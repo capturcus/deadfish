@@ -38,4 +38,4 @@ for i in range(len(imgs)):
     offset = ((i % IMGSINROW)*IMGSIZE, int((i//IMGSINROW)*IMGSIZE))
     finalimg.paste(resized, offset)
 
-finalimg.save("assets/images/"+SHEETNAME, finalimg.format)
+finalimg.save("assets/images/"+SHEETNAME+".[{},{}]".format(IMGSIZE, IMGSIZE)+".png", finalimg.format)

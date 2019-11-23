@@ -90,6 +90,8 @@ for (var i in gameAssets) {
     var scriptType = findExtension(gameAssets[i], scriptExtensions);
     var shaderType = findExtension(gameAssets[i], shaderExtensions);
 
+    console.log(i);
+
     if (bitmapFontType) {
         var isItActuallyAFont = false;
 
@@ -188,6 +190,8 @@ if (!Object.keys(loaderTypes.spritesheet).length) {
         if (spritesheetProperties.length < 2 || spritesheetProperties.length > 5) {
             console.log('Invalid number of Spritesheet properties provided for \'' + i + '\'. Must have between 2 and 5; [frameWidth, frameHeight, frameMax, margin, spacing] frameWidth and frameHeight are required');
         }
+
+        console.log("spritesheet props", spritesheetProperties);
 
         shell.ShellString('\n        static getFrameWidth(): number { return ' + parseInt(spritesheetProperties[0] ? spritesheetProperties[0] : -1) + '; }').toEnd(assetsClassFile);
         shell.ShellString('\n        static getFrameHeight(): number { return ' + parseInt(spritesheetProperties[1] ? spritesheetProperties[1] : -1) + '; }').toEnd(assetsClassFile);
