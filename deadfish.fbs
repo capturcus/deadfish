@@ -1,0 +1,95 @@
+namespace DeadFish;
+
+struct Vec2 {
+  x:float;
+  y:float;
+}
+
+struct CommandFollow {
+  id:uint16;
+}
+
+struct CommandMove {
+  target:Vec2;
+}
+
+struct CommandKill {
+  id:uint16;
+}
+
+struct CommandUse {
+  id:uint16;
+}
+
+enum MobState: byte {
+  Idle,
+  Walking
+}
+
+struct Mob {
+  id:uint16;
+  pos:Vec2;
+  state:MobState;
+  species:uint16;
+}
+
+table DataState {
+  mobs:[Mob];
+}
+
+table PlayerDied {
+  killedBy:uint16;
+}
+
+struct HighscoreEntry {
+  playerId:uint16;
+  playerPoints:uint16;
+}
+
+table HighscoreUpdate {
+  players:[HighscoreEntry];
+}
+
+table KilledPlayer {
+  playerId:uint16;
+}
+
+enum SimpleServerEventType: byte {
+  KilledNPC,
+}
+
+table SimpleServerEvent {
+  type:SimpleServerEventType;
+}
+
+table ContractChange {
+  species:uint16;
+}
+
+table InitPlayer {
+  id:uint16;
+  name:string;
+  species:uint16;
+}
+
+table InitMetadata {
+  levelId:uint16;
+  players:[InitPlayer];
+}
+
+union ServerEvent {
+  PlayerDied,
+  HighscoreUpdate,
+  KilledPlayer,
+  SimpleServerEvent,
+  ContractChange,
+  InitMetadata
+}
+
+table ServerEventWrapper {
+  event:ServerEvent;
+}
+
+table DataEvent {
+  events:[ServerEventWrapper];
+}

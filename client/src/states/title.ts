@@ -1,5 +1,6 @@
 import * as Assets from '../assets';
 import { ELOOP } from 'constants';
+import * as Generated from '../deadfish_generated';
 
 const DEBUG_CAMERA = true;
 
@@ -33,8 +34,7 @@ export default class Title extends Phaser.State {
 
     public update(): void {
         if (DEBUG_CAMERA) {
-            if (this.cursors.up.isDown)
-            {
+            if (this.cursors.up.isDown) {
                 this.game.camera.y -= 4;
             }
             else if (this.cursors.down.isDown)
