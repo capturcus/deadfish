@@ -1,14 +1,31 @@
 import * as Assets from '../assets';
 import { ELOOP } from 'constants';
 import * as Generated from '../deadfish_generated';
+import { flatbuffers } from 'flatbuffers';
+// import websocket = require('websocket');
 
 const DEBUG_CAMERA = true;
 
 export default class Title extends Phaser.State {
     cursors = null;
+    webSocket: WebSocket = null;
+    t: number;
 
     public mouseHandler(e) {
-        console.log(e.event.x+this.game.camera.x, e.event.y+this.game.camera.y)
+        let worldX = e.event.x+this.game.camera.x;
+        let worldY = e.event.y+this.game.camera.y;
+        let builder = new flatbuffers.Builder(1);
+
+        Generated.DeadFish.CommandMove.startCommandMove(builder);
+        Generated.DeadFish.CommandMove.addTarget(builder,
+            Generated.DeadFish.Vec2.createVec2(builder, worldX, worldY));
+        let firstCmdMove = Generated.DeadFish.CommandMove.endCommandMove(builder);
+        builder.finish(firstCmdMove);
+
+        let bytes = builder.asUint8Array();
+
+        this.webSocket.send(bytes);
+        this.t = performance.now();
     }
 
     public create(): void {
@@ -30,6 +47,20 @@ export default class Title extends Phaser.State {
         this.game.world.setBounds(0, 0, 20000, 20000);
 
         this.cursors = this.game.input.keyboard.createCursorKeys();
+
+        this.webSocket = new WebSocket("ws://127.0.0.1:63987");
+        this.webSocket.addEventListener("open", (ev) => {
+            console.log("open", ev);
+        });
+        this.webSocket.addEventListener("message", (ev) => {
+            (new Response(ev.data).arrayBuffer()).then((arrayBuffer) => {
+                let newBuffer = new flatbuffers.ByteBuffer(new Uint8Array(arrayBuffer));
+                console.log(ev.data, newBuffer);
+                let cmdMove = Generated.DeadFish.CommandMove.getRootAsCommandMove(newBuffer);
+                console.log(cmdMove.target().x(), cmdMove.target().y());
+                console.log("lag:", (performance.now()-this.t));
+            });
+        });
     }
 
     public update(): void {

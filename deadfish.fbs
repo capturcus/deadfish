@@ -5,19 +5,19 @@ struct Vec2 {
   y:float;
 }
 
-struct CommandFollow {
+table CommandFollow {
   id:uint16;
 }
 
-struct CommandMove {
+table CommandMove {
   target:Vec2;
 }
 
-struct CommandKill {
+table CommandKill {
   id:uint16;
 }
 
-struct CommandUse {
+table CommandUse {
   id:uint16;
 }
 
@@ -26,7 +26,7 @@ enum MobState: byte {
   Walking
 }
 
-struct Mob {
+table Mob {
   id:uint16;
   pos:Vec2;
   state:MobState;
@@ -41,7 +41,7 @@ table PlayerDied {
   killedBy:uint16;
 }
 
-struct HighscoreEntry {
+table HighscoreEntry {
   playerId:uint16;
   playerPoints:uint16;
 }
