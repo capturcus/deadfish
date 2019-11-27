@@ -55,10 +55,12 @@ export default class Title extends Phaser.State {
         this.webSocket.addEventListener("message", (ev) => {
             (new Response(ev.data).arrayBuffer()).then((arrayBuffer) => {
                 let newBuffer = new flatbuffers.ByteBuffer(new Uint8Array(arrayBuffer));
-                console.log(ev.data, newBuffer);
-                let cmdMove = Generated.DeadFish.CommandMove.getRootAsCommandMove(newBuffer);
-                console.log(cmdMove.target().x(), cmdMove.target().y());
-                console.log("lag:", (performance.now()-this.t));
+                let dataState = Generated.DeadFish.DataState.getRootAsDataState(newBuffer);
+                let mob = dataState.mobs(0);
+                // console.log(mob.angle(), mob.id(), mob.pos().x(), mob.pos().y(), mob.species(), mob.species());
+                sprite.position.x = mob.pos().x();
+                sprite.position.y = mob.pos().y();
+                sprite.angle = mob.angle();
             });
         });
     }

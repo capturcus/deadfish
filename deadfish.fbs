@@ -29,6 +29,7 @@ enum MobState: byte {
 table Mob {
   id:uint16;
   pos:Vec2;
+  angle:float;
   state:MobState;
   species:uint16;
 }
