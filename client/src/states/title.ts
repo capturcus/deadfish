@@ -12,9 +12,11 @@ export default class Title extends Phaser.State {
     t: number;
 
     public mouseHandler(e) {
-        let worldX = e.event.x+this.game.camera.x;
-        let worldY = e.event.y+this.game.camera.y;
+        let worldX = this.input.activePointer.x;
+        let worldY = this.input.activePointer.y;
         let builder = new flatbuffers.Builder(1);
+
+        console.log(worldX, worldY);
 
         Generated.DeadFish.CommandMove.startCommandMove(builder);
         Generated.DeadFish.CommandMove.addTarget(builder,

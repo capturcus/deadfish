@@ -19,10 +19,17 @@ type Vec2 = Vector2<f32>;
 const CONST_SLEEP: u64 = 40;
 
 struct Player {
+    id: u16,
     position: Vec2,
     angle: f32,
     socket: ClientSocket,
     target_position: Vec2,
+}
+
+impl PartialEq for Player {
+    fn eq(&self, rhs: &Player) -> bool {
+        self.id == rhs.id
+    }
 }
 
 impl Player {
@@ -60,8 +67,10 @@ fn fb_vec2(v: &Vec2) -> dead_fish::Vec2 {
     dead_fish::Vec2::new(v.x, v.y)
 }
 
+
 fn main() {
     let mut server = Server::bind("127.0.0.1:63987").unwrap();
+    let mut current_player_id: u16 = 0;
 
     // Set the server to non-blocking.
     server.set_nonblocking(true).unwrap();
@@ -76,11 +85,13 @@ fn main() {
                 let client = wsupgrade.accept().unwrap();
                 client.set_nonblocking(true).unwrap();
                 players.push(Player{
+                    id: current_player_id,
                     position: Vec2::new(0., 0.),
                     angle: 0.,
                     socket: client,
                     target_position: Vec2::new(100., 100.),
                 });
+                current_player_id += 1;
             }
             _ => {
                 // Nobody tried to connect, move on.
@@ -88,9 +99,15 @@ fn main() {
         };
         // println!("no siema");
         thread::sleep(time::Duration::from_millis(CONST_SLEEP));
-        for player in &mut players {
+        let mut players_to_delete = Vec::new();
+        for i in 0..players.len() {
+            let mut player = &mut players[i];
             match player.socket.recv_dataframe() {
                 Ok(data) => {
+                    if data.data.len() < 4 {
+                        // refresh ?
+                        continue
+                    }
                     let cmd_move = flatbuffers::get_root::<dead_fish::CommandMove>(&data.data);
                     println!("cmd_move {} {}", cmd_move.target().unwrap().x(), cmd_move.target().unwrap().y());
                     player.target_position = Vec2::new(cmd_move.target().unwrap().x(), cmd_move.target().unwrap().y());
@@ -100,7 +117,16 @@ fn main() {
             }
             player.update();
 
-            player.send_data().unwrap();
+            match player.send_data() {
+                Ok(_) => {}
+                _ => {
+                    players_to_delete.push(i);
+                }
+            }
+        }
+        for i in players_to_delete {
+            println!("removing player {}", i);
+            players.swap_remove(i);
         }
     }
 }
