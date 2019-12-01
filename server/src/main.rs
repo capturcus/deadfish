@@ -2,8 +2,6 @@ extern crate flatbuffers;
 extern crate nalgebra as na;
 
 use std::{thread, time};
-use std::f64::consts::PI;
-use std::ops;
 
 use websocket::server::sync::Server;
 use websocket::Message;
@@ -17,6 +15,7 @@ type ClientSocket = websocket::client::sync::Client<std::net::TcpStream>;
 type Vec2 = Vector2<f32>;
 
 const CONST_SLEEP: u64 = 40;
+const ROTATION_SPEED: f32 = 5.;
 
 struct Player {
     id: u16,
@@ -32,24 +31,28 @@ impl PartialEq for Player {
     }
 }
 
-impl Player {
-    pub fn send_data(&mut self) -> std::result::Result<(), websocket_base::result::WebSocketError> {
-        let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1);
+fn send_data(i: usize, players: &mut Vec<Player>) -> std::result::Result<(), websocket_base::result::WebSocketError> {
+    let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1);
+    let mut mobs = Vec::new();
+    for player in players.iter() {
         let mob = dead_fish::Mob::create(&mut builder, &dead_fish::MobArgs{
             id: 0,
-            pos: Some(&fb_vec2(&self.position)),
-            angle: self.angle,
+            pos: Some(&fb_vec2(&player.position)),
+            angle: player.angle,
             state: dead_fish::MobState::Walking,
             species: 0,
         });
-        let mobs = builder.create_vector(&[mob]);
-        let data_state = dead_fish::DataState::create(&mut builder, &dead_fish::DataStateArgs{
-            mobs: Some(mobs)
-        });
-        builder.finish(data_state, None);
-        self.socket.send_message(&Message::binary(builder.finished_data()))
+        mobs.push(mob);
     }
+    let mobs_vec = builder.create_vector(&mobs);
+    let data_state = dead_fish::DataState::create(&mut builder, &dead_fish::DataStateArgs{
+        mobs: Some(mobs_vec)
+    });
+    builder.finish(data_state, None);
+    players[i].socket.send_message(&Message::binary(builder.finished_data()))
+}
 
+impl Player {
     pub fn update(&mut self) {
         let to_target = self.target_position - self.position;
         if to_target.norm() <= 3.{
@@ -57,9 +60,15 @@ impl Player {
         }
         let to_target = to_target.normalize();
         let heading = Rotation2::rotation_between(&Vector2::x(), &to_target);
-        let angle = heading.angle().to_degrees();
+        let angle = heading.angle().to_degrees() + 90.;
         self.position += to_target*3.;
-        self.angle = angle+90.;
+        if (angle - self.angle).abs() >= ROTATION_SPEED {
+            if angle - self.angle < 0. {
+                self.angle -= ROTATION_SPEED;
+            } else {
+                self.angle += ROTATION_SPEED;
+            }
+        }
     }
 }
 
@@ -101,7 +110,7 @@ fn main() {
         thread::sleep(time::Duration::from_millis(CONST_SLEEP));
         let mut players_to_delete = Vec::new();
         for i in 0..players.len() {
-            let mut player = &mut players[i];
+            let player = &mut players[i];
             match player.socket.recv_dataframe() {
                 Ok(data) => {
                     if data.data.len() < 4 {
@@ -117,7 +126,7 @@ fn main() {
             }
             player.update();
 
-            match player.send_data() {
+            match send_data(i, &mut players) {
                 Ok(_) => {}
                 _ => {
                     players_to_delete.push(i);
