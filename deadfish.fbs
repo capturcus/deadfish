@@ -5,6 +5,8 @@ struct Vec2 {
   y:float;
 }
 
+// client
+
 table CommandFollow {
   id:uint16;
 }
@@ -21,6 +23,20 @@ table CommandUse {
   id:uint16;
 }
 
+table JoinRequest {
+  name:string;
+}
+
+table ClientMessage {
+  follow:CommandFollow;
+  move:CommandMove;
+  kill:CommandKill;
+  use:CommandUse;
+  join:JoinRequest;
+}
+
+// server
+
 enum MobState: byte {
   Idle,
   Walking
@@ -34,7 +50,7 @@ table Mob {
   species:uint16;
 }
 
-table DataState {
+table WorldState {
   mobs:[Mob];
 }
 
@@ -57,6 +73,7 @@ table KilledPlayer {
 
 enum SimpleServerEventType: byte {
   KilledNPC,
+  GameStart
 }
 
 table SimpleServerEvent {
@@ -76,21 +93,23 @@ table InitPlayer {
 table InitMetadata {
   levelId:uint16;
   players:[InitPlayer];
+  yourid:uint16;
 }
 
-union ServerEvent {
+union ServerMessageUnion {
   PlayerDied,
   HighscoreUpdate,
   KilledPlayer,
   SimpleServerEvent,
   ContractChange,
-  InitMetadata
+  InitMetadata,
+  WorldState
 }
 
-table ServerEventWrapper {
-  event:ServerEvent;
+table ServerMessageWrapper {
+  event:ServerMessageUnion;
 }
 
-table DataEvent {
-  events:[ServerEventWrapper];
+table ServerMessage {
+  events:[ServerMessageWrapper];
 }
