@@ -5,6 +5,15 @@ struct Vec2 {
   y:float;
 }
 
+enum Error: byte {
+  NameEmpty,
+  NameAlreadyTaken
+}
+
+table ErrorWrapper {
+  error: Error;
+}
+
 // client
 
 table CommandFollow {
@@ -27,12 +36,17 @@ table JoinRequest {
   name:string;
 }
 
+union ClientMessageUnion {
+  CommandFollow,
+  CommandMove,
+  CommandKill,
+  CommandUse,
+  JoinRequest,
+  ErrorWrapper
+}
+
 table ClientMessage {
-  follow:CommandFollow;
-  move:CommandMove;
-  kill:CommandKill;
-  use:CommandUse;
-  join:JoinRequest;
+  event:ClientMessageUnion;
 }
 
 // server
@@ -103,13 +117,10 @@ union ServerMessageUnion {
   SimpleServerEvent,
   ContractChange,
   InitMetadata,
-  WorldState
-}
-
-table ServerMessageWrapper {
-  event:ServerMessageUnion;
+  WorldState,
+  ErrorWrapper
 }
 
 table ServerMessage {
-  events:[ServerMessageWrapper];
+  event:ServerMessageUnion;
 }
