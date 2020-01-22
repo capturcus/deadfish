@@ -14,11 +14,13 @@ typedef websocketpp::server<websocketpp::config::asio> server;
 GameState gameState;
 server websocket_server;
 
+const int NUM_PLAYERS_REQUIRED = 3;
+
 void sendInitMetadata()
 {
     for (auto &targetPlayer : gameState.players)
     {
-        flatbuffers::FlatBufferBuilder builder(1024);
+        flatbuffers::FlatBufferBuilder builder(1);
         std::vector<flatbuffers::Offset<DeadFish::InitPlayer>> playerOffsets;
         for (auto &player : gameState.players)
         {
@@ -57,6 +59,27 @@ void addNewPlayer(const std::string &name, websocketpp::connection_hdl hdl)
     gameState.players.insert({p->id, std::unique_ptr<Player>(p)});
 
     sendInitMetadata();
+
+    if (gameState.players.size() == NUM_PLAYERS_REQUIRED) {
+        // start the game
+        gameState.phase = GamePhase::GAME;
+
+        flatbuffers::FlatBufferBuilder builder(1);
+        auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_GameStart);
+
+        auto message = DeadFish::CreateServerMessage(builder,
+            DeadFish::ServerMessageUnion_SimpleServerEvent,
+            ev.Union());
+
+        builder.Finish(message);
+        auto data = builder.GetBufferPointer();
+        auto str = std::string(data, data + builder.GetSize());
+        // websocket_server.send(targetPlayer.second->conn_hdl, , websocketpp::frame::opcode::binary);
+        for (auto &player : gameState.players)
+        {
+            websocket_server.send(player.second->conn_hdl, str, websocketpp::frame::opcode::binary);
+        }
+    }
 }
 
 void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg)
@@ -100,6 +123,13 @@ void on_close(websocketpp::connection_hdl hdl) {
         }
     }
     gameState.players.erase(toBeDeleted);
+
+    if(gameState.phase == GamePhase::LOBBY) {
+        sendInitMetadata();
+    }
+    if(gameState.phase == GamePhase::GAME && gameState.players.size() == 0) {
+        exit(0);
+    }
 }
 
 int main()
