@@ -3,23 +3,25 @@ import { ELOOP } from 'constants';
 import * as Generated from '../deadfish_generated';
 import { flatbuffers } from 'flatbuffers';
 import WebSocketService from '../websocket';
+import { FBUtil } from '../utils/fbutil';
 
 const DEBUG_CAMERA = true;
 
 export default class Gameplay extends Phaser.State {
     cursors = null;
     t: number;
+    mobs = {};
 
     public mouseHandler(e) {
         let worldX = this.input.activePointer.x;
         let worldY = this.input.activePointer.y;
         let builder = new flatbuffers.Builder(1);
 
-        console.log(worldX, worldY);
+        console.log(worldX, worldY, this.camera.x, this.camera.y);
 
         Generated.DeadFish.CommandMove.startCommandMove(builder);
         Generated.DeadFish.CommandMove.addTarget(builder,
-            Generated.DeadFish.Vec2.createVec2(builder, worldX, worldY));
+            Generated.DeadFish.Vec2.createVec2(builder, worldX+this.camera.x, worldY+this.camera.y));
         let firstCmdMove = Generated.DeadFish.CommandMove.endCommandMove(builder);
         Generated.DeadFish.ClientMessage.startClientMessage(builder);
         Generated.DeadFish.ClientMessage.addEventType(builder, Generated.DeadFish.ClientMessageUnion.CommandMove);
@@ -37,33 +39,60 @@ export default class Gameplay extends Phaser.State {
         this.game.camera.flash(0x000000, 1000);
         this.game.stage.backgroundColor = "#ffffff";
 
-        let sprite = this.game.add.sprite(150,150,Assets.Spritesheets.ImagesFish100100.getName());
-        sprite.anchor.x = 0.5;
-        sprite.anchor.y = 0.5;
-
-        sprite.animations.add('idle', [0,1,2]);
-        sprite.animations.add('moving', [3,4,5]);
-        sprite.animations.add('attack', [6,7,8,9,10,11]);
-
-        sprite.animations.play('idle', 3, true);
-
         this.game.input.activePointer.leftButton.onDown.add(this.mouseHandler, this);
 
         this.game.world.setBounds(0, 0, 20000, 20000);
 
         this.cursors = this.game.input.keyboard.createCursorKeys();
 
-        // WebSocketService.instance.getWebSocket().addEventListener("message", (ev) => {
-        //     (new Response(ev.data).arrayBuffer()).then((arrayBuffer) => {
-        //         let newBuffer = new flatbuffers.ByteBuffer(new Uint8Array(arrayBuffer));
-        //         let dataState = Generated.DeadFish.DataState.getRootAsDataState(newBuffer);
-        //         let mob = dataState.mobs(0);
-        //         // console.log(mob.angle(), mob.id(), mob.pos().x(), mob.pos().y(), mob.species(), mob.species());
-        //         sprite.position.x = mob.pos().x();
-        //         sprite.position.y = mob.pos().y();
-        //         sprite.angle = mob.angle();
-        //     });
-        // });
+        let that = this;
+
+        WebSocketService.instance.getWebSocket().onmessage = (ev) => {
+            (new Response(ev.data).arrayBuffer()).then(this.handleData.bind(this));
+        };
+    }
+
+    public getSpriteBySpecies(species) {
+        console.log("SPECIES", species);
+        const adjustForSpecies = (l) => l.map((x) => (x+12*species));
+        let sprite = this.game.add.sprite(150,150,Assets.Spritesheets.ImagesFish100100.getName());
+        sprite.anchor.x = 0.5;
+        sprite.anchor.y = 0.5;
+    
+        sprite.animations.add('idle', adjustForSpecies([0,1,2]));
+        sprite.animations.add('moving', adjustForSpecies([3,4,5]));
+        sprite.animations.add('attack', adjustForSpecies([6,7,8,9,10,11]));
+    
+        sprite.animations.play('idle', 3, true);
+    
+        return sprite;
+    }
+
+    public handleData(arrayBuffer) {
+        let buffer = new Uint8Array(arrayBuffer);
+        let dataState = FBUtil.ParseWorldState(buffer);
+        if (dataState === null) {
+            console.log("other type than world");
+        }
+        // let mob = dataState.mobs(0);
+        // // console.log(mob.angle(), mob.id(), mob.pos().x(), mob.pos().y(), mob.species(), mob.species());
+        // sprite.position.x = mob.pos().x();
+        // sprite.position.y = mob.pos().y();
+        // sprite.angle = mob.angle()*180/Math.PI;
+        for (let i = 0; i < dataState.mobsLength(); i++) {
+            let dataMob = dataState.mobs(i);
+            let mob = this.mobs[dataMob.id()];
+            if (mob === undefined) {
+                console.log("making new sprite");
+                mob = {
+                    sprite: this.getSpriteBySpecies(dataMob.species())
+                };
+                this.mobs[dataMob.id()] = mob;
+            }
+            mob.sprite.position.x = dataMob.pos().x();
+            mob.sprite.position.y = dataMob.pos().y();
+            mob.sprite.angle = dataMob.angle()*180/Math.PI;
+        }
     }
 
     public update(): void {

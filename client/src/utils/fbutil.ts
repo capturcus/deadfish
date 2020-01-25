@@ -40,7 +40,6 @@ export namespace FBUtil {
     }
 
     export const ParseInitMetadata = (b: Uint8Array): number => {
-        console.log(b);
         let buffer = new flatbuffers.ByteBuffer(b);
         let serverMsg = Generated.DeadFish.ServerMessage.getRootAsServerMessage(buffer);
         switch (serverMsg.eventType()) {
@@ -60,13 +59,30 @@ export namespace FBUtil {
                             species:player.species()
                         });
                     }
+                    console.log("my id:", gameData.initMeta.my_id);
                     return 0;
                 }
                 break;
         
             default:
-                console.log("wrong type not init meta", serverMsg.eventType());
+                // console.log("wrong type not init meta", serverMsg.eventType());
                 return 1;
+        }
+    }
+
+    export const ParseWorldState = (b: Uint8Array): Generated.DeadFish.WorldState => {
+        let buffer = new flatbuffers.ByteBuffer(b);
+        let serverMsg = Generated.DeadFish.ServerMessage.getRootAsServerMessage(buffer);
+        switch (serverMsg.eventType()) {
+            case Generated.DeadFish.ServerMessageUnion.WorldState:
+                {
+                    let ev = serverMsg.event(new Generated.DeadFish.WorldState());
+                    return ev;
+                }
+                break;
+            default:
+                console.log("wrong type not simple", serverMsg.eventType());
+                return null;
         }
     }
 }

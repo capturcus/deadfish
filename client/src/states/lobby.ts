@@ -11,7 +11,7 @@ export default class Title extends Phaser.State {
         for (let player of fbutil.FBUtil.gameData.initMeta.players) {
             this.text.text += player.name + "\n";
         }
-        this.text.text += "\n\nwaiting for " + (3-fbutil.FBUtil.gameData.initMeta.players.length) + " more fish"
+        // this.text.text += "\n\nwaiting for " + (3-fbutil.FBUtil.gameData.initMeta.players.length) + " more fish"
     }
 
     public create(): void {
