@@ -17,7 +17,11 @@ print("img size:", IMGSIZE)
 print("img path:", IMGPATH)
 
 imgs = []
+files = []
 for f in os.listdir(IMGPATH):
+    files.append(f)
+
+for f in sorted(files):
     if not f.endswith(".png"):
         print("not an image: ", f)
         continue

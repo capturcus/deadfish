@@ -4,7 +4,7 @@
 
 const float TURN_SPEED = .2f;
 const float WALK_SPEED = 5.f;
-const float CLOSE = 2.f;
+const float CLOSE = 3.f;
 
 std::ostream &operator<<(std::ostream &os, glm::vec2 &v)
 {

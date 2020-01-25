@@ -40,7 +40,7 @@ struct GameState {
     std::vector<std::unique_ptr<Player>> players;
     std::vector<std::unique_ptr<Mob>> npcs;
     GamePhase phase = GamePhase::LOBBY;
-    int lastSpecies = 0;
+    int lastSpecies = 1;
 };
 
 extern GameState gameState;

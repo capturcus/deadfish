@@ -49,7 +49,7 @@ void addNewPlayer(const std::string &name, websocketpp::connection_hdl hdl)
     auto addedID = p->id;
     p->name = name;
     p->conn_hdl = hdl;
-    p->species = (gameState.lastSpecies++) % 2;
+    p->species = gameState.lastSpecies++;
 
     gameState.players.push_back(std::unique_ptr<Player>(p));
 
