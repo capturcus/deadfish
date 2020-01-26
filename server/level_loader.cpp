@@ -1,0 +1,90 @@
+#include <fstream>
+#include <flatbuffers/flatbuffers.h>
+#include "deadfish.hpp"
+#include "level_loader.hpp"
+
+void initStone(Stone* s, const DeadFish::Stone* dfstone) {
+    b2BodyDef myBodyDef;
+    myBodyDef.type = b2_staticBody;
+    myBodyDef.position.Set(dfstone->pos()->x(), dfstone->pos()->y());
+    myBodyDef.angle = 0;
+    s->body = gameState.b2world->CreateBody(&myBodyDef);
+    b2CircleShape circleShape;
+    circleShape.m_radius = dfstone->radius();
+    
+    b2FixtureDef fixtureDef;
+    fixtureDef.shape = &circleShape;
+    fixtureDef.density = 1;
+    s->body->CreateFixture(&fixtureDef);
+    s->body->SetUserData(s);
+    std::cout << "created stone " << dfstone->pos()->x() << " " << dfstone->pos()->y() << " " << dfstone->radius() << "\n";
+}
+
+flatbuffers::Offset<DeadFish::Level> serializeLevel(flatbuffers::FlatBufferBuilder& builder) {
+    // bushes
+    std::vector<flatbuffers::Offset<DeadFish::Bush>> bushOffsets;
+    for (auto& b : gameState.level->bushes) {
+        DeadFish::Vec2 pos(b->position.x, b->position.y);
+        auto off = DeadFish::CreateBush(builder, b->radius, &pos);
+        bushOffsets.push_back(off);
+    }
+    auto bushes = builder.CreateVector(bushOffsets);
+
+    // stones
+    std::vector<flatbuffers::Offset<DeadFish::Stone>> stoneOffsets;
+    for (auto& s : gameState.level->stones) {
+        DeadFish::Vec2 pos(s->body->GetPosition().x, s->body->GetPosition().y);
+        auto f = s->body->GetFixtureList();
+        auto c = (b2CircleShape*) f->GetShape();
+        auto off = DeadFish::CreateStone(builder, c->m_radius, &pos);
+        stoneOffsets.push_back(off);
+    }
+    auto stones = builder.CreateVector(stoneOffsets);
+
+    std::vector<const DeadFish::Vec2*> navpoints;
+    std::vector<const DeadFish::Vec2*> playerpoints;
+    std::vector<const DeadFish::Vec2*> npcspawns;
+
+    auto navOff = builder.CreateVector(navpoints);
+    auto pointsOff = builder.CreateVector(playerpoints);
+    auto spawnsOff = builder.CreateVector(npcspawns);
+
+    DeadFish::Vec2 size(gameState.level->size.x, gameState.level->size.y);
+    auto level = DeadFish::CreateLevel(builder, bushes, stones, navOff, pointsOff, &size, spawnsOff);
+    return level;
+}
+
+void loadLevel(std::string& path) {
+    std::ifstream in;
+    in.open(path, std::ios::in | std::ios::binary | std::ios::ate);
+    if (!in.is_open()) {
+        std::cout << "failed to open level file " << path << "\n";
+        exit(1);
+    }
+    auto size = in.tellg();
+    auto memblock = new char [size];
+    in.seekg (0, std::ios::beg);
+    in.read (memblock, size);
+    in.close();
+
+    auto level = flatbuffers::GetRoot<DeadFish::Level>(memblock);
+
+    // bushes
+    for (int i = 0; i < level->bushes()->size(); i++) {
+        auto bush = level->bushes()->Get(i);
+        std::cout << "bush pos " << bush->pos()->x() << "," << bush->pos()->y() << " " << bush->radius() << "\n";
+        auto b = new Bush;
+        b->position = glm::vec2(bush->pos()->x(), bush->pos()->y());
+        b->radius = bush->radius();
+        gameState.level->bushes.push_back(std::unique_ptr<Bush>(b));
+    }
+
+    // stones
+    for (int i = 0; i < level->stones()->size(); i++) {
+        auto stone = level->stones()->Get(i);
+        // std::cout << "stone pos " << stone->pos()->x() << "," << stone->pos()->y() << " " << stone->radius() << "\n";
+        auto s = new Stone;
+        initStone(s, stone);
+        gameState.level->stones.push_back(std::unique_ptr<Stone>(s));
+    }
+}

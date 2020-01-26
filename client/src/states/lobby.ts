@@ -27,7 +27,7 @@ export default class Title extends Phaser.State {
                 let buffer = new Uint8Array(arrayBuffer);
                 if(fbutil.FBUtil.ParseInitMetadata(buffer)) {
                     console.log("was not init");
-                    if(fbutil.FBUtil.ParseSimpleServerEvent(buffer) === DeadFish.SimpleServerEventType.GameStart) {
+                    if(fbutil.FBUtil.ParseLevel(buffer)) {
                         that.game.state.start('gameplay', true);
                     }
                 }

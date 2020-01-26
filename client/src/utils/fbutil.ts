@@ -85,4 +85,41 @@ export namespace FBUtil {
                 return null;
         }
     }
+
+    export const ParseLevel = (b: Uint8Array): boolean => {
+        let buffer = new flatbuffers.ByteBuffer(b);
+        let serverMsg = Generated.DeadFish.ServerMessage.getRootAsServerMessage(buffer);
+        switch (serverMsg.eventType()) {
+            case Generated.DeadFish.ServerMessageUnion.Level:
+                {
+                    let level = {
+                        bushes: [],
+                        stones: []
+                    };
+                    let srvLevel = serverMsg.event(new Generated.DeadFish.Level());
+                    for (let i = 0; i < srvLevel.bushesLength(); i++) {
+                        let pos = srvLevel.bushes(i).pos();
+                        level.bushes.push({
+                            x: pos.x()*100,
+                            y: pos.y()*100,
+                            radius: srvLevel.bushes(i).radius()*100
+                        });
+                    }
+                    for (let i = 0; i < srvLevel.stonesLength(); i++) {
+                        let pos = srvLevel.stones(i).pos();
+                        level.stones.push({
+                            x: pos.x()*100,
+                            y: pos.y()*100,
+                            radius: srvLevel.stones(i).radius()*100
+                        });
+                    }
+                    gameData.level = level;
+                    return true;
+                }
+                break;
+            default:
+                console.log("wrong type not level", serverMsg.eventType());
+                return false;
+        }
+    }
 }

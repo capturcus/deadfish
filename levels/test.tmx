@@ -6,10 +6,10 @@
  <tileset firstgid="1" name="tiless" tilewidth="128" tileheight="128" tilecount="2" columns="0">
   <grid orientation="orthogonal" width="1" height="1"/>
   <tile id="0">
-   <image width="128" height="128" source="../../assets/bush.png"/>
+   <image width="128" height="128" source="../assets/bush.png"/>
   </tile>
   <tile id="1">
-   <image width="128" height="128" source="../../assets/stone.png"/>
+   <image width="128" height="128" source="../assets/stone.png"/>
   </tile>
  </tileset>
  <objectgroup id="2" name="objects">

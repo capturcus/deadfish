@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include "deadfish.hpp"
 #include "game_thread.hpp"
+#include "level_loader.hpp"
 
 const int FRAME_TIME = 50; // 20 fps
 
@@ -52,7 +53,6 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg) {
         const auto event = clientMessage->event_as_CommandMove();
         auto p = getPlayerByConnHdl(hdl);
         p->targetPosition = glm::vec2(event->target()->x(), event->target()->y());
-        std::cout << "target: " << p->targetPosition << "\n";
     }
     break;
 
@@ -125,24 +125,30 @@ void physicsInitMob(Mob* m, glm::vec2 pos, float angle, float radius) {
 }
 
 void gameThread() {
-    // notify clients that the game has started
-    flatbuffers::FlatBufferBuilder builder(1);
-    auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_GameStart);
-    auto message = DeadFish::CreateServerMessage(builder,
-        DeadFish::ServerMessageUnion_SimpleServerEvent,
-        ev.Union());
-    builder.Finish(message);
-    auto data = builder.GetBufferPointer();
-    auto str = std::string(data, data + builder.GetSize());
-    for (auto &player : gameState.players)
-    {
-        websocket_server.send(player->conn_hdl, str, websocketpp::frame::opcode::binary);
-    }
-
     // init physics
     gameState.b2world = std::make_unique<b2World>(b2Vec2(0, 0));
     TestContactListener tcl;
     gameState.b2world->SetContactListener(&tcl);
+
+    // load level
+    gameState.level = std::move(std::make_unique<Level>());
+    std::string path("../../levels/test.bin");
+    loadLevel(path);
+
+    // send level to clients
+    flatbuffers::FlatBufferBuilder builder(1);
+    auto levelOffset = serializeLevel(builder);
+    auto message = DeadFish::CreateServerMessage(builder,
+        DeadFish::ServerMessageUnion_Level,
+        levelOffset.Union());
+    builder.Finish(message);
+    auto data = builder.GetBufferPointer();
+    auto size = builder.GetSize();
+    auto str = std::string(data, data+size);
+    for (auto &player : gameState.players)
+    {
+        websocket_server.send(player->conn_hdl, str, websocketpp::frame::opcode::binary);
+    }
 
     // test npc
     Mob* mob = new Mob();
@@ -176,7 +182,7 @@ void gameThread() {
         // send everything to everyone
         builder.Clear();
         makeMobData(builder);
-        data = builder.GetBufferPointer();
+        auto data = builder.GetBufferPointer();
         str = std::string(data, data + builder.GetSize());
         for (auto& p : gameState.players) {
             websocket_server.send(p->conn_hdl, str, websocketpp::frame::opcode::binary);

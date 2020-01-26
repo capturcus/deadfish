@@ -51,7 +51,16 @@ export default class Gameplay extends Phaser.State {
 
         this.cursors = this.game.input.keyboard.createCursorKeys();
 
-        let that = this;
+        for (let bush of FBUtil.gameData.level.bushes) {
+            let sprite = this.game.add.sprite(bush.x, bush.y, Assets.Images.ImagesBush.getName());
+            sprite.anchor.x = 0.5;
+            sprite.anchor.y = 0.5;
+        }
+        for (let stone of FBUtil.gameData.level.stones) {
+            let sprite = this.game.add.sprite(stone.x, stone.y, Assets.Images.ImagesStone.getName());
+            sprite.anchor.x = 0.5;
+            sprite.anchor.y = 0.5;
+        }
 
         WebSocketService.instance.getWebSocket().onmessage = (ev) => {
             (new Response(ev.data).arrayBuffer()).then(this.handleData.bind(this));

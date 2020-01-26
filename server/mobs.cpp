@@ -34,7 +34,6 @@ void Mob::update()
         diff -= 2 * M_PI;
 
     bool skip = false;
-    std::cout << "diff\t" << diff << "\n";
     auto turnSpeed = TURN_SPEED;
     if (abs(diff) < ANGULAR_CLOSE*2)
     {

@@ -5,6 +5,7 @@
 #include "deadfish_generated.h"
 #include "deadfish.hpp"
 #include "game_thread.hpp"
+#include "level_loader.hpp"
 
 GameState gameState;
 server websocket_server;

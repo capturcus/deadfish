@@ -6,10 +6,20 @@ export namespace Images {
 
         static getPNG(): string { return require('assets/images/background_template.png'); }
     }
+    export class ImagesBush {
+        static getName(): string { return 'bush'; }
+
+        static getPNG(): string { return require('assets/images/bush.png'); }
+    }
     export class ImagesLogo {
         static getName(): string { return 'logo'; }
 
         static getPNG(): string { return require('assets/images/logo.png'); }
+    }
+    export class ImagesStone {
+        static getName(): string { return 'stone'; }
+
+        static getPNG(): string { return require('assets/images/stone.png'); }
     }
 }
 

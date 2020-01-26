@@ -17,18 +17,18 @@ def process_level(path):
         obj = {
             "x": o["x"]+o["width"]/2,
             "y": o["y"]-o["height"]/2,
-            "radius": 1
+            "radius": o["width"]/2
         }
         if o["gid"] == 1:
             DeadFish.Bush.BushStart(builder)
-            DeadFish.Bush.BushAddRadius(builder, obj["radius"])
-            pos = DeadFish.Vec2.CreateVec2(builder, obj["x"], obj["y"])
+            DeadFish.Bush.BushAddRadius(builder, obj["radius"]*0.01)
+            pos = DeadFish.Vec2.CreateVec2(builder, obj["x"]*0.01, obj["y"]*0.01)
             DeadFish.Bush.BushAddPos(builder, pos)
             bushes.append(DeadFish.Bush.BushEnd(builder))
         if o["gid"] == 2:
             DeadFish.Stone.StoneStart(builder)
-            DeadFish.Stone.StoneAddRadius(builder, obj["radius"])
-            pos = DeadFish.Vec2.CreateVec2(builder, obj["x"], obj["y"])
+            DeadFish.Stone.StoneAddRadius(builder, obj["radius"]*0.01)
+            pos = DeadFish.Vec2.CreateVec2(builder, obj["x"]*0.01, obj["y"]*0.01)
             DeadFish.Stone.StoneAddPos(builder, pos)
             stones.append(DeadFish.Stone.StoneEnd(builder))
     
@@ -58,8 +58,8 @@ def process_level(path):
     DeadFish.Level.LevelAddPlayerpoints(builder, playerpoints)
     DeadFish.Level.LevelAddStones(builder, stonesOff)
     size = DeadFish.Vec2.CreateVec2(builder,
-        tmxjson["width"]*tmxjson["tilewidth"],
-        tmxjson["height"]*tmxjson["tileheight"])
+        tmxjson["width"]*tmxjson["tilewidth"]*0.01,
+        tmxjson["height"]*tmxjson["tileheight"]*0.01)
     DeadFish.Level.LevelAddSize(builder, size)
     level = DeadFish.Level.LevelEnd(builder)
     builder.Finish(level)

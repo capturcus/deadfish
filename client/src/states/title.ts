@@ -52,12 +52,18 @@ export default class Title extends Phaser.State {
                     (new Response(data.data).arrayBuffer()).then((arrayBuffer) => {
                         let buffer = new Uint8Array(arrayBuffer);
                         if(fbutil.FBUtil.ParseInitMetadata(buffer)) {
-                            if(fbutil.FBUtil.ParseSimpleServerEvent(buffer) === Generated.DeadFish.SimpleServerEventType.GameStart) {
-                                console.log("starting gameplay");
-                                document.getElementById("htmlStuff").setAttribute("style", "display: none;");
-                                that.game.state.start('gameplay', true);
-                                return;
-                            }
+                            // if(fbutil.FBUtil.ParseSimpleServerEvent(buffer) === Generated.DeadFish.SimpleServerEventType.GameStart) {
+                            //     console.log("starting gameplay");
+                            //     document.getElementById("htmlStuff").setAttribute("style", "display: none;");
+                            //     that.game.state.start('gameplay', true);
+                            //     return;
+                            // }
+                        }
+                        if(fbutil.FBUtil.ParseLevel(buffer)) {
+                            console.log("was level, starting gameplay");
+                            document.getElementById("htmlStuff").setAttribute("style", "display: none;");
+                            that.game.state.start('gameplay', true);
+                            return;
                         }
                         document.getElementById("htmlStuff").setAttribute("style", "display: none;");
                         console.log("going into lobby");

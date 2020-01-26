@@ -47,11 +47,30 @@ struct Player : public Mob {
     void update() override;
 };
 
+struct Bush {
+    glm::vec2 position;
+    float radius = 0;
+};
+
+struct Stone {
+    b2Body* body = nullptr;
+};
+
+struct Level {
+    std::vector<std::unique_ptr<Bush>> bushes;
+    std::vector<std::unique_ptr<Stone>> stones;
+    std::vector<glm::vec2> navpoints;
+    std::vector<glm::vec2> playerpoints;
+    std::vector<glm::vec2> npcspawns;
+    glm::vec2 size;
+};
+
 struct GameState {
     std::vector<std::unique_ptr<Player>> players;
     std::vector<std::unique_ptr<Mob>> npcs;
     GamePhase phase = GamePhase::LOBBY;
     int lastSpecies = 0;
+    std::unique_ptr<Level> level = nullptr;
 
     std::unique_ptr<b2World> b2world = nullptr;
 };

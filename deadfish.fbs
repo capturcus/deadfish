@@ -113,8 +113,7 @@ table KilledPlayer {
 }
 
 enum SimpleServerEventType: byte {
-  KilledNPC,
-  GameStart
+  KilledNPC
 }
 
 table SimpleServerEvent {
@@ -145,7 +144,8 @@ union ServerMessageUnion {
   ContractChange,
   InitMetadata,
   WorldState,
-  ErrorWrapper
+  ErrorWrapper,
+  Level
 }
 
 table ServerMessage {
