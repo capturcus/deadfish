@@ -1,10 +1,5 @@
 namespace DeadFish;
 
-struct Vec2 {
-  x:float;
-  y:float;
-}
-
 enum Error: byte {
   NameEmpty,
   NameAlreadyTaken
@@ -12,6 +7,38 @@ enum Error: byte {
 
 table ErrorWrapper {
   error: Error;
+}
+
+// level
+
+struct Vec2 {
+  x:float;
+  y:float;
+}
+
+table Stone {
+    radius: float;
+    pos: Vec2;
+}
+
+table Bush {
+    radius: float;
+    pos: Vec2;
+}
+
+table Level {
+    bushes:[Bush];
+    stones:[Stone];
+    navpoints:[Vec2];
+    playerpoints:[Vec2];
+    size:Vec2;
+    npcspawns:[Vec2];
+}
+
+table ClientLevel {
+    bushes:[Bush];
+    stones:[Stone];
+    size:Vec2;
 }
 
 // client
