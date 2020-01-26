@@ -7,6 +7,9 @@ import { FBUtil } from '../utils/fbutil';
 
 const DEBUG_CAMERA = true;
 
+const PIXELS2METERS = 0.01;
+const METERS2PIXELS = 100;
+
 export default class Gameplay extends Phaser.State {
     cursors = null;
     t: number;
@@ -19,9 +22,12 @@ export default class Gameplay extends Phaser.State {
 
         console.log(worldX, worldY, this.camera.x, this.camera.y);
 
+        let serverX = (worldX+this.camera.x)*PIXELS2METERS;
+        let serverY = (worldY+this.camera.y)*PIXELS2METERS;
+
         Generated.DeadFish.CommandMove.startCommandMove(builder);
         Generated.DeadFish.CommandMove.addTarget(builder,
-            Generated.DeadFish.Vec2.createVec2(builder, worldX+this.camera.x, worldY+this.camera.y));
+            Generated.DeadFish.Vec2.createVec2(builder, serverX, serverY));
         let firstCmdMove = Generated.DeadFish.CommandMove.endCommandMove(builder);
         Generated.DeadFish.ClientMessage.startClientMessage(builder);
         Generated.DeadFish.ClientMessage.addEventType(builder, Generated.DeadFish.ClientMessageUnion.CommandMove);
@@ -89,8 +95,8 @@ export default class Gameplay extends Phaser.State {
                 };
                 this.mobs[dataMob.id()] = mob;
             }
-            mob.sprite.position.x = dataMob.pos().x();
-            mob.sprite.position.y = dataMob.pos().y();
+            mob.sprite.position.x = dataMob.pos().x()*METERS2PIXELS;
+            mob.sprite.position.y = dataMob.pos().y()*METERS2PIXELS;
             mob.sprite.angle = dataMob.angle()*180/Math.PI;
         }
     }

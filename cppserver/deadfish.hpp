@@ -2,16 +2,28 @@
 #include <unordered_map>
 #include <cstdint>
 #include <string>
+#include <Box2D/Box2D.h>
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
-#include "deadfish_generated.h"
 #include <glm/vec2.hpp>
+#include "deadfish_generated.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
+
+// const float METERS2PIXELS = 100.f;
+// const float PIXELS2METERS = 0.01f;
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 
 std::ostream &operator<<(std::ostream &os, glm::vec2 &v);
+
+static inline glm::vec2 b2g(b2Vec2 v) {
+    return glm::vec2(v.x, v.y);
+}
+
+static inline b2Vec2 g2b(glm::vec2 v) {
+    return b2Vec2(v.x, v.y);
+}
 
 enum class GamePhase {
     LOBBY = 0,
@@ -20,9 +32,8 @@ enum class GamePhase {
 
 struct Mob {
     uint16_t id = 0;
-    glm::vec2 position = glm::vec2(100, 100);
-    float angle;
     uint16_t species = 0;
+    b2Body* body = nullptr;
 
     glm::vec2 targetPosition;
 
@@ -40,7 +51,9 @@ struct GameState {
     std::vector<std::unique_ptr<Player>> players;
     std::vector<std::unique_ptr<Mob>> npcs;
     GamePhase phase = GamePhase::LOBBY;
-    int lastSpecies = 1;
+    int lastSpecies = 0;
+
+    std::unique_ptr<b2World> b2world = nullptr;
 };
 
 extern GameState gameState;

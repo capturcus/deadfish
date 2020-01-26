@@ -65,21 +65,21 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg) {
 void makeMobData(flatbuffers::FlatBufferBuilder& builder) {
     std::vector<flatbuffers::Offset<DeadFish::Mob>> mobs;
     for (auto& n: gameState.npcs) {
-        auto posVec = DeadFish::Vec2(n->position.x, n->position.y);
+        auto posVec = DeadFish::Vec2(n->body->GetPosition().x, n->body->GetPosition().y);
         auto mob = DeadFish::CreateMob(builder,
             n->id,
             &posVec,
-            n->angle,
+            n->body->GetAngle(),
             DeadFish::MobState::MobState_Idle,
             n->species);
         mobs.push_back(mob);
     }
     for (auto& p: gameState.players) {
-        auto posVec = DeadFish::Vec2(p->position.x, p->position.y);
+        auto posVec = DeadFish::Vec2(p->body->GetPosition().x, p->body->GetPosition().y);
         auto mob = DeadFish::CreateMob(builder,
             p->id,
             &posVec,
-            p->angle,
+            p->body->GetAngle(),
             DeadFish::MobState::MobState_Idle,
             p->species);
         mobs.push_back(mob);
@@ -95,14 +95,42 @@ void makeMobData(flatbuffers::FlatBufferBuilder& builder) {
     builder.Finish(message);
 }
 
+class TestContactListener : public b2ContactListener
+  {
+    void BeginContact(b2Contact* contact) {
+        std::cout << "BEGIN CONTACT\n";
+    }
+  
+    void EndContact(b2Contact* contact) {
+        std::cout << "END CONTACT\n";
+    }
+  };
+
+void physicsInitMob(Mob* m, glm::vec2 pos, float angle, float radius) {
+    b2BodyDef myBodyDef;
+    myBodyDef.type = b2_dynamicBody; //this will be a dynamic body
+    myBodyDef.position.Set(pos.x, pos.y); //set the starting position
+    myBodyDef.angle = angle; //set the starting angle
+    m->body = gameState.b2world->CreateBody(&myBodyDef);
+    b2CircleShape circleShape;
+    circleShape.m_radius = radius;
+    
+    b2FixtureDef fixtureDef;
+    fixtureDef.shape = &circleShape;
+    fixtureDef.density = 1;
+    m->body->CreateFixture(&fixtureDef);
+    m->body->SetUserData(m);
+
+    m->targetPosition = pos;
+}
+
 void gameThread() {
+    // notify clients that the game has started
     flatbuffers::FlatBufferBuilder builder(1);
     auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_GameStart);
-
     auto message = DeadFish::CreateServerMessage(builder,
         DeadFish::ServerMessageUnion_SimpleServerEvent,
         ev.Union());
-
     builder.Finish(message);
     auto data = builder.GetBufferPointer();
     auto str = std::string(data, data + builder.GetSize());
@@ -111,10 +139,32 @@ void gameThread() {
         websocket_server.send(player->conn_hdl, str, websocketpp::frame::opcode::binary);
     }
 
+    // init physics
+    gameState.b2world = std::make_unique<b2World>(b2Vec2(0, 0));
+    TestContactListener tcl;
+    gameState.b2world->SetContactListener(&tcl);
+
+    // test npc
+    Mob* mob = new Mob();
+    mob->id = newID();
+    mob->species = 1;
+    gameState.npcs.push_back(std::unique_ptr<Mob>(mob));
+
+    physicsInitMob(gameState.npcs[0].get(), {1, 1}, 0, 0.3);
+
+    for (auto &player : gameState.players)
+    {
+        physicsInitMob(player.get(), {2, 1}, 0, 0.3);
+    }
+
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     while(1) {
         auto frameStart = std::chrono::system_clock::now();
+
+        // update physics
+        gameState.b2world->Step(1/20.0, 8, 3);
+
         // update everyone
         for (auto& n: gameState.npcs) {
             n->update();
