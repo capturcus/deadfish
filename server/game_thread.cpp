@@ -150,17 +150,9 @@ void gameThread() {
         websocket_server.send(player->conn_hdl, str, websocketpp::frame::opcode::binary);
     }
 
-    // test npc
-    Mob* mob = new Mob();
-    mob->id = newID();
-    mob->species = 1;
-    gameState.npcs.push_back(std::unique_ptr<Mob>(mob));
-
-    physicsInitMob(gameState.npcs[0].get(), {1, 1}, 0, 0.3);
-
     for (auto &player : gameState.players)
     {
-        physicsInitMob(player.get(), {2, 1}, 0, 0.3);
+        physicsInitMob(player.get(), {2, 2}, 0, 0.3);
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(500));

@@ -14,6 +14,7 @@ export default class Gameplay extends Phaser.State {
     cursors = null;
     t: number;
     mobs = {};
+    mySprite = null;
 
     public mouseHandler(e) {
         let worldX = this.input.activePointer.x;
@@ -47,9 +48,11 @@ export default class Gameplay extends Phaser.State {
 
         this.game.input.activePointer.leftButton.onDown.add(this.mouseHandler, this);
 
-        this.game.world.setBounds(0, 0, 20000, 20000);
+        this.game.world.setBounds(-2000, -2000, 20000, 20000);
 
         this.cursors = this.game.input.keyboard.createCursorKeys();
+
+        console.log(FBUtil.gameData);
 
         for (let bush of FBUtil.gameData.level.bushes) {
             let sprite = this.game.add.sprite(bush.x, bush.y, Assets.Images.ImagesBush.getName());
@@ -103,6 +106,9 @@ export default class Gameplay extends Phaser.State {
                     sprite: this.getSpriteBySpecies(dataMob.species())
                 };
                 this.mobs[dataMob.id()] = mob;
+                if (dataMob.id() == FBUtil.gameData.initMeta.my_id) {
+                    this.mySprite = mob.sprite;
+                }
             }
             mob.sprite.position.x = dataMob.pos().x()*METERS2PIXELS;
             mob.sprite.position.y = dataMob.pos().y()*METERS2PIXELS;
@@ -111,27 +117,15 @@ export default class Gameplay extends Phaser.State {
     }
 
     public update(): void {
-        if (DEBUG_CAMERA) {
-            if (this.cursors.up.isDown) {
-                this.game.camera.y -= 4;
-            }
-            else if (this.cursors.down.isDown)
-            {
-                this.game.camera.y += 4;
-            }
-        
-            if (this.cursors.left.isDown)
-            {
-                this.game.camera.x -= 4;
-            }
-            else if (this.cursors.right.isDown)
-            {
-                this.game.camera.x += 4;
-            }
-        }
+        if (!this.mySprite)
+            return;
+        let offsetX = this.input.activePointer.x-(this.game.width/2);
+        let offsetY = this.input.activePointer.y-(this.game.height/2);
+        this.game.camera.x = (offsetX + this.mySprite.position.x)-(this.game.width/2);
+        this.game.camera.y = (offsetY + this.mySprite.position.y)-(this.game.height/2);
     }
 
     public render(): void {
-        this.game.debug.cameraInfo(this.game.camera, 32, 32);
+        // this.game.debug.cameraInfo(this.game.camera, 32, 32);
     }
 }

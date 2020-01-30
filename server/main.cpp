@@ -10,7 +10,7 @@
 GameState gameState;
 server websocket_server;
 
-const int NUM_PLAYERS_REQUIRED = 2;
+const int NUM_PLAYERS_REQUIRED = 1;
 
 void sendInitMetadata()
 {

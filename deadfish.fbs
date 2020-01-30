@@ -26,18 +26,18 @@ table Bush {
     pos: Vec2;
 }
 
+table NavPoint {
+  position: Vec2;
+  name: string;
+  neighbors: [string];
+  isspawn: bool;
+}
+
 table Level {
     bushes:[Bush];
     stones:[Stone];
-    navpoints:[Vec2];
+    navpoints:[NavPoint];
     playerpoints:[Vec2];
-    size:Vec2;
-    npcspawns:[Vec2];
-}
-
-table ClientLevel {
-    bushes:[Bush];
-    stones:[Stone];
     size:Vec2;
 }
 

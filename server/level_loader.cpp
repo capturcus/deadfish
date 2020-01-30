@@ -17,7 +17,6 @@ void initStone(Stone* s, const DeadFish::Stone* dfstone) {
     fixtureDef.density = 1;
     s->body->CreateFixture(&fixtureDef);
     s->body->SetUserData(s);
-    std::cout << "created stone " << dfstone->pos()->x() << " " << dfstone->pos()->y() << " " << dfstone->radius() << "\n";
 }
 
 flatbuffers::Offset<DeadFish::Level> serializeLevel(flatbuffers::FlatBufferBuilder& builder) {
@@ -41,17 +40,29 @@ flatbuffers::Offset<DeadFish::Level> serializeLevel(flatbuffers::FlatBufferBuild
     }
     auto stones = builder.CreateVector(stoneOffsets);
 
-    std::vector<const DeadFish::Vec2*> navpoints;
+    // the client doesn't need these so just leave them empty
+    std::vector<flatbuffers::Offset<DeadFish::NavPoint>> navpoints;
     std::vector<const DeadFish::Vec2*> playerpoints;
     std::vector<const DeadFish::Vec2*> npcspawns;
 
     auto navOff = builder.CreateVector(navpoints);
     auto pointsOff = builder.CreateVector(playerpoints);
-    auto spawnsOff = builder.CreateVector(npcspawns);
 
     DeadFish::Vec2 size(gameState.level->size.x, gameState.level->size.y);
-    auto level = DeadFish::CreateLevel(builder, bushes, stones, navOff, pointsOff, &size, spawnsOff);
+    auto level = DeadFish::CreateLevel(builder, bushes, stones, navOff, pointsOff, &size);
     return level;
+}
+
+std::ostream& operator<<(std::ostream& os, std::vector<std::string>& v) {
+    for (auto s : v) {
+        os << s << ",";
+    }
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, NavPoint& n) {
+    os << n.isspawn << "\t" << n.position << "\t" << n.neighbors;
+    return os;
 }
 
 void loadLevel(std::string& path) {
@@ -72,7 +83,6 @@ void loadLevel(std::string& path) {
     // bushes
     for (int i = 0; i < level->bushes()->size(); i++) {
         auto bush = level->bushes()->Get(i);
-        std::cout << "bush pos " << bush->pos()->x() << "," << bush->pos()->y() << " " << bush->radius() << "\n";
         auto b = new Bush;
         b->position = glm::vec2(bush->pos()->x(), bush->pos()->y());
         b->radius = bush->radius();
@@ -82,9 +92,21 @@ void loadLevel(std::string& path) {
     // stones
     for (int i = 0; i < level->stones()->size(); i++) {
         auto stone = level->stones()->Get(i);
-        // std::cout << "stone pos " << stone->pos()->x() << "," << stone->pos()->y() << " " << stone->radius() << "\n";
         auto s = new Stone;
         initStone(s, stone);
         gameState.level->stones.push_back(std::unique_ptr<Stone>(s));
     }
-}
+
+    // navpoints
+    for (int i = 0; i < level->navpoints()->size(); i++) {
+        auto navpoint = level->navpoints()->Get(i);
+        auto n = new NavPoint;
+        n->isspawn = navpoint->isspawn();
+        n->position = glm::vec2(navpoint->position()->x(), navpoint->position()->y());
+        for (int j = 0; j < navpoint->neighbors()->size(); j++) {
+            n->neighbors.push_back(navpoint->neighbors()->Get(j)->c_str());
+        }
+        gameState.level->navpoints[navpoint->name()->c_str()] = std::unique_ptr<NavPoint>(n);
+        std::cout << "navpoint\t" << navpoint->name()->c_str() << "\t" << *n << "\n";
+    }
+} 
