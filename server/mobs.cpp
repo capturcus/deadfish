@@ -16,6 +16,12 @@ std::ostream &operator<<(std::ostream &os, glm::vec2 &v)
     return os;
 }
 
+std::ostream &operator<<(std::ostream &os, b2Vec2 v)
+{
+    os << v.x << "," << v.y;
+    return os;
+}
+
 bool Mob::update()
 {
     float dist = glm::distance(b2g(this->body->GetPosition()), this->targetPosition);

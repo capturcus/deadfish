@@ -16,6 +16,7 @@
 typedef websocketpp::server<websocketpp::config::asio> server;
 
 std::ostream& operator<<(std::ostream &os, glm::vec2 &v);
+std::ostream& operator<<(std::ostream &os, b2Vec2 v);
 std::ostream& operator<<(std::ostream& os, std::vector<std::string>& v);
 
 static inline glm::vec2 b2g(b2Vec2 v) {

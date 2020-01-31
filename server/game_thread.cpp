@@ -70,11 +70,34 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
     }
 }
 
-void makeMobData(flatbuffers::FlatBufferBuilder &builder)
+struct FOVCallback
+	: public b2RayCastCallback
+{
+	float32 ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float32 fraction) {
+        if (fraction < minfraction) {
+            minfraction = fraction;
+            closest = fixture;
+        }
+		return fraction;
+	}
+    float minfraction = 1.f;
+    b2Fixture* closest = nullptr;
+};
+
+bool playerSeeMob(Player* const p, Mob* const m) {
+    FOVCallback fovCallback;
+    gameState.b2world->RayCast(&fovCallback, p->body->GetPosition(), m->body->GetPosition());
+    return fovCallback.closest->GetBody() == m->body;
+}
+
+void makeMobData(Player* const player, flatbuffers::FlatBufferBuilder &builder)
 {
     std::vector<flatbuffers::Offset<DeadFish::Mob>> mobs;
     for (auto &n : gameState.civilians)
     {
+        if (!playerSeeMob(player, n.get())) {
+            continue;
+        }
         auto posVec = DeadFish::Vec2(n->body->GetPosition().x, n->body->GetPosition().y);
         auto mob = DeadFish::CreateMob(builder,
                                        n->id,
@@ -86,6 +109,9 @@ void makeMobData(flatbuffers::FlatBufferBuilder &builder)
     }
     for (auto &p : gameState.players)
     {
+        if (p.get() != player && !playerSeeMob(player, p.get())) {
+            continue;
+        }
         auto posVec = DeadFish::Vec2(p->body->GetPosition().x, p->body->GetPosition().y);
         auto mob = DeadFish::CreateMob(builder,
                                        p->id,
@@ -135,6 +161,47 @@ void physicsInitMob(Mob *m, glm::vec2 pos, float angle, float radius)
     fixtureDef.friction = 0;
     m->body->CreateFixture(&fixtureDef);
     m->body->SetUserData(m);
+}
+
+void spawnCivilian()
+{
+    // find spawns
+    std::vector<std::string> spawns;
+    for (auto &p : gameState.level->navpoints)
+    {
+        if (p.second->isspawn)
+        {
+            spawns.push_back(p.first);
+        }
+    }
+    auto &spawnName = spawns[rand() % spawns.size()];
+    auto spawn = gameState.level->navpoints[spawnName].get();
+    auto c = new Civilian;
+    std::cout << "spawning at point " << spawnName << "\n";
+    c->id = newID();
+    c->species = 0;
+    c->previousNavpoint = spawnName;
+    c->currentNavpoint = spawnName;
+    physicsInitMob(c, spawn->position, 0, 0.3f);
+    c->setNextNavpoint();
+    gameState.civilians.push_back(std::unique_ptr<Civilian>(c));
+}
+
+void spawnPlayer(Player *const p)
+{
+    // find spawns
+    std::vector<std::string> spawns;
+    for (auto &p : gameState.level->navpoints)
+    {
+        if (p.second->isplayerspawn)
+        {
+            spawns.push_back(p.first);
+        }
+    }
+    auto &spawnName = spawns[rand() % spawns.size()];
+    auto spawn = gameState.level->navpoints[spawnName].get();
+    physicsInitMob(p, spawn->position, 0, 0.3f);
+    p->targetPosition = spawn->position;
 }
 
 void gameThread()
@@ -210,58 +277,17 @@ void gameThread()
             civilianTimer = std::max(0, civilianTimer - 1);
         }
 
-        // send everything to everyone
-        builder.Clear();
-        makeMobData(builder);
-        auto data = builder.GetBufferPointer();
-        str = std::string(data, data + builder.GetSize());
+        // send data to everyone
         for (auto &p : gameState.players)
         {
+            builder.Clear();
+            makeMobData(p.get(), builder);
+            auto data = builder.GetBufferPointer();
+            str = std::string(data, data + builder.GetSize());
             websocket_server.send(p->conn_hdl, str, websocketpp::frame::opcode::binary);
         }
 
         // sleep for the remaining of time
         std::this_thread::sleep_until(frameStart + std::chrono::milliseconds(FRAME_TIME));
     }
-}
-
-void spawnCivilian()
-{
-    // find spawns
-    std::vector<std::string> spawns;
-    for (auto &p : gameState.level->navpoints)
-    {
-        if (p.second->isspawn)
-        {
-            spawns.push_back(p.first);
-        }
-    }
-    auto &spawnName = spawns[rand() % spawns.size()];
-    auto spawn = gameState.level->navpoints[spawnName].get();
-    auto c = new Civilian;
-    std::cout << "spawning at point " << spawnName << "\n";
-    c->id = newID();
-    c->species = 0;
-    c->previousNavpoint = spawnName;
-    c->currentNavpoint = spawnName;
-    physicsInitMob(c, spawn->position, 0, 0.3f);
-    c->setNextNavpoint();
-    gameState.civilians.push_back(std::unique_ptr<Civilian>(c));
-}
-
-void spawnPlayer(Player *const p)
-{
-    // find spawns
-    std::vector<std::string> spawns;
-    for (auto &p : gameState.level->navpoints)
-    {
-        if (p.second->isplayerspawn)
-        {
-            spawns.push_back(p.first);
-        }
-    }
-    auto &spawnName = spawns[rand() % spawns.size()];
-    auto spawn = gameState.level->navpoints[spawnName].get();
-    physicsInitMob(p, spawn->position, 0, 0.3f);
-    p->targetPosition = spawn->position;
 }
