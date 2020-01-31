@@ -6,7 +6,7 @@
 
 const int FRAME_TIME = 50; // 20 fps
 const int CIVILIAN_TIME = 40;
-const int MAX_CIVILIANS = 5;
+const int MAX_CIVILIANS = 6;
 
 bool operator==(websocketpp::connection_hdl &a, websocketpp::connection_hdl &b)
 {
@@ -71,31 +71,35 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
 }
 
 struct FOVCallback
-	: public b2RayCastCallback
+    : public b2RayCastCallback
 {
-	float32 ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float32 fraction) {
-        if (fraction < minfraction) {
+    float32 ReportFixture(b2Fixture *fixture, const b2Vec2 &point, const b2Vec2 &normal, float32 fraction)
+    {
+        if (fraction < minfraction)
+        {
             minfraction = fraction;
             closest = fixture;
         }
-		return fraction;
-	}
+        return fraction;
+    }
     float minfraction = 1.f;
-    b2Fixture* closest = nullptr;
+    b2Fixture *closest = nullptr;
 };
 
-bool playerSeeMob(Player* const p, Mob* const m) {
+bool playerSeeMob(Player *const p, Mob *const m)
+{
     FOVCallback fovCallback;
     gameState.b2world->RayCast(&fovCallback, p->body->GetPosition(), m->body->GetPosition());
     return fovCallback.closest->GetBody() == m->body;
 }
 
-void makeMobData(Player* const player, flatbuffers::FlatBufferBuilder &builder)
+void makeMobData(Player *const player, flatbuffers::FlatBufferBuilder &builder)
 {
     std::vector<flatbuffers::Offset<DeadFish::Mob>> mobs;
     for (auto &n : gameState.civilians)
     {
-        if (!playerSeeMob(player, n.get())) {
+        if (!playerSeeMob(player, n.get()))
+        {
             continue;
         }
         auto posVec = DeadFish::Vec2(n->body->GetPosition().x, n->body->GetPosition().y);
@@ -109,7 +113,8 @@ void makeMobData(Player* const player, flatbuffers::FlatBufferBuilder &builder)
     }
     for (auto &p : gameState.players)
     {
-        if (p.get() != player && !playerSeeMob(player, p.get())) {
+        if (p.get() != player && !playerSeeMob(player, p.get()))
+        {
             continue;
         }
         auto posVec = DeadFish::Vec2(p->body->GetPosition().x, p->body->GetPosition().y);
@@ -163,6 +168,17 @@ void physicsInitMob(Mob *m, glm::vec2 pos, float angle, float radius)
     m->body->SetUserData(m);
 }
 
+std::vector<int> civiliansSpeciesCount()
+{
+    std::vector<int> ret;
+    ret.resize(gameState.players.size());
+    for (auto &c : gameState.civilians)
+    {
+        ret[c->species]++;
+    }
+    return ret;
+}
+
 void spawnCivilian()
 {
     // find spawns
@@ -177,9 +193,21 @@ void spawnCivilian()
     auto &spawnName = spawns[rand() % spawns.size()];
     auto spawn = gameState.level->navpoints[spawnName].get();
     auto c = new Civilian;
-    std::cout << "spawning at point " << spawnName << "\n";
+
+    // find species with lowest count of civilians
+    auto civCounts = civiliansSpeciesCount();
+    int lowestSpecies = 0;
+    int lowestSpeciesCount = INT_MAX;
+    for (int i = 0; i < civCounts.size(); i++) {
+        if (civCounts[i] < lowestSpeciesCount) {
+            lowestSpecies = i;
+            lowestSpeciesCount = civCounts[i];
+        }
+    }
+
     c->id = newID();
-    c->species = 0;
+    c->species = lowestSpecies;
+    std::cout << "spawning species " << lowestSpecies << "\n";
     c->previousNavpoint = spawnName;
     c->currentNavpoint = spawnName;
     physicsInitMob(c, spawn->position, 0, 0.3f);
