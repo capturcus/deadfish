@@ -225,13 +225,13 @@
   <object id="410" name="spawnleft" type="waypoint" x="-289.393" y="760.606" width="27.2727" height="21.2121">
    <properties>
     <property name="isspawn" type="bool" value="true"/>
-    <property name="wps" value="leftcenter,center,rightcenter"/>
+    <property name="wps" value="leftcenter"/>
    </properties>
   </object>
   <object id="411" name="spawnright" type="waypoint" x="1813.64" y="754.545" width="30.303" height="21.2121">
    <properties>
     <property name="isspawn" type="bool" value="true"/>
-    <property name="wps" value="leftcenter,center,rightcenter"/>
+    <property name="wps" value="rightcenter"/>
    </properties>
   </object>
  </objectgroup>

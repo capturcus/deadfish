@@ -15,7 +15,8 @@
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 
-std::ostream &operator<<(std::ostream &os, glm::vec2 &v);
+std::ostream& operator<<(std::ostream &os, glm::vec2 &v);
+std::ostream& operator<<(std::ostream& os, std::vector<std::string>& v);
 
 static inline glm::vec2 b2g(b2Vec2 v) {
     return glm::vec2(v.x, v.y);
@@ -37,14 +38,23 @@ struct Mob {
 
     glm::vec2 targetPosition;
 
-    virtual void update();
+    virtual bool update();
+    inline virtual ~Mob(){}
 };
 
 struct Player : public Mob {
     std::string name;
     websocketpp::connection_hdl conn_hdl;
 
-    void update() override;
+    bool update() override;
+};
+
+struct Civilian : public Mob {
+    std::string currentNavpoint;
+    std::string previousNavpoint;
+
+    bool update() override;
+    void setNextNavpoint();
 };
 
 struct Bush {
@@ -72,7 +82,7 @@ struct Level {
 
 struct GameState {
     std::vector<std::unique_ptr<Player>> players;
-    std::vector<std::unique_ptr<Mob>> npcs;
+    std::vector<std::unique_ptr<Civilian>> civilians;
     GamePhase phase = GamePhase::LOBBY;
     int lastSpecies = 0;
     std::unique_ptr<Level> level = nullptr;

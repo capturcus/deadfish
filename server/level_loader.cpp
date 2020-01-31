@@ -107,6 +107,5 @@ void loadLevel(std::string& path) {
             n->neighbors.push_back(navpoint->neighbors()->Get(j)->c_str());
         }
         gameState.level->navpoints[navpoint->name()->c_str()] = std::unique_ptr<NavPoint>(n);
-        std::cout << "navpoint\t" << navpoint->name()->c_str() << "\t" << *n << "\n";
     }
 } 

@@ -2136,7 +2136,7 @@
                         {
                          "name":"wps",
                          "type":"string",
-                         "value":"leftcenter,center,rightcenter"
+                         "value":"leftcenter"
                         }],
                  "rotation":0,
                  "type":"waypoint",
@@ -2158,7 +2158,7 @@
                         {
                          "name":"wps",
                          "type":"string",
-                         "value":"leftcenter,center,rightcenter"
+                         "value":"rightcenter"
                         }],
                  "rotation":0,
                  "type":"waypoint",

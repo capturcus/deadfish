@@ -13,14 +13,15 @@ std::ostream &operator<<(std::ostream &os, glm::vec2 &v)
     return os;
 }
 
-void Mob::update()
+bool Mob::update()
 {
     float dist = glm::distance(b2g(this->body->GetPosition()), this->targetPosition);
     auto pos = b2g(this->body->GetPosition());
-    if (dist < CLOSE) {
+    if (dist < CLOSE)
+    {
         this->body->SetAngularVelocity(0);
         this->body->SetLinearVelocity(b2Vec2(0, 0));
-        return; // don't move if really close to target
+        return true; // don't move if really close to target
     }
 
     // update angle
@@ -35,11 +36,12 @@ void Mob::update()
 
     bool skip = false;
     auto turnSpeed = TURN_SPEED;
-    if (abs(diff) < ANGULAR_CLOSE*2)
+    if (abs(diff) < ANGULAR_CLOSE * 2)
     {
         turnSpeed /= 2.;
     }
-    if (abs(diff) < ANGULAR_CLOSE) {
+    if (abs(diff) < ANGULAR_CLOSE)
+    {
         this->body->SetAngularVelocity(0);
         skip = true;
     }
@@ -67,9 +69,44 @@ void Mob::update()
     // update box
     // this->body->SetTransform(b2Vec2(this->position.x, this->position.y), this->angle);
     // std::cout << "physics pos \t" << this->body->GetPosition().x << "\t" << this->body->GetPosition().y << "\n";
+    return true;
 }
 
-void Player::update()
+bool Player::update()
 {
-    Mob::update();
+    return Mob::update();
+}
+
+bool Civilian::update()
+{
+    float dist = glm::distance(b2g(this->body->GetPosition()), this->targetPosition);
+    if (dist < CLOSE) {
+        // the civilian reached his destination
+        if (gameState.level->navpoints[this->currentNavpoint]->isspawn) {
+            // we arrived at spawn, despawn
+            return false;
+        }
+        this->setNextNavpoint();
+    }
+    return Mob::update();
+}
+
+void Civilian::setNextNavpoint()
+{
+    auto &spawn = gameState.level->navpoints[this->currentNavpoint];
+    auto neighbors = spawn->neighbors;
+    std::vector<std::string>::iterator toDelete = neighbors.end();
+    for (auto it = neighbors.begin(); it != neighbors.end(); it++)
+    {
+        if (*it == this->previousNavpoint)
+        {
+            toDelete = it;
+            break;
+        }
+    }
+    if (toDelete != neighbors.end())
+        neighbors.erase(toDelete);
+    this->previousNavpoint = this->currentNavpoint;
+    this->currentNavpoint = neighbors[rand() % neighbors.size()];
+    this->targetPosition = gameState.level->navpoints[this->currentNavpoint]->position;
 }
