@@ -44,10 +44,6 @@ table Level {
 
 // client
 
-table CommandFollow {
-  id:uint16;
-}
-
 table CommandMove {
   target:Vec2;
 }
@@ -56,8 +52,8 @@ table CommandKill {
   id:uint16;
 }
 
-table CommandUse {
-  id:uint16;
+table CommandRun {
+  run:bool;
 }
 
 table JoinRequest {
@@ -65,10 +61,9 @@ table JoinRequest {
 }
 
 union ClientMessageUnion {
-  CommandFollow,
   CommandMove,
   CommandKill,
-  CommandUse,
+  CommandRun,
   JoinRequest,
   ErrorWrapper
 }
@@ -81,7 +76,8 @@ table ClientMessage {
 
 enum MobState: byte {
   Idle,
-  Walking
+  Walking,
+  Attacking
 }
 
 table Mob {

@@ -15,6 +15,24 @@ export default class Gameplay extends Phaser.State {
     t: number;
     mobs = {};
     mySprite = null;
+    running: boolean = false;
+
+    public sendCommandRunning(running: boolean) {
+        let builder = new flatbuffers.Builder(1);
+
+        Generated.DeadFish.CommandRun.startCommandRun(builder);
+        Generated.DeadFish.CommandRun.addRun(builder, running);
+        let cmdRun = Generated.DeadFish.CommandRun.endCommandRun(builder);
+        Generated.DeadFish.ClientMessage.startClientMessage(builder);
+        Generated.DeadFish.ClientMessage.addEventType(builder, Generated.DeadFish.ClientMessageUnion.CommandRun);
+        Generated.DeadFish.ClientMessage.addEvent(builder, cmdRun);
+        let event = Generated.DeadFish.ClientMessage.endClientMessage(builder);
+        builder.finish(event);
+
+        let bytes = builder.asUint8Array();
+
+        WebSocketService.instance.getWebSocket().send(bytes);
+    }
 
     public mouseHandler(e) {
         let worldX = this.input.activePointer.x;
@@ -37,7 +55,6 @@ export default class Gameplay extends Phaser.State {
         builder.finish(event);
 
         let bytes = builder.asUint8Array();
-
         WebSocketService.instance.getWebSocket().send(bytes);
         this.t = performance.now();
     }
@@ -51,6 +68,22 @@ export default class Gameplay extends Phaser.State {
         this.game.world.setBounds(-2000, -2000, 20000, 20000);
 
         this.cursors = this.game.input.keyboard.createCursorKeys();
+        this.game.input.keyboard.onDownCallback = ((ev) => {
+            if (ev.key === "q") {
+                if (!this.running) {
+                    this.running = true;
+                    this.sendCommandRunning(this.running);
+                }
+            }
+        });
+        this.game.input.keyboard.onUpCallback = ((ev) => {
+            if (ev.key === "q") {
+                if (this.running) {
+                    this.running = false;
+                    this.sendCommandRunning(this.running);
+                }
+            }
+        });
 
         console.log(FBUtil.gameData);
 
@@ -78,12 +111,24 @@ export default class Gameplay extends Phaser.State {
         sprite.anchor.y = 0.5;
     
         sprite.animations.add('idle', adjustForSpecies([0,1,2]));
-        sprite.animations.add('moving', adjustForSpecies([3,4,5]));
-        sprite.animations.add('attack', adjustForSpecies([6,7,8,9,10,11]));
+        sprite.animations.add('walking', adjustForSpecies([3,4,5]));
+        sprite.animations.add('attacking', adjustForSpecies([6,7,8,9,10,11]));
     
         sprite.animations.play('idle', 3, true);
     
         return sprite;
+    }
+
+    mobStateToAnimKey(s) {
+        if (s === Generated.DeadFish.MobState.Idle) {
+            return 'idle';
+        }
+        if (s === Generated.DeadFish.MobState.Walking) {
+            return 'walking';
+        }
+        if (s === Generated.DeadFish.MobState.Attacking) {
+            return 'attacking';
+        }
     }
 
     public handleData(arrayBuffer) {
@@ -101,10 +146,11 @@ export default class Gameplay extends Phaser.State {
             if (mob === undefined) {
                 console.log("making new sprite");
                 mob = {
-                    sprite: this.getSpriteBySpecies(dataMob.species())
+                    sprite: this.getSpriteBySpecies(dataMob.species()),
+                    state: dataMob.state()
                 };
                 this.mobs[dataMob.id()] = mob;
-                if (dataMob.id() == FBUtil.gameData.initMeta.my_id) {
+                if (dataMob.id() === FBUtil.gameData.initMeta.my_id) {
                     this.mySprite = mob.sprite;
                 }
             }
@@ -112,6 +158,12 @@ export default class Gameplay extends Phaser.State {
             mob.sprite.position.y = dataMob.pos().y()*METERS2PIXELS;
             mob.sprite.angle = dataMob.angle()*180/Math.PI;
             mob.seen = true;
+            if (dataMob.state() != mob.state) {
+                mob.state = dataMob.state();
+                let animKey = this.mobStateToAnimKey(mob.state);
+                console.log("change to", animKey);
+                mob.sprite.animations.play(animKey, 3, true);
+            }
         }
         for (let mob in this.mobs) {
             if (!this.mobs[mob].seen) {

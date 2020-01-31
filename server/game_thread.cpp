@@ -61,6 +61,14 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
         const auto event = clientMessage->event_as_CommandMove();
         auto p = getPlayerByConnHdl(hdl);
         p->targetPosition = glm::vec2(event->target()->x(), event->target()->y());
+        p->state = MobState::WALKING;
+    }
+    break;
+    case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandRun:
+    {
+        const auto event = clientMessage->event_as_CommandRun();
+        auto p = getPlayerByConnHdl(hdl);
+        p->state = event->run() ? MobState::RUNNING : MobState::WALKING;
     }
     break;
 
@@ -107,7 +115,7 @@ void makeMobData(Player *const player, flatbuffers::FlatBufferBuilder &builder)
                                        n->id,
                                        &posVec,
                                        n->body->GetAngle(),
-                                       DeadFish::MobState::MobState_Idle,
+                                       (DeadFish::MobState)n->state,
                                        n->species);
         mobs.push_back(mob);
     }
@@ -122,7 +130,7 @@ void makeMobData(Player *const player, flatbuffers::FlatBufferBuilder &builder)
                                        p->id,
                                        &posVec,
                                        p->body->GetAngle(),
-                                       DeadFish::MobState::MobState_Idle,
+                                       (DeadFish::MobState)p->state,
                                        p->species);
         mobs.push_back(mob);
     }

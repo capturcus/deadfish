@@ -32,10 +32,17 @@ enum class GamePhase {
     GAME
 };
 
+enum class MobState {
+    WALKING = 0,
+    RUNNING = 1,
+    ATTACKING = 2
+};
+
 struct Mob {
     uint16_t id = 0;
     uint16_t species = 0;
     b2Body* body = nullptr;
+    MobState state = MobState::WALKING;
 
     glm::vec2 targetPosition;
 

@@ -5,6 +5,7 @@
 
 const float TURN_SPEED = 4.f;
 const float WALK_SPEED = 1.f;
+const float RUN_SPEED = 2.f;
 const float CLOSE = 0.05f;
 const float ANGULAR_CLOSE = 0.1f;
 const float TARGET_OFFSET = 0.3f;
@@ -71,7 +72,8 @@ bool Mob::update()
     }
 
     // update position
-    auto translation = glm::rotate(glm::vec2(1, 0), this->body->GetAngle() - (float)(M_PI / 2)) * WALK_SPEED;
+    auto speed = this->state == MobState::WALKING ? WALK_SPEED : RUN_SPEED;
+    auto translation = glm::rotate(glm::vec2(1, 0), this->body->GetAngle() - (float)(M_PI / 2)) * speed;
     this->body->SetLinearVelocity(b2Vec2(translation.x, translation.y));
 
     // update box
