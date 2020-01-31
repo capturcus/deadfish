@@ -70,13 +70,13 @@ struct NavPoint {
     glm::vec2 position;
     std::vector<std::string> neighbors;
     bool isspawn;
+    bool isplayerspawn;
 };
 
 struct Level {
     std::vector<std::unique_ptr<Bush>> bushes;
     std::vector<std::unique_ptr<Stone>> stones;
     std::unordered_map<std::string, std::unique_ptr<NavPoint>> navpoints;
-    std::vector<glm::vec2> playerpoints;
     glm::vec2 size;
 };
 

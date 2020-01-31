@@ -31,6 +31,7 @@ table NavPoint {
   name: string;
   neighbors: [string];
   isspawn: bool;
+  isplayerspawn: bool;
 }
 
 table Level {

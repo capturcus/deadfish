@@ -43,7 +43,6 @@ flatbuffers::Offset<DeadFish::Level> serializeLevel(flatbuffers::FlatBufferBuild
     // the client doesn't need these so just leave them empty
     std::vector<flatbuffers::Offset<DeadFish::NavPoint>> navpoints;
     std::vector<const DeadFish::Vec2*> playerpoints;
-    std::vector<const DeadFish::Vec2*> npcspawns;
 
     auto navOff = builder.CreateVector(navpoints);
     auto pointsOff = builder.CreateVector(playerpoints);
@@ -102,6 +101,7 @@ void loadLevel(std::string& path) {
         auto navpoint = level->navpoints()->Get(i);
         auto n = new NavPoint;
         n->isspawn = navpoint->isspawn();
+        n->isplayerspawn = navpoint->isplayerspawn();
         n->position = glm::vec2(navpoint->position()->x(), navpoint->position()->y());
         for (int j = 0; j < navpoint->neighbors()->size(); j++) {
             n->neighbors.push_back(navpoint->neighbors()->Get(j)->c_str());

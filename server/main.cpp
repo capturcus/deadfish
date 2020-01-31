@@ -65,7 +65,7 @@ void addNewPlayer(const std::string &name, websocketpp::connection_hdl hdl)
             con->set_message_handler(&gameOnMessage);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        std::thread *game = new std::thread(gameThread); // leak the shit out of it yooo
+        new std::thread(gameThread); // leak the shit out of it yooo
     }
 }
 

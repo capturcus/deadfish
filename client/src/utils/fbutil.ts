@@ -3,8 +3,12 @@ import { flatbuffers } from 'flatbuffers';
 
 export namespace FBUtil {
 
-    export let gameData: any = {
-    };
+    class GameData {
+        level: any;
+        initMeta: any;
+    }
+
+    export let gameData: GameData = new GameData();
 
     export const MakeJoinRequest = (name: string): Uint8Array => {
         let builder = new flatbuffers.Builder(0);

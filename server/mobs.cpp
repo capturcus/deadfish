@@ -1,11 +1,14 @@
 #include "deadfish.hpp"
 #include <glm/gtx/vector_angle.hpp>
+#include <glm/gtc/random.hpp>
 #include <iostream>
 
 const float TURN_SPEED = 4.f;
 const float WALK_SPEED = 1.f;
 const float CLOSE = 0.05f;
 const float ANGULAR_CLOSE = 0.1f;
+const float TARGET_OFFSET = 0.3f;
+const float RANDOM_OFFSET = 0.15f;
 
 std::ostream &operator<<(std::ostream &os, glm::vec2 &v)
 {
@@ -16,7 +19,6 @@ std::ostream &operator<<(std::ostream &os, glm::vec2 &v)
 bool Mob::update()
 {
     float dist = glm::distance(b2g(this->body->GetPosition()), this->targetPosition);
-    auto pos = b2g(this->body->GetPosition());
     if (dist < CLOSE)
     {
         this->body->SetAngularVelocity(0);
@@ -108,5 +110,9 @@ void Civilian::setNextNavpoint()
         neighbors.erase(toDelete);
     this->previousNavpoint = this->currentNavpoint;
     this->currentNavpoint = neighbors[rand() % neighbors.size()];
-    this->targetPosition = gameState.level->navpoints[this->currentNavpoint]->position;
+    auto targetPoint = gameState.level->navpoints[this->currentNavpoint]->position;
+    auto pos = b2g(this->body->GetPosition());
+    auto offset = glm::rotate(glm::normalize(targetPoint - pos), glm::pi<float>()/2)*TARGET_OFFSET;
+    offset += glm::linearRand(glm::vec2(-RANDOM_OFFSET, -RANDOM_OFFSET), {RANDOM_OFFSET, RANDOM_OFFSET});
+    this->targetPosition = targetPoint + offset;
 }

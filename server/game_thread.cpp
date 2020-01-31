@@ -166,7 +166,7 @@ void gameThread()
 
     for (auto &player : gameState.players)
     {
-        physicsInitMob(player.get(), {2, 2}, 0, 0.3);
+        spawnPlayer(player.get());
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -244,7 +244,24 @@ void spawnCivilian()
     c->species = 0;
     c->previousNavpoint = spawnName;
     c->currentNavpoint = spawnName;
-    c->setNextNavpoint();
     physicsInitMob(c, spawn->position, 0, 0.3f);
+    c->setNextNavpoint();
     gameState.civilians.push_back(std::unique_ptr<Civilian>(c));
+}
+
+void spawnPlayer(Player *const p)
+{
+    // find spawns
+    std::vector<std::string> spawns;
+    for (auto &p : gameState.level->navpoints)
+    {
+        if (p.second->isplayerspawn)
+        {
+            spawns.push_back(p.first);
+        }
+    }
+    auto &spawnName = spawns[rand() % spawns.size()];
+    auto spawn = gameState.level->navpoints[spawnName].get();
+    physicsInitMob(p, spawn->position, 0, 0.3f);
+    p->targetPosition = spawn->position;
 }

@@ -92,11 +92,9 @@ export default class Gameplay extends Phaser.State {
         if (dataState === null) {
             console.log("other type than world");
         }
-        // let mob = dataState.mobs(0);
-        // // console.log(mob.angle(), mob.id(), mob.pos().x(), mob.pos().y(), mob.species(), mob.species());
-        // sprite.position.x = mob.pos().x();
-        // sprite.position.y = mob.pos().y();
-        // sprite.angle = mob.angle()*180/Math.PI;
+        for (let mob in this.mobs) {
+            this.mobs[mob].seen = false;
+        }
         for (let i = 0; i < dataState.mobsLength(); i++) {
             let dataMob = dataState.mobs(i);
             let mob = this.mobs[dataMob.id()];
@@ -113,6 +111,13 @@ export default class Gameplay extends Phaser.State {
             mob.sprite.position.x = dataMob.pos().x()*METERS2PIXELS;
             mob.sprite.position.y = dataMob.pos().y()*METERS2PIXELS;
             mob.sprite.angle = dataMob.angle()*180/Math.PI;
+            mob.seen = true;
+        }
+        for (let mob in this.mobs) {
+            if (!this.mobs[mob].seen) {
+                this.mobs[mob].sprite.destroy();
+                delete this.mobs[mob];
+            }
         }
     }
 

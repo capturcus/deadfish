@@ -38,12 +38,14 @@ def process_level(path):
         elif l["name"] == "meta":
             for o in l["objects"]:
                 isspawn = [x for x in filter(lambda x: x["name"] == "isspawn", o["properties"])]
+                isplayerspawn = [x for x in filter(lambda x: x["name"] == "isplayerspawn", o["properties"])]
                 obj = {
                     "x": o["x"]+o["width"]/2,
                     "y": o["y"]-o["height"]/2,
                     "name": o["name"],
                     "neighbors": [x for x in filter(lambda x: x["name"] == "wps", o["properties"])][0]["value"].split(","),
-                    "isspawn": False if len(isspawn) == 0 else isspawn[0]["value"]
+                    "isspawn": False if len(isspawn) == 0 else isspawn[0]["value"],
+                    "isplayerspawn": False if len(isplayerspawn) == 0 else isplayerspawn[0]["value"]
                 }
                 name = builder.CreateString(obj["name"])
                 neighOff = [builder.CreateString(x) for x in obj["neighbors"]]
@@ -57,6 +59,7 @@ def process_level(path):
                 DeadFish.NavPoint.NavPointAddName(builder, name)
                 DeadFish.NavPoint.NavPointAddNeighbors(builder, neighs)
                 DeadFish.NavPoint.NavPointAddIsspawn(builder, obj["isspawn"])
+                DeadFish.NavPoint.NavPointAddIsplayerspawn(builder, obj["isplayerspawn"])
                 navpoints.append(DeadFish.NavPoint.NavPointEnd(builder))
 
     DeadFish.Level.LevelStartBushesVector(builder, len(bushes))

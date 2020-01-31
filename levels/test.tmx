@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.3.2" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="24" height="23" tilewidth="64" tileheight="64" infinite="0" nextlayerid="4" nextobjectid="412">
+<map version="1.2" tiledversion="1.3.2" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="24" height="23" tilewidth="64" tileheight="64" infinite="0" nextlayerid="4" nextobjectid="413">
  <editorsettings>
   <export target="test.json" format="json"/>
  </editorsettings>
@@ -175,6 +175,7 @@
   <object id="396" gid="2" x="1266.06" y="73.0933" width="128" height="128"/>
   <object id="397" gid="2" x="1335.38" y="74.8733" width="128" height="128"/>
   <object id="398" gid="2" x="1388.74" y="71.2033" width="128" height="128"/>
+  <object id="412" gid="1" x="128" y="248" width="128" height="128"/>
  </objectgroup>
  <objectgroup id="3" name="meta">
   <object id="399" name="center" type="waypoint" x="775.758" y="757.576" width="45.4545" height="54.5455">
@@ -189,6 +190,7 @@
   </object>
   <object id="401" name="rightup" type="waypoint" x="1357.58" y="203.03" width="45" height="45.4545">
    <properties>
+    <property name="isplayerspawn" type="bool" value="true"/>
     <property name="wps" value="up,rightcenter"/>
    </properties>
   </object>
@@ -199,6 +201,7 @@
   </object>
   <object id="403" name="leftup" type="waypoint" x="180.303" y="166.667" width="33.3333" height="30.303">
    <properties>
+    <property name="isplayerspawn" type="bool" value="true"/>
     <property name="wps" value="leftcenter,up"/>
    </properties>
   </object>
@@ -209,6 +212,7 @@
   </object>
   <object id="405" name="leftdown" type="waypoint" x="180.303" y="1281.82" width="33.3333" height="30.303">
    <properties>
+    <property name="isplayerspawn" type="bool" value="true"/>
     <property name="wps" value="leftcenter,down"/>
    </properties>
   </object>
@@ -219,6 +223,7 @@
   </object>
   <object id="407" name="rightdown" type="waypoint" x="1368.18" y="1293.94" width="33.3333" height="30.303">
    <properties>
+    <property name="isplayerspawn" type="bool" value="true"/>
     <property name="wps" value="down,rightcenter"/>
    </properties>
   </object>

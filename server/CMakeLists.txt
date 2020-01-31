@@ -1,14 +1,14 @@
 # set clang
 
 SET (CMAKE_C_COMPILER             "/usr/bin/clang")
-SET (CMAKE_C_FLAGS                "-Wall -Wpedantic -std=c99 -g -O0")
+SET (CMAKE_C_FLAGS                "-Wall -Wpedantic -Wextra -std=c99 -g -O0")
 SET (CMAKE_C_FLAGS_DEBUG          "-g -O0")
 SET (CMAKE_C_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
 SET (CMAKE_C_FLAGS_RELEASE        "-O4 -DNDEBUG")
 SET (CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g")
 
 SET (CMAKE_CXX_COMPILER             "/usr/bin/clang++")
-SET (CMAKE_CXX_FLAGS                "-Wall -Wpedantic -g -O0")
+SET (CMAKE_CXX_FLAGS                "-Wall -Wpedantic -Wextra -g -O0")
 SET (CMAKE_CXX_FLAGS_DEBUG          "-g -O0")
 SET (CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
 SET (CMAKE_CXX_FLAGS_RELEASE        "-O4 -DNDEBUG")
