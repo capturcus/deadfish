@@ -10,6 +10,21 @@ export namespace FBUtil {
 
     export let gameData: GameData = new GameData();
 
+    export const MakePlayerReady = (): Uint8Array => {
+        let builder = new flatbuffers.Builder(0);
+        let cmd = Generated.DeadFish.PlayerReady.createPlayerReady(builder);
+
+        let message = Generated.DeadFish.ClientMessage.createClientMessage(
+            builder,
+            Generated.DeadFish.ClientMessageUnion.PlayerReady,
+            cmd
+            );
+
+        builder.finish(message);
+
+        return builder.asUint8Array();
+    }
+
     export const MakeJoinRequest = (name: string): Uint8Array => {
         let builder = new flatbuffers.Builder(0);
         let joinRequest = Generated.DeadFish.JoinRequest.createJoinRequest(builder, builder.createString(name));

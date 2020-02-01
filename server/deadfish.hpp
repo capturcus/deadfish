@@ -53,6 +53,7 @@ struct Mob {
 struct Player : public Mob {
     std::string name;
     websocketpp::connection_hdl conn_hdl;
+    bool ready = false;
 
     bool update() override;
 };

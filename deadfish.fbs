@@ -60,12 +60,17 @@ table JoinRequest {
   name:string;
 }
 
+table PlayerReady {
+
+}
+
 union ClientMessageUnion {
   CommandMove,
   CommandKill,
   CommandRun,
   JoinRequest,
-  ErrorWrapper
+  ErrorWrapper,
+  PlayerReady
 }
 
 table ClientMessage {

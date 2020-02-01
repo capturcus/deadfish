@@ -10,8 +10,6 @@
 GameState gameState;
 server websocket_server;
 
-const int NUM_PLAYERS_REQUIRED = 2;
-
 void sendInitMetadata()
 {
     for (auto &targetPlayer : gameState.players)
@@ -54,19 +52,6 @@ void addNewPlayer(const std::string &name, websocketpp::connection_hdl hdl)
     gameState.players.push_back(std::unique_ptr<Player>(p));
 
     sendInitMetadata();
-
-    if (gameState.players.size() == NUM_PLAYERS_REQUIRED)
-    {
-        // start the game
-        gameState.phase = GamePhase::GAME;
-        for (auto &p : gameState.players)
-        {
-            auto con = websocket_server.get_con_from_hdl(p->conn_hdl);
-            con->set_message_handler(&gameOnMessage);
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        new std::thread(gameThread); // leak the shit out of it yooo
-    }
 }
 
 void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg)
@@ -83,6 +68,25 @@ void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg)
         std::cout << "new player " << event->name()->c_str() << "\n";
         addNewPlayer(event->name()->c_str(), hdl);
         std::cout << "player count " << gameState.players.size() << "\n";
+    }
+    break;
+    case DeadFish::ClientMessageUnion::ClientMessageUnion_PlayerReady:
+    {
+        auto pl = getPlayerByConnHdl(hdl);
+        pl->ready = true;
+        for (auto& p : gameState.players) {
+            if (!p->ready)
+                return;
+        }
+        // all are ready, start game
+        gameState.phase = GamePhase::GAME;
+        for (auto &p : gameState.players)
+        {
+            auto con = websocket_server.get_con_from_hdl(p->conn_hdl);
+            con->set_message_handler(&gameOnMessage);
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        new std::thread(gameThread); // leak the shit out of it yooo
     }
     break;
 
