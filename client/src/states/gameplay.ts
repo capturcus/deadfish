@@ -41,8 +41,8 @@ export default class Gameplay extends Phaser.State {
 
         console.log(worldX, worldY, this.camera.x, this.camera.y);
 
-        let serverX = (worldX+this.camera.x)*PIXELS2METERS;
-        let serverY = (worldY+this.camera.y)*PIXELS2METERS;
+        let serverX = (worldX + this.camera.x) * PIXELS2METERS;
+        let serverY = (worldY + this.camera.y) * PIXELS2METERS;
 
         Generated.DeadFish.CommandMove.startCommandMove(builder);
         Generated.DeadFish.CommandMove.addTarget(builder,
@@ -66,6 +66,8 @@ export default class Gameplay extends Phaser.State {
         this.game.input.activePointer.leftButton.onDown.add(this.mouseHandler, this);
 
         this.game.world.setBounds(-2000, -2000, 20000, 20000);
+
+        this.game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
 
         this.cursors = this.game.input.keyboard.createCursorKeys();
         this.game.input.keyboard.onDownCallback = ((ev) => {
@@ -105,17 +107,19 @@ export default class Gameplay extends Phaser.State {
 
     public getSpriteBySpecies(species) {
         console.log("SPECIES", species);
-        const adjustForSpecies = (l) => l.map((x) => (x+12*species));
-        let sprite = this.game.add.sprite(150,150,Assets.Spritesheets.ImagesFish100100.getName());
+        const adjustForSpecies = (l) => l.map((x) => (x + 12 * species));
+        let sprite = this.game.add.sprite(150, 150, Assets.Spritesheets.ImagesFish100100.getName());
         sprite.anchor.x = 0.5;
         sprite.anchor.y = 0.5;
-    
-        sprite.animations.add('idle', adjustForSpecies([0,1,2]));
-        sprite.animations.add('walking', adjustForSpecies([3,4,5]));
-        sprite.animations.add('attacking', adjustForSpecies([6,7,8,9,10,11]));
-    
+
+        sprite.animations.add('idle', adjustForSpecies([0, 1, 2]));
+        sprite.animations.add('walking', adjustForSpecies([3, 4, 5]));
+        sprite.animations.add('attacking', adjustForSpecies([6, 7, 8, 9, 10, 11]));
+
         sprite.animations.play('idle', 3, true);
-    
+        sprite.inputEnabled = true;
+        sprite.hitArea = new PIXI.Rectangle(-25, -50, 50, 100);
+
         return sprite;
     }
 
@@ -129,6 +133,11 @@ export default class Gameplay extends Phaser.State {
         if (s === Generated.DeadFish.MobState.Attacking) {
             return 'attacking';
         }
+    }
+
+    sendKillCommand(id) {
+        let buf = FBUtil.MakeKillCommand(id);
+        WebSocketService.instance.getWebSocket().send(buf);
     }
 
     public handleData(arrayBuffer) {
@@ -147,16 +156,23 @@ export default class Gameplay extends Phaser.State {
                 console.log("making new sprite");
                 mob = {
                     sprite: this.getSpriteBySpecies(dataMob.species()),
-                    state: dataMob.state()
+                    state: dataMob.state(),
+                    id: dataMob.id()
                 };
                 this.mobs[dataMob.id()] = mob;
                 if (dataMob.id() === FBUtil.gameData.initMeta.my_id) {
                     this.mySprite = mob.sprite;
                 }
+                mob.sprite.events.onInputDown.add((ev) => {
+                    if (this.game.input.activePointer.rightButton.isDown
+                        && mob.id !== FBUtil.gameData.initMeta.my_id) {
+                        this.sendKillCommand(mob.id);
+                    }
+                });
             }
-            mob.sprite.position.x = dataMob.pos().x()*METERS2PIXELS;
-            mob.sprite.position.y = dataMob.pos().y()*METERS2PIXELS;
-            mob.sprite.angle = dataMob.angle()*180/Math.PI;
+            mob.sprite.position.x = dataMob.pos().x() * METERS2PIXELS;
+            mob.sprite.position.y = dataMob.pos().y() * METERS2PIXELS;
+            mob.sprite.angle = dataMob.angle() * 180 / Math.PI;
             mob.seen = true;
             if (dataMob.state() != mob.state) {
                 mob.state = dataMob.state();
@@ -176,10 +192,10 @@ export default class Gameplay extends Phaser.State {
     public update(): void {
         if (!this.mySprite)
             return;
-        let offsetX = this.input.activePointer.x-(this.game.width/2);
-        let offsetY = this.input.activePointer.y-(this.game.height/2);
-        this.game.camera.x = (offsetX + this.mySprite.position.x)-(this.game.width/2);
-        this.game.camera.y = (offsetY + this.mySprite.position.y)-(this.game.height/2);
+        let offsetX = this.input.activePointer.x - (this.game.width / 2);
+        let offsetY = this.input.activePointer.y - (this.game.height / 2);
+        this.game.camera.x = (offsetX + this.mySprite.position.x) - (this.game.width / 2);
+        this.game.camera.y = (offsetY + this.mySprite.position.y) - (this.game.height / 2);
     }
 
     public render(): void {

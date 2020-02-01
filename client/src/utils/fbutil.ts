@@ -10,6 +10,21 @@ export namespace FBUtil {
 
     export let gameData: GameData = new GameData();
 
+    export const MakeKillCommand = (id): Uint8Array => {
+        let builder = new flatbuffers.Builder(0);
+        let cmd = Generated.DeadFish.CommandKill.createCommandKill(builder, id);
+
+        let message = Generated.DeadFish.ClientMessage.createClientMessage(
+            builder,
+            Generated.DeadFish.ClientMessageUnion.CommandKill,
+            cmd
+            );
+
+        builder.finish(message);
+
+        return builder.asUint8Array();
+    }
+
     export const MakePlayerReady = (): Uint8Array => {
         let builder = new flatbuffers.Builder(0);
         let cmd = Generated.DeadFish.PlayerReady.createPlayerReady(builder);
