@@ -146,6 +146,16 @@ export default class Gameplay extends Phaser.State {
         if (ev !== null) {
             if (ev === Generated.DeadFish.SimpleServerEventType.TooFarToKill) {
                 console.log("TOO FAR TO KILL");
+                let spr = this.game.add.text(300, 100, "Mob too far to kill...", {
+                    "fontSize": 20
+                });
+                spr.fixedToCamera = true;
+                this.game.add.tween(spr).to({y: 0}, 1500, Phaser.Easing.Linear.None, true);
+                this.game.add.tween(spr).to({alpha: 0}, 1500, Phaser.Easing.Linear.None, true);
+                this.game.time.events.add(1500, () => {
+                    spr.destroy();
+                    spr = undefined;
+                });
             }
             return;
         }

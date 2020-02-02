@@ -2,6 +2,7 @@
 #include <glm/gtx/vector_angle.hpp>
 #include <glm/gtc/random.hpp>
 #include <iostream>
+#include "game_thread.hpp"
 
 const float TURN_SPEED = 4.f;
 const float WALK_SPEED = 1.f;
@@ -84,6 +85,9 @@ bool Mob::update()
 
 bool Player::update()
 {
+    if (this->killTarget) {
+        this->targetPosition = b2g(this->killTarget->body->GetPosition());
+    }
     return Mob::update();
 }
 
@@ -123,4 +127,18 @@ void Civilian::setNextNavpoint()
     auto offset = glm::rotate(glm::normalize(targetPoint - pos), glm::pi<float>()/2)*TARGET_OFFSET;
     offset += glm::linearRand(glm::vec2(-RANDOM_OFFSET, -RANDOM_OFFSET), {RANDOM_OFFSET, RANDOM_OFFSET});
     this->targetPosition = targetPoint + offset;
+}
+
+void Player::handleCollision(Mob* other) {
+    if(this->killTarget && this->killTarget == other) {
+        // the player wants to kill the mob and collided with him, execute the kill
+        executeKill(this, other);
+    }
+}
+
+Mob::~Mob() {
+    if (this->body) {
+        gameState.b2world->DestroyBody(this->body);
+        this->body = nullptr;
+    }
 }

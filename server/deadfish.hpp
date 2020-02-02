@@ -43,11 +43,13 @@ struct Mob {
     uint16_t species = 0;
     b2Body* body = nullptr;
     MobState state = MobState::WALKING;
+    bool toBeDeleted = false;
 
     glm::vec2 targetPosition;
 
     virtual bool update();
-    inline virtual ~Mob(){}
+    virtual void handleCollision(Mob* other) {}
+    virtual ~Mob();
 };
 
 struct Player : public Mob {
@@ -55,7 +57,8 @@ struct Player : public Mob {
     websocketpp::connection_hdl conn_hdl;
     bool ready = false;
     Mob* killTarget = nullptr;
-
+    
+    void handleCollision(Mob* other) override;
     bool update() override;
 };
 

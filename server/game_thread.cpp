@@ -123,7 +123,13 @@ class TestContactListener : public b2ContactListener
 {
     void BeginContact(b2Contact *contact)
     {
-        // std::cout << "BEGIN CONTACT\n";
+        auto mobA = (Mob*)contact->GetFixtureA()->GetBody()->GetUserData();
+        auto mobB = (Mob*)contact->GetFixtureB()->GetBody()->GetUserData();
+
+        if (mobA && mobA->body)
+            mobA->handleCollision(mobB);
+        if (mobB && mobB->body)
+            mobB->handleCollision(mobA);
     }
 
     void EndContact(b2Contact *contact)
@@ -260,6 +266,19 @@ void executeCommandKill(Player * const player, uint16_t id) {
     }
 }
 
+void executeKill(Player* p, Mob* m) {
+    p->killTarget = nullptr;
+    // was it a civilian?
+    auto toDelete = gameState.civilians.end();
+    for (auto it = gameState.civilians.begin(); it != gameState.civilians.end(); it++) {
+        if ((*it)->id == m->id) {
+            // it was a civ
+            (*it)->toBeDeleted = true;
+            break;
+        }
+    }
+}
+
 void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
 {
     const auto payload = msg->get_payload();
@@ -272,6 +291,7 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
         auto p = getPlayerByConnHdl(hdl);
         p->targetPosition = glm::vec2(event->target()->x(), event->target()->y());
         p->state = p->state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
+        p->killTarget = nullptr;
     }
     break;
     case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandRun:
@@ -342,7 +362,7 @@ void gameThread()
         std::vector<int> despawns;
         for (int i = 0; i < gameState.civilians.size(); i++)
         {
-            if (!gameState.civilians[i]->update())
+            if (!gameState.civilians[i]->update() || gameState.civilians[i]->toBeDeleted)
             {
                 despawns.push_back(i);
             }
