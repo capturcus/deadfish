@@ -1,4 +1,5 @@
 #include <iostream>
+#include <limits>
 #include <unistd.h>
 #include "deadfish.hpp"
 #include "game_thread.hpp"
@@ -121,7 +122,7 @@ void makeMobData(Player *const player, flatbuffers::FlatBufferBuilder &builder)
     }
     for (auto &p : gameState.players)
     {
-        if (p.get() != player && !playerSeeMob(player, p.get()))
+        if (p->id != player->id && !playerSeeMob(player, p.get()))
         {
             continue;
         }
@@ -226,16 +227,28 @@ void spawnCivilian()
 void spawnPlayer(Player *const p)
 {
     // find spawns
-    std::vector<std::string> spawns;
+    uint64_t maxMinDist = 0;
+    std::string maxSpawn = "";
     for (auto &p : gameState.level->navpoints)
     {
         if (p.second->isplayerspawn)
         {
-            spawns.push_back(p.first);
+            float minDist = std::numeric_limits<float>::max();
+            for (auto& pl: gameState.players) {
+                if (!pl->body)
+                    continue;
+                auto dist = b2Distance(g2b(p.second->position), pl->body->GetPosition());
+                if (dist < minDist) {
+                    minDist = dist;
+                }
+            }
+            if (minDist > maxMinDist) {
+                maxMinDist = minDist;
+                maxSpawn = p.first;
+            }
         }
     }
-    auto &spawnName = spawns[rand() % spawns.size()];
-    auto spawn = gameState.level->navpoints[spawnName].get();
+    auto spawn = gameState.level->navpoints[maxSpawn].get();
     physicsInitMob(p, spawn->position, 0, 0.3f);
     p->targetPosition = spawn->position;
 }
