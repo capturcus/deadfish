@@ -111,11 +111,12 @@ table HighscoreUpdate {
 }
 
 table KilledPlayer {
-  playerId:uint16;
+  playerName:string;
 }
 
 enum SimpleServerEventType: byte {
-  KilledNPC
+  KilledNPC,
+  TooFarToKill
 }
 
 table SimpleServerEvent {

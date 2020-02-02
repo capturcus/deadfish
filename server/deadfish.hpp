@@ -54,6 +54,7 @@ struct Player : public Mob {
     std::string name;
     websocketpp::connection_hdl conn_hdl;
     bool ready = false;
+    Mob* killTarget = nullptr;
 
     bool update() override;
 };

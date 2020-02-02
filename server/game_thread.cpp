@@ -8,6 +8,7 @@
 const int FRAME_TIME = 50; // 20 fps
 const int CIVILIAN_TIME = 40;
 const int MAX_CIVILIANS = 6;
+const float KILL_DISTANCE = 1.f;
 
 bool operator==(websocketpp::connection_hdl &a, websocketpp::connection_hdl &b)
 {
@@ -36,7 +37,7 @@ uint16_t newID()
     }
 }
 
-Player *getPlayerByConnHdl(websocketpp::connection_hdl &hdl)
+Player * const getPlayerByConnHdl(websocketpp::connection_hdl &hdl)
 {
     auto player = gameState.players.begin();
     while (player != gameState.players.end())
@@ -49,34 +50,6 @@ Player *getPlayerByConnHdl(websocketpp::connection_hdl &hdl)
     }
     std::cout << "getPlayerByConnHdl PLAYER NOT FOUND\n";
     return nullptr;
-}
-
-void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
-{
-    const auto payload = msg->get_payload();
-    const auto clientMessage = flatbuffers::GetRoot<DeadFish::ClientMessage>(payload.c_str());
-    switch (clientMessage->event_type())
-    {
-    case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandMove:
-    {
-        const auto event = clientMessage->event_as_CommandMove();
-        auto p = getPlayerByConnHdl(hdl);
-        p->targetPosition = glm::vec2(event->target()->x(), event->target()->y());
-        p->state = MobState::WALKING;
-    }
-    break;
-    case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandRun:
-    {
-        const auto event = clientMessage->event_as_CommandRun();
-        auto p = getPlayerByConnHdl(hdl);
-        p->state = event->run() ? MobState::RUNNING : MobState::WALKING;
-    }
-    break;
-
-    default:
-        std::cout << "gameOnMessage: some other message type received\n";
-        break;
-    }
 }
 
 struct FOVCallback
@@ -251,6 +224,75 @@ void spawnPlayer(Player *const p)
     auto spawn = gameState.level->navpoints[maxSpawn].get();
     physicsInitMob(p, spawn->position, 0, 0.3f);
     p->targetPosition = spawn->position;
+}
+
+void executeCommandKill(Player * const player, uint16_t id) {
+    std::cout << "player " << player->name << " trying to kill " << id << "\n";
+    Civilian* civ = nullptr;
+    for (auto& c : gameState.civilians) {
+        if (c->id == id) {
+            civ = c.get();
+            break;
+        }
+    }
+    Player* pl = nullptr;
+    for (auto& p : gameState.players) {
+        if (p->id == id) {
+            pl = p.get();
+            break;
+        }
+    }
+    Mob* m = civ ? (Mob*)civ : (Mob*)pl;
+    if (b2Distance(m->body->GetPosition(), player->body->GetPosition()) < KILL_DISTANCE) {
+        player->killTarget = m;
+    } else {
+        // send message too far
+        flatbuffers::FlatBufferBuilder builder(1);
+        auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_TooFarToKill);
+        auto message = DeadFish::CreateServerMessage(builder, 
+            DeadFish::ServerMessageUnion_SimpleServerEvent,
+            ev.Union());
+        builder.Finish(message);
+        auto data = builder.GetBufferPointer();
+        auto size = builder.GetSize();
+        auto str = std::string(data, data + size);
+        websocket_server.send(player->conn_hdl, str, websocketpp::frame::opcode::binary);
+    }
+}
+
+void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
+{
+    const auto payload = msg->get_payload();
+    const auto clientMessage = flatbuffers::GetRoot<DeadFish::ClientMessage>(payload.c_str());
+    switch (clientMessage->event_type())
+    {
+    case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandMove:
+    {
+        const auto event = clientMessage->event_as_CommandMove();
+        auto p = getPlayerByConnHdl(hdl);
+        p->targetPosition = glm::vec2(event->target()->x(), event->target()->y());
+        p->state = p->state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
+    }
+    break;
+    case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandRun:
+    {
+        const auto event = clientMessage->event_as_CommandRun();
+        auto p = getPlayerByConnHdl(hdl);
+        p->state = event->run() ? MobState::RUNNING : MobState::WALKING;
+    }
+    break;
+    case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandKill:
+    {
+        const auto event = clientMessage->event_as_CommandKill();
+        auto p = getPlayerByConnHdl(hdl);
+        executeCommandKill(p, event->id());
+    }
+    break;
+
+    default:
+        std::cout << "gameOnMessage: some other message type received\n";
+        break;
+    }
 }
 
 void gameThread()

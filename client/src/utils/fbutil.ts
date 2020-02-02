@@ -68,7 +68,7 @@ export namespace FBUtil {
                 }
                 break;
             default:
-                console.log("wrong type not simple", serverMsg.eventType());
+                // console.log("wrong type not simple", serverMsg.eventType());
                 return null;
         }
     }
@@ -115,7 +115,7 @@ export namespace FBUtil {
                 }
                 break;
             default:
-                console.log("wrong type not simple", serverMsg.eventType());
+                // console.log("wrong type not simple", serverMsg.eventType());
                 return null;
         }
     }

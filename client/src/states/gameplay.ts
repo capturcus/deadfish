@@ -142,9 +142,17 @@ export default class Gameplay extends Phaser.State {
 
     public handleData(arrayBuffer) {
         let buffer = new Uint8Array(arrayBuffer);
+        let ev = FBUtil.ParseSimpleServerEvent(buffer);
+        if (ev !== null) {
+            if (ev === Generated.DeadFish.SimpleServerEventType.TooFarToKill) {
+                console.log("TOO FAR TO KILL");
+            }
+            return;
+        }
         let dataState = FBUtil.ParseWorldState(buffer);
         if (dataState === null) {
             console.log("other type than world");
+            return;
         }
         for (let mob in this.mobs) {
             this.mobs[mob].seen = false;
