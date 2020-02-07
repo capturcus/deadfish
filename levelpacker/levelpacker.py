@@ -37,15 +37,21 @@ def process_level(path):
                     stones.append(DeadFish.Stone.StoneEnd(builder))
         elif l["name"] == "meta":
             for o in l["objects"]:
-                isspawn = [x for x in filter(lambda x: x["name"] == "isspawn", o["properties"])]
-                isplayerspawn = [x for x in filter(lambda x: x["name"] == "isplayerspawn", o["properties"])]
+                def getprop(name, default):
+                    if "properties" not in o:
+                        return default
+                    for prop in o["properties"]:
+                        if prop["name"] == name:
+                            return prop["value"]
+                    return default
+
                 obj = {
                     "x": o["x"]+o["width"]/2,
                     "y": o["y"]-o["height"]/2,
                     "name": o["name"],
-                    "neighbors": [x for x in filter(lambda x: x["name"] == "wps", o["properties"])][0]["value"].split(","),
-                    "isspawn": False if len(isspawn) == 0 else isspawn[0]["value"],
-                    "isplayerspawn": False if len(isplayerspawn) == 0 else isplayerspawn[0]["value"]
+                    "neighbors": getprop("wps", "").split(","),
+                    "isspawn": getprop("isspawn", False),
+                    "isplayerspawn": getprop("isplayerspawn", False)
                 }
                 name = builder.CreateString(obj["name"])
                 neighOff = [builder.CreateString(x) for x in obj["neighbors"]]

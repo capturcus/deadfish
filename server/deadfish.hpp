@@ -2,6 +2,8 @@
 #include <unordered_map>
 #include <cstdint>
 #include <string>
+#include <mutex>
+#include <memory>
 #include <Box2D/Box2D.h>
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
@@ -101,6 +103,10 @@ struct Level {
 };
 
 struct GameState {
+private:
+    std::mutex mut;
+
+public:
     std::vector<std::unique_ptr<Player>> players;
     std::vector<std::unique_ptr<Civilian>> civilians;
     GamePhase phase = GamePhase::LOBBY;
@@ -108,6 +114,10 @@ struct GameState {
     std::unique_ptr<Level> level = nullptr;
 
     std::unique_ptr<b2World> b2world = nullptr;
+
+    inline std::unique_ptr<std::lock_guard<std::mutex>> lock() {
+        return std::make_unique<std::lock_guard<std::mutex>>(mut);
+    }
 };
 
 extern GameState gameState;
