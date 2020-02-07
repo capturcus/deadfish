@@ -105,7 +105,7 @@ void makeWorldState(Player *const player, flatbuffers::FlatBufferBuilder &builde
     {
         if (!playerSeeMob(player, n.get()))
             continue;
-        
+
         auto posVec = DeadFish::Vec2(n->body->GetPosition().x, n->body->GetPosition().y);
         auto mob = DeadFish::CreateMob(builder,
                                        n->id,
@@ -119,7 +119,8 @@ void makeWorldState(Player *const player, flatbuffers::FlatBufferBuilder &builde
     {
         bool differentPlayer = p->id != player->id;
         bool canSeeOther;
-        if (differentPlayer) {
+        if (differentPlayer)
+        {
             canSeeOther = playerSeeMob(player, p.get());
             auto indicator = makePlayerIndicator(builder, player, p.get(), canSeeOther);
             indicators.push_back(indicator);
@@ -314,6 +315,8 @@ void executeCommandKill(Player *const player, uint16_t id)
 void executeKill(Player *p, Mob *m)
 {
     p->killTarget = nullptr;
+    p->state = MobState::ATTACKING;
+    p->attackTimeout = 40;
     // was it a civilian?
     for (auto it = gameState.civilians.begin(); it != gameState.civilians.end(); it++)
     {
@@ -325,7 +328,7 @@ void executeKill(Player *p, Mob *m)
             flatbuffers::FlatBufferBuilder builder;
             auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_KilledCivilian);
             auto message = DeadFish::CreateServerMessage(builder, DeadFish::ServerMessageUnion_SimpleServerEvent,
-                ev.Union());
+                                                         ev.Union());
             builder.Finish(message);
             auto data = builder.GetBufferPointer();
             auto size = builder.GetSize();
@@ -347,7 +350,7 @@ void executeKill(Player *p, Mob *m)
             auto name = builder.CreateString((*it)->name);
             auto ev = DeadFish::CreateKilledPlayer(builder, name);
             auto message = DeadFish::CreateServerMessage(builder, DeadFish::ServerMessageUnion_KilledPlayer,
-                ev.Union());
+                                                         ev.Union());
             builder.Finish(message);
             auto data = builder.GetBufferPointer();
             auto size = builder.GetSize();
@@ -362,12 +365,14 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
 {
     const auto payload = msg->get_payload();
     const auto clientMessage = flatbuffers::GetRoot<DeadFish::ClientMessage>(payload.c_str());
+    auto p = getPlayerByConnHdl(hdl);
+    if (p->state == MobState::ATTACKING)
+        return;
     switch (clientMessage->event_type())
     {
     case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandMove:
     {
         const auto event = clientMessage->event_as_CommandMove();
-        auto p = getPlayerByConnHdl(hdl);
         p->targetPosition = glm::vec2(event->target()->x(), event->target()->y());
         p->state = p->state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
         p->killTarget = nullptr;
@@ -376,14 +381,12 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
     case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandRun:
     {
         const auto event = clientMessage->event_as_CommandRun();
-        auto p = getPlayerByConnHdl(hdl);
         p->state = event->run() ? MobState::RUNNING : MobState::WALKING;
     }
     break;
     case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandKill:
     {
         const auto event = clientMessage->event_as_CommandKill();
-        auto p = getPlayerByConnHdl(hdl);
         executeCommandKill(p, event->id());
     }
     break;

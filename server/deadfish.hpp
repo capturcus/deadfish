@@ -63,6 +63,7 @@ struct Player : public Mob {
     websocketpp::connection_hdl conn_hdl;
     bool ready = false;
     Mob* killTarget = nullptr;
+    uint16_t attackTimeout = 0;
     
     void handleCollision(Collideable* other) override;
     bool update() override;

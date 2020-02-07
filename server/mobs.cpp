@@ -84,7 +84,12 @@ void Player::reset() {
 
 bool Player::update()
 {
-    std::cout << this->body->GetPosition() << "\n";
+    if (this->attackTimeout > 0) {
+        this->attackTimeout--;
+        if (this->attackTimeout == 0) {
+            this->state = MobState::WALKING;
+        }
+    }
     if (this->toBeDeleted) {
         // respawn player
         this->reset();
