@@ -320,6 +320,16 @@ void executeKill(Player *p, Mob *m)
         {
             // it was a civ
             (*it)->toBeDeleted = true;
+            // send the killednpc message
+            flatbuffers::FlatBufferBuilder builder;
+            auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_KilledCivilian);
+            auto message = DeadFish::CreateServerMessage(builder, DeadFish::ServerMessageUnion_SimpleServerEvent,
+                ev.Union());
+            builder.Finish(message);
+            auto data = builder.GetBufferPointer();
+            auto size = builder.GetSize();
+            auto str = std::string(data, data + size);
+            websocket_server.send(p->conn_hdl, str, websocketpp::frame::opcode::binary);
             return;
         }
     }
@@ -331,6 +341,17 @@ void executeKill(Player *p, Mob *m)
         {
             // it was a PLAYER
             (*it)->toBeDeleted = true;
+            // send the killedplayer message
+            flatbuffers::FlatBufferBuilder builder;
+            auto name = builder.CreateString((*it)->name);
+            auto ev = DeadFish::CreateKilledPlayer(builder, name);
+            auto message = DeadFish::CreateServerMessage(builder, DeadFish::ServerMessageUnion_KilledPlayer,
+                ev.Union());
+            builder.Finish(message);
+            auto data = builder.GetBufferPointer();
+            auto size = builder.GetSize();
+            auto str = std::string(data, data + size);
+            websocket_server.send(p->conn_hdl, str, websocketpp::frame::opcode::binary);
             return;
         }
     }

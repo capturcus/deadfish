@@ -104,6 +104,21 @@ export namespace FBUtil {
         }
     }
 
+    export const ParseKilledPlayer = (b: Uint8Array): Generated.DeadFish.KilledPlayer => {
+        let buffer = new flatbuffers.ByteBuffer(b);
+        let serverMsg = Generated.DeadFish.ServerMessage.getRootAsServerMessage(buffer);
+        switch (serverMsg.eventType()) {
+            case Generated.DeadFish.ServerMessageUnion.KilledPlayer:
+                {
+                    let ev = serverMsg.event(new Generated.DeadFish.KilledPlayer());
+                    return ev;
+                }
+                break;
+            default:
+                return null;
+        }
+    }
+
     export const ParseWorldState = (b: Uint8Array): Generated.DeadFish.WorldState => {
         let buffer = new flatbuffers.ByteBuffer(b);
         let serverMsg = Generated.DeadFish.ServerMessage.getRootAsServerMessage(buffer);

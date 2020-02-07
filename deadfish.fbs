@@ -122,7 +122,7 @@ table KilledPlayer {
 }
 
 enum SimpleServerEventType: byte {
-  KilledNPC,
+  KilledCivilian,
   TooFarToKill
 }
 

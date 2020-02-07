@@ -59,6 +59,20 @@ export default class Gameplay extends Phaser.State {
         this.t = performance.now();
     }
 
+    public showText(text: string, color: string) {
+        let spr = this.game.add.text(300, 100, text, {
+            "fontSize": 20
+        });
+        spr.addColor(color, 0);
+        spr.fixedToCamera = true;
+        this.game.add.tween(spr).to({y: 0}, 1500, Phaser.Easing.Linear.None, true);
+        this.game.add.tween(spr).to({alpha: 0}, 1500, Phaser.Easing.Linear.None, true);
+        this.game.time.events.add(1500, () => {
+            spr.destroy();
+            spr = undefined;
+        });
+    }
+
     public create(): void {
         this.game.camera.flash(0x000000, 1000);
         this.game.stage.backgroundColor = "#ffffff";
@@ -146,23 +160,21 @@ export default class Gameplay extends Phaser.State {
         let ev = FBUtil.ParseSimpleServerEvent(buffer);
         if (ev !== null) {
             if (ev === Generated.DeadFish.SimpleServerEventType.TooFarToKill) {
-                console.log("TOO FAR TO KILL");
-                let spr = this.game.add.text(300, 100, "Mob too far to kill...", {
-                    "fontSize": 20
-                });
-                spr.fixedToCamera = true;
-                this.game.add.tween(spr).to({y: 0}, 1500, Phaser.Easing.Linear.None, true);
-                this.game.add.tween(spr).to({alpha: 0}, 1500, Phaser.Easing.Linear.None, true);
-                this.game.time.events.add(1500, () => {
-                    spr.destroy();
-                    spr = undefined;
-                });
+                this.showText("Mob too far to kill...", "#000");
+            }
+            if (ev === Generated.DeadFish.SimpleServerEventType.KilledCivilian) {
+                this.showText("You killed a civilian. You monster.", "#000");
             }
             return;
         }
         let dataState = FBUtil.ParseWorldState(buffer);
         if (dataState === null) {
             console.log("other type than world");
+            let killedPlayer = FBUtil.ParseKilledPlayer(buffer);
+            if (killedPlayer !== null) {
+                console.log("killed player", killedPlayer.playerName());
+                this.showText("You killed "+killedPlayer.playerName()+"!", "#f00");
+            }
             return;
         }
         for (let mob in this.mobs) {
@@ -218,7 +230,6 @@ export default class Gameplay extends Phaser.State {
     }
 
     public drawIndicators(indicators) {
-        console.log("drawing inds", indicators);
         const FORCE_MULTIPLIER = Math.PI/2;
         indicators.sort((a,b) => a.force-b.force);
         this.myGraphics.clear();
