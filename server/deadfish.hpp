@@ -64,6 +64,7 @@ struct Player : public Mob {
     bool ready = false;
     Mob* killTarget = nullptr;
     uint16_t attackTimeout = 0;
+    std::chrono::system_clock::time_point lastAttack;
     
     void handleCollision(Collideable* other) override;
     bool update() override;

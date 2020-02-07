@@ -271,6 +271,7 @@ void spawnPlayer(Player *const p)
 
 void executeCommandKill(Player *const player, uint16_t id)
 {
+    player->lastAttack = std::chrono::system_clock::now();
     std::cout << "player " << player->name << " trying to kill " << id << "\n";
     Civilian *civ = nullptr;
     for (auto &c : gameState.civilians)
@@ -317,9 +318,21 @@ void executeCommandKill(Player *const player, uint16_t id)
 
 void executeKill(Player *p, Mob *m)
 {
+    // maybe he killed us first?
+    auto p2 = dynamic_cast<Player*>(m);
+    if (p2 &&
+        p2->killTarget &&
+        p2->killTarget->id == p->id &&
+        p2->lastAttack > p->lastAttack) {
+        // he did kill us first
+        std::cout << "uno reverse card\n";
+        executeKill(p2, p);
+        return;
+    }
     p->killTarget = nullptr;
     p->state = MobState::ATTACKING;
     p->attackTimeout = 40;
+    p->lastAttack = std::chrono::system_clock::from_time_t(0);
     // was it a civilian?
     for (auto it = gameState.civilians.begin(); it != gameState.civilians.end(); it++)
     {
@@ -379,6 +392,7 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
         p->targetPosition = glm::vec2(event->target()->x(), event->target()->y());
         p->state = p->state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
         p->killTarget = nullptr;
+        p->lastAttack = std::chrono::system_clock::from_time_t(0);
     }
     break;
     case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandRun:

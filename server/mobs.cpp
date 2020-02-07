@@ -80,6 +80,7 @@ void Player::reset() {
     this->killTarget = nullptr;
     this->toBeDeleted = false;
     this->state = MobState::WALKING;
+    this->lastAttack = std::chrono::system_clock::from_time_t(0);
 }
 
 bool Player::update()
@@ -88,6 +89,7 @@ bool Player::update()
         this->attackTimeout--;
         if (this->attackTimeout == 0) {
             this->state = MobState::WALKING;
+            this->lastAttack = std::chrono::system_clock::from_time_t(0);
         }
     }
     if (this->toBeDeleted) {
