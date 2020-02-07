@@ -38,17 +38,23 @@ enum class MobState {
     ATTACKING = 2
 };
 
-struct Mob {
+struct Collideable {
+    bool toBeDeleted = false;
+    virtual void handleCollision(Collideable* other) {}
+
+    virtual ~Collideable(){}
+};
+
+struct Mob : public Collideable {
     uint16_t id = 0;
     uint16_t species = 0;
     b2Body* body = nullptr;
     MobState state = MobState::WALKING;
-    bool toBeDeleted = false;
+    virtual void handleCollision(Collideable* other) override {}
 
     glm::vec2 targetPosition;
 
     virtual bool update();
-    virtual void handleCollision(Mob* other) {}
     virtual ~Mob();
 };
 
@@ -58,8 +64,9 @@ struct Player : public Mob {
     bool ready = false;
     Mob* killTarget = nullptr;
     
-    void handleCollision(Mob* other) override;
+    void handleCollision(Collideable* other) override;
     bool update() override;
+    void reset();
 };
 
 struct Civilian : public Mob {
@@ -75,7 +82,7 @@ struct Bush {
     float radius = 0;
 };
 
-struct Stone {
+struct Stone : public Collideable {
     b2Body* body = nullptr;
 };
 

@@ -123,13 +123,13 @@ class TestContactListener : public b2ContactListener
 {
     void BeginContact(b2Contact *contact)
     {
-        auto mobA = (Mob*)contact->GetFixtureA()->GetBody()->GetUserData();
-        auto mobB = (Mob*)contact->GetFixtureB()->GetBody()->GetUserData();
+        auto collideableA = (Collideable*)contact->GetFixtureA()->GetBody()->GetUserData();
+        auto collideableB = (Collideable*)contact->GetFixtureB()->GetBody()->GetUserData();
 
-        if (mobA && mobA->body)
-            mobA->handleCollision(mobB);
-        if (mobB && mobB->body)
-            mobB->handleCollision(mobA);
+        if (!collideableA->toBeDeleted)
+            collideableA->handleCollision(collideableB);
+        if (!collideableB->toBeDeleted)
+            collideableB->handleCollision(collideableA);
     }
 
     void EndContact(b2Contact *contact)
@@ -269,12 +269,20 @@ void executeCommandKill(Player * const player, uint16_t id) {
 void executeKill(Player* p, Mob* m) {
     p->killTarget = nullptr;
     // was it a civilian?
-    auto toDelete = gameState.civilians.end();
     for (auto it = gameState.civilians.begin(); it != gameState.civilians.end(); it++) {
         if ((*it)->id == m->id) {
             // it was a civ
             (*it)->toBeDeleted = true;
-            break;
+            return;
+        }
+    }
+
+    // was it a player?
+    for (auto it = gameState.players.begin(); it != gameState.players.end(); it++) {
+        if ((*it)->id == m->id) {
+            // it was a PLAYER
+            (*it)->toBeDeleted = true;
+            return;
         }
     }
 }

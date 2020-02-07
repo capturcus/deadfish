@@ -83,8 +83,20 @@ bool Mob::update()
     return true;
 }
 
+void Player::reset() {
+    gameState.b2world->DestroyBody(this->body);
+    this->killTarget = nullptr;
+    this->toBeDeleted = false;
+    this->state = MobState::WALKING;
+}
+
 bool Player::update()
 {
+    if (this->toBeDeleted) {
+        // respawn player
+        this->reset();
+        spawnPlayer(this);
+    }
     if (this->killTarget) {
         this->targetPosition = b2g(this->killTarget->body->GetPosition());
     }
@@ -129,10 +141,13 @@ void Civilian::setNextNavpoint()
     this->targetPosition = targetPoint + offset;
 }
 
-void Player::handleCollision(Mob* other) {
-    if(this->killTarget && this->killTarget == other) {
+void Player::handleCollision(Collideable* other) {
+    auto mob = dynamic_cast<Mob*>(other);
+    if (!mob)
+        return;
+    if(this->killTarget && this->killTarget == mob) {
         // the player wants to kill the mob and collided with him, execute the kill
-        executeKill(this, other);
+        executeKill(this, mob);
     }
 }
 

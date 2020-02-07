@@ -16,7 +16,7 @@ void initStone(Stone* s, const DeadFish::Stone* dfstone) {
     fixtureDef.shape = &circleShape;
     fixtureDef.density = 1;
     s->body->CreateFixture(&fixtureDef);
-    s->body->SetUserData(nullptr);
+    s->body->SetUserData(s);
 }
 
 flatbuffers::Offset<DeadFish::Level> serializeLevel(flatbuffers::FlatBufferBuilder& builder) {
