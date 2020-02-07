@@ -3,8 +3,8 @@ import WebSocketService from '../websocket';
 import * as fbutil from '../utils/fbutil';
 import { DeadFish } from '../deadfish_generated';
 
-// const AUTO_READY = true;
-const AUTO_READY = false;
+const AUTO_READY = true;
+// const AUTO_READY = false;
 
 export default class Title extends Phaser.State {
     text;

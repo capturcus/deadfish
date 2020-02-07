@@ -65,11 +65,6 @@ bool Mob::update()
         {
             this->body->SetAngularVelocity(-turnSpeed);
         }
-
-        // if (this->angle > M_PI)
-        //     this->angle -= 2 * M_PI;
-        // if (this->angle < M_PI)
-        //     this->angle += 2 * M_PI;
     }
 
     // update position
@@ -77,9 +72,6 @@ bool Mob::update()
     auto translation = glm::rotate(glm::vec2(1, 0), this->body->GetAngle() - (float)(M_PI / 2)) * speed;
     this->body->SetLinearVelocity(b2Vec2(translation.x, translation.y));
 
-    // update box
-    // this->body->SetTransform(b2Vec2(this->position.x, this->position.y), this->angle);
-    // std::cout << "physics pos \t" << this->body->GetPosition().x << "\t" << this->body->GetPosition().y << "\n";
     return true;
 }
 
@@ -92,6 +84,7 @@ void Player::reset() {
 
 bool Player::update()
 {
+    std::cout << this->body->GetPosition() << "\n";
     if (this->toBeDeleted) {
         // respawn player
         this->reset();

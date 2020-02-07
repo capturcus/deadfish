@@ -3,6 +3,23 @@
 #include "deadfish.hpp"
 #include "level_loader.hpp"
 
+void initPlayerwall(const DeadFish::PlayerWall* pw) {
+    std::cout << "playerwall " << pw->position()->x() << "," << pw->position()->y() <<
+        "; " << pw->size()->x() << "," << pw->size()->y() << "\n";
+    b2BodyDef myBodyDef;
+    myBodyDef.type = b2_staticBody;
+    myBodyDef.position.Set(pw->position()->x(), pw->position()->y());
+    b2Body* staticBody = gameState.b2world->CreateBody(&myBodyDef); //add body to world
+    b2PolygonShape boxShape;
+    boxShape.SetAsBox(pw->size()->x(), pw->size()->y());
+    b2FixtureDef boxFixtureDef;
+    boxFixtureDef.shape = &boxShape;
+    boxFixtureDef.density = 1;
+    boxFixtureDef.filter.maskBits = ~1;
+    boxFixtureDef.filter.categoryBits = 1 << 1;
+    staticBody->CreateFixture(&boxFixtureDef); //add fixture to body
+}
+
 void initStone(Stone* s, const DeadFish::Stone* dfstone) {
     b2BodyDef myBodyDef;
     myBodyDef.type = b2_staticBody;
@@ -40,15 +57,8 @@ flatbuffers::Offset<DeadFish::Level> serializeLevel(flatbuffers::FlatBufferBuild
     }
     auto stones = builder.CreateVector(stoneOffsets);
 
-    // the client doesn't need these so just leave them empty
-    std::vector<flatbuffers::Offset<DeadFish::NavPoint>> navpoints;
-    std::vector<const DeadFish::Vec2*> playerpoints;
-
-    auto navOff = builder.CreateVector(navpoints);
-    auto pointsOff = builder.CreateVector(playerpoints);
-
     DeadFish::Vec2 size(gameState.level->size.x, gameState.level->size.y);
-    auto level = DeadFish::CreateLevel(builder, bushes, stones, navOff, pointsOff, &size);
+    auto level = DeadFish::CreateLevel(builder, bushes, stones, 0, 0, &size);
     return level;
 }
 
@@ -94,6 +104,12 @@ void loadLevel(std::string& path) {
         auto s = new Stone;
         initStone(s, stone);
         gameState.level->stones.push_back(std::unique_ptr<Stone>(s));
+    }
+
+    // playerwalls
+    for (int i = 0; i < level->playerwalls()->size(); i++) {
+        auto playerwall = level->playerwalls()->Get(i);
+        initPlayerwall(playerwall);
     }
 
     // navpoints

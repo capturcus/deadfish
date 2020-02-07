@@ -104,9 +104,8 @@ void makeWorldState(Player *const player, flatbuffers::FlatBufferBuilder &builde
     for (auto &n : gameState.civilians)
     {
         if (!playerSeeMob(player, n.get()))
-        {
             continue;
-        }
+        
         auto posVec = DeadFish::Vec2(n->body->GetPosition().x, n->body->GetPosition().y);
         auto mob = DeadFish::CreateMob(builder,
                                        n->id,
@@ -157,9 +156,9 @@ class TestContactListener : public b2ContactListener
         auto collideableA = (Collideable *)contact->GetFixtureA()->GetBody()->GetUserData();
         auto collideableB = (Collideable *)contact->GetFixtureB()->GetBody()->GetUserData();
 
-        if (!collideableA->toBeDeleted)
+        if (collideableA && !collideableA->toBeDeleted)
             collideableA->handleCollision(collideableB);
-        if (!collideableB->toBeDeleted)
+        if (collideableB && !collideableB->toBeDeleted)
             collideableB->handleCollision(collideableA);
     }
 
@@ -169,7 +168,7 @@ class TestContactListener : public b2ContactListener
     }
 };
 
-void physicsInitMob(Mob *m, glm::vec2 pos, float angle, float radius)
+void physicsInitMob(Mob *m, glm::vec2 pos, float angle, float radius, uint16 categoryBits = 1)
 {
     b2BodyDef myBodyDef;
     myBodyDef.type = b2_dynamicBody;      //this will be a dynamic body
@@ -183,6 +182,7 @@ void physicsInitMob(Mob *m, glm::vec2 pos, float angle, float radius)
     fixtureDef.shape = &circleShape;
     fixtureDef.density = 1;
     fixtureDef.friction = 0;
+    fixtureDef.filter.categoryBits = categoryBits;
     m->body->CreateFixture(&fixtureDef);
     m->body->SetUserData(m);
 }
@@ -264,7 +264,8 @@ void spawnPlayer(Player *const p)
         }
     }
     auto spawn = gameState.level->navpoints[maxSpawn].get();
-    physicsInitMob(p, spawn->position, 0, 0.3f);
+    physicsInitMob(p, spawn->position, 0, 0.3f, 3);
+    // physicsInitMob(p, spawn->position, 0, 0.3f);
     p->targetPosition = spawn->position;
 }
 

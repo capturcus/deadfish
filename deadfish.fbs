@@ -34,11 +34,16 @@ table NavPoint {
   isplayerspawn: bool;
 }
 
+table PlayerWall {
+  position: Vec2;
+  size: Vec2;
+}
+
 table Level {
     bushes:[Bush];
     stones:[Stone];
     navpoints:[NavPoint];
-    playerpoints:[Vec2];
+    playerwalls:[PlayerWall];
     size:Vec2;
 }
 

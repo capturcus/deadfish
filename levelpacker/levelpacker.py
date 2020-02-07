@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import configparser, os, json, flatbuffers
-import DeadFish.Bush, DeadFish.Level, DeadFish.Stone, DeadFish.Vec2, DeadFish.NavPoint
+import DeadFish.Bush, DeadFish.Level, DeadFish.Stone, DeadFish.Vec2, DeadFish.NavPoint, DeadFish.PlayerWall
 from functools import reduce
 
 config = configparser.ConfigParser()
@@ -14,6 +14,7 @@ def process_level(path):
     bushes = []
     stones = []
     navpoints = []
+    playerwalls = []
     builder = flatbuffers.Builder(1)
     for l in tmxjson["layers"]:
         if l["name"] == "objects":
@@ -37,11 +38,27 @@ def process_level(path):
                     stones.append(DeadFish.Stone.StoneEnd(builder))
         elif l["name"] == "meta":
             for o in l["objects"]:
+                if o["type"] == "playerwall":
+                    obj = {
+                        "x": o["x"]+o["width"]/2,
+                        "y": o["y"]+o["height"]/2,
+                        "width": o["width"]/2,
+                        "height": o["height"]/2
+                    }
+                    print(obj)
+                    DeadFish.PlayerWall.PlayerWallStart(builder)
+                    pos = DeadFish.Vec2.CreateVec2(builder, obj["x"]*0.01, obj["y"]*0.01)
+                    DeadFish.PlayerWall.PlayerWallAddPosition(builder, pos)
+                    size = DeadFish.Vec2.CreateVec2(builder, obj["width"]*0.01, obj["height"]*0.01)
+                    DeadFish.PlayerWall.PlayerWallAddSize(builder, size)
+                    pwall = DeadFish.PlayerWall.PlayerWallEnd(builder)
+                    playerwalls.append(pwall)
+                    continue
                 isspawn = [x for x in filter(lambda x: x["name"] == "isspawn", o["properties"])]
                 isplayerspawn = [x for x in filter(lambda x: x["name"] == "isplayerspawn", o["properties"])]
                 obj = {
                     "x": o["x"]+o["width"]/2,
-                    "y": o["y"]-o["height"]/2,
+                    "y": o["y"]+o["height"]/2,
                     "name": o["name"],
                     "neighbors": [x for x in filter(lambda x: x["name"] == "wps", o["properties"])][0]["value"].split(","),
                     "isspawn": False if len(isspawn) == 0 else isspawn[0]["value"],
@@ -77,14 +94,16 @@ def process_level(path):
         builder.PrependUOffsetTRelative(b)
     navpointsOff = builder.EndVector(len(navpoints))
 
-    DeadFish.Level.LevelStartPlayerpointsVector(builder, 0)
-    playerpoints = builder.EndVector(0)
+    DeadFish.Level.LevelStartPlayerwallsVector(builder, len(playerwalls))
+    for b in playerwalls:
+        builder.PrependUOffsetTRelative(b)
+    playerwallsOff = builder.EndVector(len(playerwalls))
 
     DeadFish.Level.LevelStart(builder)
     DeadFish.Level.LevelAddBushes(builder, bushesOff)
     DeadFish.Level.LevelAddStones(builder, stonesOff)
     DeadFish.Level.LevelAddNavpoints(builder, navpointsOff)
-    DeadFish.Level.LevelAddPlayerpoints(builder, playerpoints)
+    DeadFish.Level.LevelAddPlayerwalls(builder, playerwallsOff)
     size = DeadFish.Vec2.CreateVec2(builder,
         tmxjson["width"]*tmxjson["tilewidth"]*0.01,
         tmxjson["height"]*tmxjson["tileheight"]*0.01)
