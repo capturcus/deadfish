@@ -18,6 +18,7 @@ export default class Gameplay extends Phaser.State {
     mySprite: Phaser.Sprite = null;
     myGraphics: Phaser.Graphics = null;
     running: boolean = false;
+    bushGroup: Phaser.Group;
 
     public sendCommandRunning(running: boolean) {
         let builder = new flatbuffers.Builder(1);
@@ -66,13 +67,13 @@ export default class Gameplay extends Phaser.State {
             "fontSize": 20
         });
         spr.addColor(color, 0);
-        spr.fixedToCamera = true;
-        this.game.add.tween(spr).to({y: 0}, 1500, Phaser.Easing.Linear.None, true);
+        this.game.add.tween(spr.cameraOffset).to({y: 0}, 1000, Phaser.Easing.Linear.None, true);
         this.game.add.tween(spr).to({alpha: 0}, 1500, Phaser.Easing.Linear.None, true);
         this.game.time.events.add(1500, () => {
             spr.destroy();
             spr = undefined;
         });
+        spr.fixedToCamera = true;
     }
 
     public create(): void {
@@ -86,6 +87,7 @@ export default class Gameplay extends Phaser.State {
         this.game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
 
         this.myGraphics = this.game.add.graphics(this.game.width/2-50, this.game.height/2+100);
+        this.bushGroup = this.game.add.group();
 
         this.game.input.keyboard.onDownCallback = ((ev) => {
             if (ev.key === "q") {
@@ -110,13 +112,14 @@ export default class Gameplay extends Phaser.State {
             let sprite = this.game.add.sprite(bush.x, bush.y, Assets.Images.ImagesBush.getName());
             sprite.anchor.x = 0.5;
             sprite.anchor.y = 0.5;
+            this.bushGroup.add(sprite);
         }
         for (let stone of FBUtil.gameData.level.stones) {
             let sprite = this.game.add.sprite(stone.x, stone.y, Assets.Images.ImagesStone.getName());
             sprite.anchor.x = 0.5;
             sprite.anchor.y = 0.5;
         }
-
+    
         WebSocketService.instance.getWebSocket().onmessage = (ev) => {
             (new Response(ev.data).arrayBuffer()).then(this.handleData.bind(this));
         };
@@ -266,6 +269,7 @@ export default class Gameplay extends Phaser.State {
         let offsetY = this.input.activePointer.y - (this.game.height / 2);
         this.game.camera.x = (offsetX + this.mySprite.position.x) - (this.game.width / 2);
         this.game.camera.y = (offsetY + this.mySprite.position.y) - (this.game.height / 2);
+        this.game.world.bringToTop(this.bushGroup);
     }
 
     public render(): void {
