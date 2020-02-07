@@ -11,10 +11,10 @@ const PIXELS2METERS = 0.01;
 const METERS2PIXELS = 100;
 
 export default class Gameplay extends Phaser.State {
-    cursors = null;
     t: number;
     mobs = {};
-    mySprite = null;
+    mySprite: Phaser.Sprite = null;
+    myGraphics: Phaser.Graphics = null;
     running: boolean = false;
 
     public sendCommandRunning(running: boolean) {
@@ -69,7 +69,8 @@ export default class Gameplay extends Phaser.State {
 
         this.game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
 
-        this.cursors = this.game.input.keyboard.createCursorKeys();
+        this.myGraphics = this.game.add.graphics(this.game.width/2-50, this.game.height/2+100);
+
         this.game.input.keyboard.onDownCallback = ((ev) => {
             if (ev.key === "q") {
                 if (!this.running) {
@@ -205,11 +206,49 @@ export default class Gameplay extends Phaser.State {
                 delete this.mobs[mob];
             }
         }
+        let indicators = [];
+        for (let i = 0; i < dataState.indicatorsLength(); i++) {
+            indicators.push({
+                angle: dataState.indicators(i).angle(),
+                force: 1-dataState.indicators(i).force(),
+                visible: dataState.indicators(i).visible()
+            });
+        }
+        this.drawIndicators(indicators);
+    }
+
+    public drawIndicators(indicators) {
+        console.log("drawing inds", indicators);
+        const FORCE_MULTIPLIER = Math.PI/2;
+        indicators.sort((a,b) => a.force-b.force);
+        this.myGraphics.clear();
+        let outer = indicators.length*10;
+        let arc = (i) => {
+            if (i.force !== 1) {
+            this.myGraphics.arc(0, 0, 60+outer,
+                i.angle+i.force*FORCE_MULTIPLIER,
+                i.angle-i.force*FORCE_MULTIPLIER,
+                true);
+            } else {
+                this.myGraphics.drawCircle(0, 0, (60+outer)*2);
+            }
+        };
+        for (let i of indicators) {
+            if (i.visible)
+                this.myGraphics.beginFill(Phaser.Color.BLUE, 0.5);
+            else
+                this.myGraphics.beginFill(Phaser.Color.GRAY, 0.2);
+            arc(i);
+            outer -= 10;
+            this.myGraphics.beginFill(Phaser.Color.WHITE, 1);
+            arc(i);
+        }
     }
 
     public update(): void {
         if (!this.mySprite)
             return;
+        this.myGraphics.position = this.mySprite.position;
         let offsetX = this.input.activePointer.x - (this.game.width / 2);
         let offsetY = this.input.activePointer.y - (this.game.height / 2);
         this.game.camera.x = (offsetX + this.mySprite.position.x) - (this.game.width / 2);

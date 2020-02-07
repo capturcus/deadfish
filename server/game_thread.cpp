@@ -2,6 +2,7 @@
 #include <limits>
 #include <unistd.h>
 #include "deadfish.hpp"
+#include <glm/gtx/vector_angle.hpp>
 #include "game_thread.hpp"
 #include "level_loader.hpp"
 
@@ -37,7 +38,7 @@ uint16_t newID()
     }
 }
 
-Player * const getPlayerByConnHdl(websocketpp::connection_hdl &hdl)
+Player *const getPlayerByConnHdl(websocketpp::connection_hdl &hdl)
 {
     auto player = gameState.players.begin();
     while (player != gameState.players.end())
@@ -75,9 +76,31 @@ bool playerSeeMob(Player *const p, Mob *const m)
     return fovCallback.closest->GetBody() == m->body;
 }
 
-void makeMobData(Player *const player, flatbuffers::FlatBufferBuilder &builder)
+float revLerp(float min, float max, float val)
+{
+    if (val < min)
+        return 0;
+    if (val > max)
+        return 1;
+    return (val - min) / (max - min);
+}
+
+flatbuffers::Offset<DeadFish::Indicator>
+makePlayerIndicator(flatbuffers::FlatBufferBuilder &builder,
+                    Player *const rootPlayer,
+                    Player *const otherPlayer,
+                    bool canSeeOther)
+{
+    glm::vec2 toTarget = b2g(otherPlayer->body->GetPosition()) - b2g(rootPlayer->body->GetPosition());
+    float targetAngle = -glm::orientedAngle(glm::normalize(toTarget), glm::vec2(1, 0));
+    float force = revLerp(6, 12, glm::length(toTarget));
+    return DeadFish::CreateIndicator(builder, targetAngle, force, canSeeOther);
+}
+
+void makeWorldState(Player *const player, flatbuffers::FlatBufferBuilder &builder)
 {
     std::vector<flatbuffers::Offset<DeadFish::Mob>> mobs;
+    std::vector<flatbuffers::Offset<DeadFish::Indicator>> indicators;
     for (auto &n : gameState.civilians)
     {
         if (!playerSeeMob(player, n.get()))
@@ -95,7 +118,14 @@ void makeMobData(Player *const player, flatbuffers::FlatBufferBuilder &builder)
     }
     for (auto &p : gameState.players)
     {
-        if (p->id != player->id && !playerSeeMob(player, p.get()))
+        bool differentPlayer = p->id != player->id;
+        bool canSeeOther;
+        if (differentPlayer) {
+            canSeeOther = playerSeeMob(player, p.get());
+            auto indicator = makePlayerIndicator(builder, player, p.get(), canSeeOther);
+            indicators.push_back(indicator);
+        }
+        if (differentPlayer && !canSeeOther)
         {
             continue;
         }
@@ -109,8 +139,9 @@ void makeMobData(Player *const player, flatbuffers::FlatBufferBuilder &builder)
         mobs.push_back(mob);
     }
     auto mobsOffset = builder.CreateVector(mobs);
+    auto indicatorsOffset = builder.CreateVector(indicators);
 
-    auto worldState = DeadFish::CreateWorldState(builder, mobsOffset);
+    auto worldState = DeadFish::CreateWorldState(builder, mobsOffset, indicatorsOffset);
 
     auto message = DeadFish::CreateServerMessage(builder,
                                                  DeadFish::ServerMessageUnion_WorldState,
@@ -123,8 +154,8 @@ class TestContactListener : public b2ContactListener
 {
     void BeginContact(b2Contact *contact)
     {
-        auto collideableA = (Collideable*)contact->GetFixtureA()->GetBody()->GetUserData();
-        auto collideableB = (Collideable*)contact->GetFixtureB()->GetBody()->GetUserData();
+        auto collideableA = (Collideable *)contact->GetFixtureA()->GetBody()->GetUserData();
+        auto collideableB = (Collideable *)contact->GetFixtureB()->GetBody()->GetUserData();
 
         if (!collideableA->toBeDeleted)
             collideableA->handleCollision(collideableB);
@@ -186,8 +217,10 @@ void spawnCivilian()
     auto civCounts = civiliansSpeciesCount();
     int lowestSpecies = 0;
     int lowestSpeciesCount = INT_MAX;
-    for (int i = 0; i < civCounts.size(); i++) {
-        if (civCounts[i] < lowestSpeciesCount) {
+    for (int i = 0; i < civCounts.size(); i++)
+    {
+        if (civCounts[i] < lowestSpeciesCount)
+        {
             lowestSpecies = i;
             lowestSpeciesCount = civCounts[i];
         }
@@ -213,15 +246,18 @@ void spawnPlayer(Player *const p)
         if (p.second->isplayerspawn)
         {
             float minDist = std::numeric_limits<float>::max();
-            for (auto& pl: gameState.players) {
+            for (auto &pl : gameState.players)
+            {
                 if (!pl->body)
                     continue;
                 auto dist = b2Distance(g2b(p.second->position), pl->body->GetPosition());
-                if (dist < minDist) {
+                if (dist < minDist)
+                {
                     minDist = dist;
                 }
             }
-            if (minDist > maxMinDist) {
+            if (minDist > maxMinDist)
+            {
                 maxMinDist = minDist;
                 maxSpawn = p.first;
             }
@@ -232,32 +268,40 @@ void spawnPlayer(Player *const p)
     p->targetPosition = spawn->position;
 }
 
-void executeCommandKill(Player * const player, uint16_t id) {
+void executeCommandKill(Player *const player, uint16_t id)
+{
     std::cout << "player " << player->name << " trying to kill " << id << "\n";
-    Civilian* civ = nullptr;
-    for (auto& c : gameState.civilians) {
-        if (c->id == id) {
+    Civilian *civ = nullptr;
+    for (auto &c : gameState.civilians)
+    {
+        if (c->id == id)
+        {
             civ = c.get();
             break;
         }
     }
-    Player* pl = nullptr;
-    for (auto& p : gameState.players) {
-        if (p->id == id) {
+    Player *pl = nullptr;
+    for (auto &p : gameState.players)
+    {
+        if (p->id == id)
+        {
             pl = p.get();
             break;
         }
     }
-    Mob* m = civ ? (Mob*)civ : (Mob*)pl;
-    if (b2Distance(m->body->GetPosition(), player->body->GetPosition()) < KILL_DISTANCE) {
+    Mob *m = civ ? (Mob *)civ : (Mob *)pl;
+    if (b2Distance(m->body->GetPosition(), player->body->GetPosition()) < KILL_DISTANCE)
+    {
         player->killTarget = m;
-    } else {
+    }
+    else
+    {
         // send message too far
         flatbuffers::FlatBufferBuilder builder(1);
         auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_TooFarToKill);
-        auto message = DeadFish::CreateServerMessage(builder, 
-            DeadFish::ServerMessageUnion_SimpleServerEvent,
-            ev.Union());
+        auto message = DeadFish::CreateServerMessage(builder,
+                                                     DeadFish::ServerMessageUnion_SimpleServerEvent,
+                                                     ev.Union());
         builder.Finish(message);
         auto data = builder.GetBufferPointer();
         auto size = builder.GetSize();
@@ -266,11 +310,14 @@ void executeCommandKill(Player * const player, uint16_t id) {
     }
 }
 
-void executeKill(Player* p, Mob* m) {
+void executeKill(Player *p, Mob *m)
+{
     p->killTarget = nullptr;
     // was it a civilian?
-    for (auto it = gameState.civilians.begin(); it != gameState.civilians.end(); it++) {
-        if ((*it)->id == m->id) {
+    for (auto it = gameState.civilians.begin(); it != gameState.civilians.end(); it++)
+    {
+        if ((*it)->id == m->id)
+        {
             // it was a civ
             (*it)->toBeDeleted = true;
             return;
@@ -278,8 +325,10 @@ void executeKill(Player* p, Mob* m) {
     }
 
     // was it a player?
-    for (auto it = gameState.players.begin(); it != gameState.players.end(); it++) {
-        if ((*it)->id == m->id) {
+    for (auto it = gameState.players.begin(); it != gameState.players.end(); it++)
+    {
+        if ((*it)->id == m->id)
+        {
             // it was a PLAYER
             (*it)->toBeDeleted = true;
             return;
@@ -400,7 +449,7 @@ void gameThread()
         for (auto &p : gameState.players)
         {
             builder.Clear();
-            makeMobData(p.get(), builder);
+            makeWorldState(p.get(), builder);
             auto data = builder.GetBufferPointer();
             str = std::string(data, data + builder.GetSize());
             websocket_server.send(p->conn_hdl, str, websocketpp::frame::opcode::binary);

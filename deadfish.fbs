@@ -93,8 +93,15 @@ table Mob {
   species:uint16;
 }
 
+table Indicator {
+  angle:float;
+  force:float;
+  visible:bool;
+}
+
 table WorldState {
   mobs:[Mob];
+  indicators:[Indicator];
 }
 
 table PlayerDied {
