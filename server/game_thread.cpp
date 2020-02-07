@@ -10,6 +10,7 @@ const int FRAME_TIME = 50; // 20 fps
 const int CIVILIAN_TIME = 40;
 const int MAX_CIVILIANS = 6;
 const float KILL_DISTANCE = 1.f;
+const float INSTA_KILL_DISTANCE = 0.61f;
 
 bool operator==(websocketpp::connection_hdl &a, websocketpp::connection_hdl &b)
 {
@@ -88,13 +89,11 @@ float revLerp(float min, float max, float val)
 flatbuffers::Offset<DeadFish::Indicator>
 makePlayerIndicator(flatbuffers::FlatBufferBuilder &builder,
                     Player *const rootPlayer,
-                    Player *const otherPlayer,
-                    bool canSeeOther)
+                    Player *const otherPlayer)
 {
     glm::vec2 toTarget = b2g(otherPlayer->body->GetPosition()) - b2g(rootPlayer->body->GetPosition());
-    float targetAngle = -glm::orientedAngle(glm::normalize(toTarget), glm::vec2(1, 0));
     float force = revLerp(6, 12, glm::length(toTarget));
-    return DeadFish::CreateIndicator(builder, targetAngle, force, canSeeOther);
+    return DeadFish::CreateIndicator(builder, 0, force, false);
 }
 
 void makeWorldState(Player *const player, flatbuffers::FlatBufferBuilder &builder)
@@ -122,7 +121,7 @@ void makeWorldState(Player *const player, flatbuffers::FlatBufferBuilder &builde
         if (differentPlayer)
         {
             canSeeOther = playerSeeMob(player, p.get());
-            auto indicator = makePlayerIndicator(builder, player, p.get(), canSeeOther);
+            auto indicator = makePlayerIndicator(builder, player, p.get());
             indicators.push_back(indicator);
         }
         if (differentPlayer && !canSeeOther)
@@ -292,24 +291,28 @@ void executeCommandKill(Player *const player, uint16_t id)
         }
     }
     Mob *m = civ ? (Mob *)civ : (Mob *)pl;
-    if (b2Distance(m->body->GetPosition(), player->body->GetPosition()) < KILL_DISTANCE)
+    auto distance = b2Distance(m->body->GetPosition(), player->body->GetPosition());
+    if (distance < INSTA_KILL_DISTANCE)
+    {
+        executeKill(player, m);
+        return;
+    }
+    if (distance < KILL_DISTANCE)
     {
         player->killTarget = m;
+        return;
     }
-    else
-    {
-        // send message too far
-        flatbuffers::FlatBufferBuilder builder(1);
-        auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_TooFarToKill);
-        auto message = DeadFish::CreateServerMessage(builder,
-                                                     DeadFish::ServerMessageUnion_SimpleServerEvent,
-                                                     ev.Union());
-        builder.Finish(message);
-        auto data = builder.GetBufferPointer();
-        auto size = builder.GetSize();
-        auto str = std::string(data, data + size);
-        websocket_server.send(player->conn_hdl, str, websocketpp::frame::opcode::binary);
-    }
+    // send message too far
+    flatbuffers::FlatBufferBuilder builder(1);
+    auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_TooFarToKill);
+    auto message = DeadFish::CreateServerMessage(builder,
+                                                 DeadFish::ServerMessageUnion_SimpleServerEvent,
+                                                 ev.Union());
+    builder.Finish(message);
+    auto data = builder.GetBufferPointer();
+    auto size = builder.GetSize();
+    auto str = std::string(data, data + size);
+    websocket_server.send(player->conn_hdl, str, websocketpp::frame::opcode::binary);
 }
 
 void executeKill(Player *p, Mob *m)

@@ -10,6 +10,8 @@ const DEBUG_CAMERA = true;
 const PIXELS2METERS = 0.01;
 const METERS2PIXELS = 100;
 
+const CIRCLE_WIDTH = 15;
+
 export default class Gameplay extends Phaser.State {
     t: number;
     mobs = {};
@@ -233,26 +235,26 @@ export default class Gameplay extends Phaser.State {
         const FORCE_MULTIPLIER = Math.PI/2;
         indicators.sort((a,b) => a.force-b.force);
         this.myGraphics.clear();
-        let outer = indicators.length*10;
-        let arc = (i) => {
-            if (i.force !== 1) {
-            this.myGraphics.arc(0, 0, 60+outer,
-                i.angle+i.force*FORCE_MULTIPLIER,
-                i.angle-i.force*FORCE_MULTIPLIER,
-                true);
-            } else {
-                this.myGraphics.drawCircle(0, 0, (60+outer)*2);
-            }
-        };
+        let outer = indicators.length;
+        // let arc = (i) => {
+        //     if (i.force !== 1) {
+        //     this.myGraphics.arc(0, 0, 60+outer,
+        //         i.angle+i.force*FORCE_MULTIPLIER,
+        //         i.angle-i.force*FORCE_MULTIPLIER,
+        //         true);
+        //     } else {
+        //         this.myGraphics.drawCircle(0, 0, (60+outer)*2);
+        //     }
+        // };
         for (let i of indicators) {
             if (i.visible)
                 this.myGraphics.beginFill(Phaser.Color.BLUE, 0.5);
             else
                 this.myGraphics.beginFill(Phaser.Color.GRAY, 0.2);
-            arc(i);
-            outer -= 10;
+            this.myGraphics.drawCircle(0, 0, 60+outer*CIRCLE_WIDTH+CIRCLE_WIDTH*i.force);
             this.myGraphics.beginFill(Phaser.Color.WHITE, 1);
-            arc(i);
+            this.myGraphics.drawCircle(0, 0, 60+outer*CIRCLE_WIDTH);
+            outer--;
         }
     }
 
