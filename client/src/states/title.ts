@@ -23,8 +23,8 @@ export default class Title extends Phaser.State {
 
         this.game.add.sprite(this.game.width/2-580/2, 0, Assets.Images.ImagesLogo.getName());
 
-        let nameText = document.getElementById("myName");
-        nameText.setAttribute("value", makeid(5));
+        // let nameText = document.getElementById("myName");
+        // nameText.setAttribute("value", makeid(5));
 
         let butt = document.getElementById("myButton");
         let that = this;

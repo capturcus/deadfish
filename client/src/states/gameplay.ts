@@ -17,6 +17,7 @@ export default class Gameplay extends Phaser.State {
     mobs = {};
     mySprite: Phaser.Sprite = null;
     myGraphics: Phaser.Graphics = null;
+    globalGraphics: Phaser.Graphics = null;
     running: boolean = false;
     bushGroup: Phaser.Group;
 
@@ -87,6 +88,7 @@ export default class Gameplay extends Phaser.State {
         this.game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
 
         this.myGraphics = this.game.add.graphics(this.game.width/2-50, this.game.height/2+100);
+        this.globalGraphics = this.game.add.graphics(0, 0);
         this.bushGroup = this.game.add.group();
 
         this.game.input.keyboard.onDownCallback = ((ev) => {
@@ -166,6 +168,10 @@ export default class Gameplay extends Phaser.State {
         if (ev !== null) {
             if (ev === Generated.DeadFish.SimpleServerEventType.TooFarToKill) {
                 this.showText("Mob too far to kill...", "#000");
+                for (let k in this.mobs) {
+                    let mob = this.mobs[k];
+                    mob.targeted = false;
+                }
             }
             if (ev === Generated.DeadFish.SimpleServerEventType.KilledCivilian) {
                 this.showText("You killed a civilian. You monster.", "#000");
@@ -193,7 +199,8 @@ export default class Gameplay extends Phaser.State {
                 mob = {
                     sprite: this.getSpriteBySpecies(dataMob.species()),
                     state: dataMob.state(),
-                    id: dataMob.id()
+                    id: dataMob.id(),
+                    targeted: false
                 };
                 this.mobs[dataMob.id()] = mob;
                 if (dataMob.id() === FBUtil.gameData.initMeta.my_id) {
@@ -203,6 +210,7 @@ export default class Gameplay extends Phaser.State {
                     if (this.game.input.activePointer.rightButton.isDown
                         && mob.id !== FBUtil.gameData.initMeta.my_id) {
                         this.sendKillCommand(mob.id);
+                        mob.targeted = true;
                     }
                 });
             }
@@ -269,6 +277,21 @@ export default class Gameplay extends Phaser.State {
         let offsetY = this.input.activePointer.y - (this.game.height / 2);
         this.game.camera.x = (offsetX + this.mySprite.position.x) - (this.game.width / 2);
         this.game.camera.y = (offsetY + this.mySprite.position.y) - (this.game.height / 2);
+        this.globalGraphics.clear();
+        // this.globalGraphics.drawCircle(this.mySprite.position.x, this.mySprite.position.y, 100);
+        for (let k in this.mobs) {
+            let mob = this.mobs[k];
+            if (mob.targeted) {
+                this.globalGraphics.beginFill(Phaser.Color.RED, 0.2);
+                this.globalGraphics.drawCircle(mob.sprite.x, mob.sprite.y, 100);
+                continue;
+            }
+            if (mob.id !== FBUtil.gameData.initMeta.my_id &&
+                Phaser.Math.distance(mob.sprite.x, mob.sprite.y, this.mySprite.x, this.mySprite.y) <= 100) {
+                this.globalGraphics.beginFill(Phaser.Color.BLUE, 0.2);
+                this.globalGraphics.drawCircle(mob.sprite.x, mob.sprite.y, 100);
+            }
+        }
         this.game.world.bringToTop(this.bushGroup);
     }
 
