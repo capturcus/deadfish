@@ -1,14 +1,13 @@
 #include <iostream>
 #include <limits>
-#include <unistd.h>
 #include "deadfish.hpp"
 #include <glm/gtx/vector_angle.hpp>
 #include "game_thread.hpp"
 #include "level_loader.hpp"
 
 const int FRAME_TIME = 50; // 20 fps
-const int CIVILIAN_TIME = 40;
-const int MAX_CIVILIANS = 6;
+const int CIVILIAN_TIME = 20;
+const int MAX_CIVILIANS = 100;
 const float KILL_DISTANCE = 1.f;
 const float INSTA_KILL_DISTANCE = 0.61f;
 
@@ -59,6 +58,9 @@ struct FOVCallback
 {
     float32 ReportFixture(b2Fixture *fixture, const b2Vec2 &point, const b2Vec2 &normal, float32 fraction)
     {
+        auto data = (Collideable*)fixture->GetBody()->GetUserData();
+        if (data && data != target && dynamic_cast<Mob*>(data))
+            return 1.f;
         if (fraction < minfraction)
         {
             minfraction = fraction;
@@ -68,11 +70,13 @@ struct FOVCallback
     }
     float minfraction = 1.f;
     b2Fixture *closest = nullptr;
+    Mob* target = nullptr;
 };
 
 bool playerSeeMob(Player *const p, Mob *const m)
 {
     FOVCallback fovCallback;
+    fovCallback.target = m;
     gameState.b2world->RayCast(&fovCallback, p->body->GetPosition(), m->body->GetPosition());
     return fovCallback.closest->GetBody() == m->body;
 }
@@ -272,7 +276,7 @@ void spawnPlayer(Player *const p)
 void executeCommandKill(Player *const player, uint16_t id)
 {
     player->lastAttack = std::chrono::system_clock::now();
-    std::cout << "player " << player->name << " trying to kill " << id << "\n";
+    // std::cout << "player " << player->name << " trying to kill " << id << "\n";
     Civilian *civ = nullptr;
     for (auto &c : gameState.civilians)
     {
@@ -381,9 +385,12 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
 {
     const auto payload = msg->get_payload();
     const auto clientMessage = flatbuffers::GetRoot<DeadFish::ClientMessage>(payload.c_str());
+    const auto guard = gameState.lock();
+
     auto p = getPlayerByConnHdl(hdl);
     if (p->state == MobState::ATTACKING)
         return;
+
     switch (clientMessage->event_type())
     {
     case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandMove:
@@ -416,34 +423,39 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
 
 void gameThread()
 {
-    // init physics
-    gameState.b2world = std::make_unique<b2World>(b2Vec2(0, 0));
     TestContactListener tcl;
-    gameState.b2world->SetContactListener(&tcl);
-
-    // load level
-    gameState.level = std::make_unique<Level>();
-    std::string path("../../levels/test.bin");
-    loadLevel(path);
-
-    // send level to clients
     flatbuffers::FlatBufferBuilder builder(1);
-    auto levelOffset = serializeLevel(builder);
-    auto message = DeadFish::CreateServerMessage(builder,
-                                                 DeadFish::ServerMessageUnion_Level,
-                                                 levelOffset.Union());
-    builder.Finish(message);
-    auto data = builder.GetBufferPointer();
-    auto size = builder.GetSize();
-    auto str = std::string(data, data + size);
-    for (auto &player : gameState.players)
-    {
-        websocket_server.send(player->conn_hdl, str, websocketpp::frame::opcode::binary);
-    }
 
-    for (auto &player : gameState.players)
     {
-        spawnPlayer(player.get());
+        const auto guard = gameState.lock();
+
+        // init physics
+        gameState.b2world = std::make_unique<b2World>(b2Vec2(0, 0));
+        gameState.b2world->SetContactListener(&tcl);
+
+        // load level
+        gameState.level = std::make_unique<Level>();
+        std::string path("../../levels/big.bin");
+        loadLevel(path);
+
+        // send level to clients
+        auto levelOffset = serializeLevel(builder);
+        auto message = DeadFish::CreateServerMessage(builder,
+                                                    DeadFish::ServerMessageUnion_Level,
+                                                    levelOffset.Union());
+        builder.Finish(message);
+        auto data = builder.GetBufferPointer();
+        auto size = builder.GetSize();
+        auto str = std::string(data, data + size);
+        for (auto &player : gameState.players)
+        {
+            websocket_server.send(player->conn_hdl, str, websocketpp::frame::opcode::binary);
+        }
+
+        for (auto &player : gameState.players)
+        {
+            spawnPlayer(player.get());
+        }
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -452,6 +464,7 @@ void gameThread()
 
     while (1)
     {
+        auto maybe_guard = gameState.lock();
         auto frameStart = std::chrono::system_clock::now();
 
         // update physics
@@ -493,9 +506,12 @@ void gameThread()
             builder.Clear();
             makeWorldState(p.get(), builder);
             auto data = builder.GetBufferPointer();
-            str = std::string(data, data + builder.GetSize());
+            std::string str(data, data + builder.GetSize());
             websocket_server.send(p->conn_hdl, str, websocketpp::frame::opcode::binary);
         }
+
+        // Drop the lock
+        maybe_guard.reset();
 
         // sleep for the remaining of time
         std::this_thread::sleep_until(frameStart + std::chrono::milliseconds(FRAME_TIME));

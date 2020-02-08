@@ -4,8 +4,8 @@ var commander = require('commander');
 var shell = require('shelljs');
 
 var filename = './assets/images/background_template.png';
-var defaultWidth = 800;
-var defaultHeight = 500;
+var defaultWidth = 1600;
+var defaultHeight = 1000;
 var defaultAspectRatio = 1.6;
 var defaultScaleMode = 'USER_SCALE';
 var possibleScaleModes = ['USER_SCALE', 'SHOW_ALL', 'EXACT_FIT', 'NO_SCALE', 'RESIZE'];
