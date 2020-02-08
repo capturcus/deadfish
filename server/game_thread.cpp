@@ -6,8 +6,8 @@
 #include "level_loader.hpp"
 
 const int FRAME_TIME = 50; // 20 fps
-const int CIVILIAN_TIME = 20;
-const int MAX_CIVILIANS = 100;
+const int CIVILIAN_TIME = 40;
+const int MAX_CIVILIANS = 30;
 const float KILL_DISTANCE = 1.f;
 const float INSTA_KILL_DISTANCE = 0.61f;
 
@@ -327,7 +327,7 @@ void executeKill(Player *p, Mob *m)
     if (p2 &&
         p2->killTarget &&
         p2->killTarget->id == p->id &&
-        p2->lastAttack > p->lastAttack) {
+        p2->lastAttack < p->lastAttack) {
         // he did kill us first
         std::cout << "uno reverse card\n";
         executeKill(p2, p);
