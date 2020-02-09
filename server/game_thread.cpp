@@ -10,6 +10,8 @@ const int CIVILIAN_TIME = 40;
 const int MAX_CIVILIANS = 30;
 const float KILL_DISTANCE = 1.f;
 const float INSTA_KILL_DISTANCE = 0.61f;
+const int CIVILIAN_PENALTY = -1;
+const int KILL_REWARD = 5;
 
 bool operator==(websocketpp::connection_hdl &a, websocketpp::connection_hdl &b)
 {
@@ -38,6 +40,28 @@ uint16_t newID()
     }
 }
 
+std::string makeServerMessage(flatbuffers::FlatBufferBuilder &builder,
+    DeadFish::ServerMessageUnion type,
+    flatbuffers::Offset<void> offset) {
+    auto message = DeadFish::CreateServerMessage(builder,
+                                                 type,
+                                                 offset);
+    builder.Finish(message);
+    auto data = builder.GetBufferPointer();
+    auto size = builder.GetSize();
+    auto str = std::string(data, data + size);
+    return str;
+}
+
+void sendServerMessage(Player *const player,
+    flatbuffers::FlatBufferBuilder &builder,
+    DeadFish::ServerMessageUnion type,
+    flatbuffers::Offset<void> offset)
+{
+    auto str = makeServerMessage(builder, type, offset);
+    websocket_server.send(player->conn_hdl, str, websocketpp::frame::opcode::binary);
+}
+
 Player *const getPlayerByConnHdl(websocketpp::connection_hdl &hdl)
 {
     auto player = gameState.players.begin();
@@ -58,8 +82,8 @@ struct FOVCallback
 {
     float32 ReportFixture(b2Fixture *fixture, const b2Vec2 &point, const b2Vec2 &normal, float32 fraction)
     {
-        auto data = (Collideable*)fixture->GetBody()->GetUserData();
-        if (data && data != target && dynamic_cast<Mob*>(data))
+        auto data = (Collideable *)fixture->GetBody()->GetUserData();
+        if (data && data != target && dynamic_cast<Mob *>(data))
             return 1.f;
         if (fraction < minfraction)
         {
@@ -70,7 +94,7 @@ struct FOVCallback
     }
     float minfraction = 1.f;
     b2Fixture *closest = nullptr;
-    Mob* target = nullptr;
+    Mob *target = nullptr;
 };
 
 bool playerSeeMob(Player *const p, Mob *const m)
@@ -100,7 +124,7 @@ makePlayerIndicator(flatbuffers::FlatBufferBuilder &builder,
     return DeadFish::CreateIndicator(builder, 0, force, false);
 }
 
-void makeWorldState(Player *const player, flatbuffers::FlatBufferBuilder &builder)
+flatbuffers::Offset<void> makeWorldState(Player *const player, flatbuffers::FlatBufferBuilder &builder)
 {
     std::vector<flatbuffers::Offset<DeadFish::Mob>> mobs;
     std::vector<flatbuffers::Offset<DeadFish::Indicator>> indicators;
@@ -146,11 +170,7 @@ void makeWorldState(Player *const player, flatbuffers::FlatBufferBuilder &builde
 
     auto worldState = DeadFish::CreateWorldState(builder, mobsOffset, indicatorsOffset);
 
-    auto message = DeadFish::CreateServerMessage(builder,
-                                                 DeadFish::ServerMessageUnion_WorldState,
-                                                 worldState.Union());
-
-    builder.Finish(message);
+    return worldState.Union();
 }
 
 class TestContactListener : public b2ContactListener
@@ -232,7 +252,7 @@ void spawnCivilian()
 
     c->id = newID();
     c->species = lowestSpecies;
-    std::cout << "spawning species " << lowestSpecies << "\n";
+    // std::cout << "spawning species " << lowestSpecies << "\n";
     c->previousNavpoint = spawnName;
     c->currentNavpoint = spawnName;
     physicsInitMob(c, spawn->position, 0, 0.3f);
@@ -310,26 +330,64 @@ void executeCommandKill(Player *const player, uint16_t id)
     // send message too far
     flatbuffers::FlatBufferBuilder builder(1);
     auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_TooFarToKill);
-    auto message = DeadFish::CreateServerMessage(builder,
-                                                 DeadFish::ServerMessageUnion_SimpleServerEvent,
-                                                 ev.Union());
-    builder.Finish(message);
-    auto data = builder.GetBufferPointer();
-    auto size = builder.GetSize();
-    auto str = std::string(data, data + size);
-    websocket_server.send(player->conn_hdl, str, websocketpp::frame::opcode::binary);
+    sendServerMessage(player, builder, DeadFish::ServerMessageUnion_SimpleServerEvent, ev.Union());
 }
 
-void executeKill(Player *p, Mob *m)
+void sendHighscores()
+{
+    flatbuffers::FlatBufferBuilder builder;
+    std::vector<flatbuffers::Offset<DeadFish::HighscoreEntry>> entries;
+    for (auto &p : gameState.players)
+    {
+        auto entry = DeadFish::CreateHighscoreEntry(builder, builder.CreateString(p->name), p->points);
+        entries.push_back(entry);
+    }
+    auto v = builder.CreateVector(entries);
+    auto update = DeadFish::CreateHighscoreUpdate(builder, v);
+    auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_HighscoreUpdate, update.Union());
+    for (auto &p : gameState.players)
+    {
+        websocket_server.send(p->conn_hdl, data, websocketpp::frame::opcode::binary);
+    }
+}
+
+void killCivilian(Player *const p, Civilian *const c)
+{
+    c->toBeDeleted = true;
+    p->points += CIVILIAN_PENALTY;
+
+    // send the killednpc message
+    flatbuffers::FlatBufferBuilder builder;
+    auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_KilledCivilian);
+    sendServerMessage(p, builder, DeadFish::ServerMessageUnion_SimpleServerEvent, ev.Union());
+
+    sendHighscores();
+}
+
+void killPlayer(Player *const p, Player *const target)
+{
+    target->toBeDeleted = true;
+    p->points += KILL_REWARD;
+
+    // send the killedplayer message
+    flatbuffers::FlatBufferBuilder builder;
+    auto name = builder.CreateString(target->name);
+    auto ev = DeadFish::CreateKilledPlayer(builder, name);
+    sendServerMessage(p, builder, DeadFish::ServerMessageUnion_KilledPlayer, ev.Union());
+
+    sendHighscores();
+}
+
+void executeKill(Player *const p, Mob *const m)
 {
     // maybe he killed us first?
-    auto p2 = dynamic_cast<Player*>(m);
+    auto p2 = dynamic_cast<Player *>(m);
     if (p2 &&
         p2->killTarget &&
         p2->killTarget->id == p->id &&
-        p2->lastAttack < p->lastAttack) {
+        p2->lastAttack < p->lastAttack)
+    {
         // he did kill us first
-        std::cout << "uno reverse card\n";
         executeKill(p2, p);
         return;
     }
@@ -343,17 +401,7 @@ void executeKill(Player *p, Mob *m)
         if ((*it)->id == m->id)
         {
             // it was a civ
-            (*it)->toBeDeleted = true;
-            // send the killednpc message
-            flatbuffers::FlatBufferBuilder builder;
-            auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_KilledCivilian);
-            auto message = DeadFish::CreateServerMessage(builder, DeadFish::ServerMessageUnion_SimpleServerEvent,
-                                                         ev.Union());
-            builder.Finish(message);
-            auto data = builder.GetBufferPointer();
-            auto size = builder.GetSize();
-            auto str = std::string(data, data + size);
-            websocket_server.send(p->conn_hdl, str, websocketpp::frame::opcode::binary);
+            killCivilian(p, it->get());
             return;
         }
     }
@@ -364,18 +412,7 @@ void executeKill(Player *p, Mob *m)
         if ((*it)->id == m->id)
         {
             // it was a PLAYER
-            (*it)->toBeDeleted = true;
-            // send the killedplayer message
-            flatbuffers::FlatBufferBuilder builder;
-            auto name = builder.CreateString((*it)->name);
-            auto ev = DeadFish::CreateKilledPlayer(builder, name);
-            auto message = DeadFish::CreateServerMessage(builder, DeadFish::ServerMessageUnion_KilledPlayer,
-                                                         ev.Union());
-            builder.Finish(message);
-            auto data = builder.GetBufferPointer();
-            auto size = builder.GetSize();
-            auto str = std::string(data, data + size);
-            websocket_server.send(p->conn_hdl, str, websocketpp::frame::opcode::binary);
+            killPlayer(p, it->get());
             return;
         }
     }
@@ -440,13 +477,7 @@ void gameThread()
 
         // send level to clients
         auto levelOffset = serializeLevel(builder);
-        auto message = DeadFish::CreateServerMessage(builder,
-                                                    DeadFish::ServerMessageUnion_Level,
-                                                    levelOffset.Union());
-        builder.Finish(message);
-        auto data = builder.GetBufferPointer();
-        auto size = builder.GetSize();
-        auto str = std::string(data, data + size);
+        auto str = makeServerMessage(builder, DeadFish::ServerMessageUnion_Level, levelOffset.Union());
         for (auto &player : gameState.players)
         {
             websocket_server.send(player->conn_hdl, str, websocketpp::frame::opcode::binary);
@@ -481,7 +512,7 @@ void gameThread()
         }
         for (int i = despawns.size() - 1; i >= 0; i--)
         {
-            std::cout << "despawning civilian\n";
+            // std::cout << "despawning civilian\n";
             gameState.civilians.erase(gameState.civilians.begin() + despawns[i]);
         }
 
@@ -504,10 +535,8 @@ void gameThread()
         for (auto &p : gameState.players)
         {
             builder.Clear();
-            makeWorldState(p.get(), builder);
-            auto data = builder.GetBufferPointer();
-            std::string str(data, data + builder.GetSize());
-            websocket_server.send(p->conn_hdl, str, websocketpp::frame::opcode::binary);
+            auto offset = makeWorldState(p.get(), builder);
+            sendServerMessage(p.get(), builder, DeadFish::ServerMessageUnion_WorldState, offset);
         }
 
         // Drop the lock

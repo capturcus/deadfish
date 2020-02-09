@@ -114,8 +114,8 @@ table PlayerDied {
 }
 
 table HighscoreEntry {
-  playerId:uint16;
-  playerPoints:uint16;
+  playerName:string;
+  playerPoints:int16;
 }
 
 table HighscoreUpdate {
@@ -140,7 +140,6 @@ table ContractChange {
 }
 
 table InitPlayer {
-  id:uint16;
   name:string;
   species:uint16;
 }

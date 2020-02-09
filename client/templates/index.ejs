@@ -8,6 +8,20 @@
         body {
             margin: 0px; /*This removes the border around the canvas that Phaser adds, making the game actually take up all the available space*/
         }
+
+        #highscores {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            background-color: white;
+            font-size: 40pt;
+            transform: translate(-50%, -50%);
+            background: yellow;
+        }
+        td {
+            padding-left: 0.5cm;
+            padding-right: 0.5cm;
+        }
     </style>
 </head>
 <body>
@@ -27,6 +41,10 @@
     </div>
     <div id="lobbyStuff" style="display: none;">
         <button id="readyButton" style="width: 10vw; height: 5vh;">ready</button>
+    </div>
+    <div id="highscores">
+        <table id="highscorestable" style="display: none;">
+        </table>
     </div>
 </body>
 </html>

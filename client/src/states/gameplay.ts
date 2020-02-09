@@ -20,6 +20,7 @@ export default class Gameplay extends Phaser.State {
     globalGraphics: Phaser.Graphics = null;
     running: boolean = false;
     bushGroup: Phaser.Group;
+    textGroup: Phaser.Group;
 
     public sendCommandRunning(running: boolean) {
         let builder = new flatbuffers.Builder(1);
@@ -64,9 +65,11 @@ export default class Gameplay extends Phaser.State {
     }
 
     public showText(text: string, color: string) {
-        let spr = this.game.add.text(300, 100, text, {
-            "fontSize": 20
+        let spr = this.add.text(0, 300, text, {
+            "fontSize": 60
         });
+        spr.position.x = this.game.width/2-spr.width/2;
+        this.textGroup.add(spr);
         spr.addColor(color, 0);
         this.game.add.tween(spr.cameraOffset).to({y: 0}, 1000, Phaser.Easing.Linear.None, true);
         this.game.add.tween(spr).to({alpha: 0}, 1500, Phaser.Easing.Linear.None, true);
@@ -75,6 +78,21 @@ export default class Gameplay extends Phaser.State {
             spr = undefined;
         });
         spr.fixedToCamera = true;
+    }
+
+    public updateHighscores() {
+        let highscores = document.getElementById("highscorestable");
+        let html = "";
+        for (let p of FBUtil.gameData.highscores) {
+            html += "<tr><td>"+p.name+"</td><td>"+p.points+"</td></tr>";
+        }
+        highscores.innerHTML = html;
+    }
+
+    public renderHighscores() {
+        let highscores = document.getElementById("highscorestable");
+        highscores.setAttribute("style", "display: block;");
+        this.updateHighscores();
     }
 
     public create(): void {
@@ -90,6 +108,11 @@ export default class Gameplay extends Phaser.State {
         this.myGraphics = this.game.add.graphics(this.game.width/2-50, this.game.height/2+100);
         this.globalGraphics = this.game.add.graphics(0, 0);
         this.bushGroup = this.game.add.group();
+        this.textGroup = this.game.add.group();
+
+        for (let player of FBUtil.gameData.initMeta.players) {
+            FBUtil.gameData.highscores.push({name: player.name, points: 0});
+        }
 
         this.game.input.keyboard.onDownCallback = ((ev) => {
             if (ev.key === "q") {
@@ -98,6 +121,9 @@ export default class Gameplay extends Phaser.State {
                     this.sendCommandRunning(this.running);
                 }
             }
+            if (ev.key === "a") {
+                this.renderHighscores();
+            }
         });
         this.game.input.keyboard.onUpCallback = ((ev) => {
             if (ev.key === "q") {
@@ -105,6 +131,10 @@ export default class Gameplay extends Phaser.State {
                     this.running = false;
                     this.sendCommandRunning(this.running);
                 }
+            }
+            if (ev.key === "a") {
+                let highscores = document.getElementById("highscorestable");
+                highscores.setAttribute("style", "display: none;");
             }
         });
 
@@ -128,7 +158,6 @@ export default class Gameplay extends Phaser.State {
     }
 
     public getSpriteBySpecies(species) {
-        console.log("SPECIES", species);
         const adjustForSpecies = (l) => l.map((x) => (x + 12 * species));
         let sprite = this.game.add.sprite(150, 150, Assets.Spritesheets.ImagesFish100100.getName());
         sprite.anchor.x = 0.5;
@@ -185,6 +214,18 @@ export default class Gameplay extends Phaser.State {
             if (killedPlayer !== null) {
                 console.log("killed player", killedPlayer.playerName());
                 this.showText("You killed "+killedPlayer.playerName()+"!", "#f00");
+                return;
+            }
+            let highscores = FBUtil.ParseHighscoreUpdate(buffer);
+            if (highscores !== null) {
+                FBUtil.gameData.highscores = [];
+                for (let i = 0; i < highscores.playersLength(); i++) {
+                    let player = highscores.players(i);
+                    FBUtil.gameData.highscores.push({"name": player.playerName(), "points": player.playerPoints()});
+                }
+                FBUtil.gameData.highscores.sort((a, b) => b.points - a.points);
+
+                this.updateHighscores();
             }
             return;
         }
@@ -195,7 +236,6 @@ export default class Gameplay extends Phaser.State {
             let dataMob = dataState.mobs(i);
             let mob = this.mobs[dataMob.id()];
             if (mob === undefined) {
-                console.log("making new sprite");
                 mob = {
                     sprite: this.getSpriteBySpecies(dataMob.species()),
                     state: dataMob.state(),
@@ -293,6 +333,7 @@ export default class Gameplay extends Phaser.State {
             }
         }
         this.game.world.bringToTop(this.bushGroup);
+        this.game.world.bringToTop(this.textGroup);
     }
 
     public render(): void {

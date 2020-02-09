@@ -6,6 +6,7 @@ export namespace FBUtil {
     class GameData {
         level: any;
         initMeta: any;
+        highscores: any = [];
     }
 
     export let gameData: GameData = new GameData();
@@ -89,7 +90,6 @@ export namespace FBUtil {
                         let player = ev.players(i);
                         gameData.initMeta.players.push({
                             name: player.name(),
-                            id: player.id(),
                             species:player.species()
                         });
                     }
@@ -115,6 +115,22 @@ export namespace FBUtil {
                 }
                 break;
             default:
+                return null;
+        }
+    }
+
+    export const ParseHighscoreUpdate = (b: Uint8Array): Generated.DeadFish.HighscoreUpdate => {
+        let buffer = new flatbuffers.ByteBuffer(b);
+        let serverMsg = Generated.DeadFish.ServerMessage.getRootAsServerMessage(buffer);
+        switch (serverMsg.eventType()) {
+            case Generated.DeadFish.ServerMessageUnion.HighscoreUpdate:
+                {
+                    let ev = serverMsg.event(new Generated.DeadFish.HighscoreUpdate());
+                    return ev;
+                }
+                break;
+            default:
+                // console.log("wrong type not simple", serverMsg.eventType());
                 return null;
         }
     }

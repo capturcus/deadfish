@@ -7,8 +7,8 @@ You are a sea creature on the bottom of the ocean. There are multiple species of
 Game interface:
 - **left click** to move
 - **right click** to kill (only within a certain radius from the target creature)
-- **q** to sprint (unless you're Kuba Księżyc)
-- **tab** to show highscores
+- **q** to sprint (unless you're Moon)
+- **a** to show highscores
 - creatures that are within attacking range are marked by a blue circle
 - creatures that you're hovering over are marked by a gray circle
 - a creature that is currently targeted by you is marked by a red circle

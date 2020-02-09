@@ -18,20 +18,12 @@ void sendInitMetadata()
         for (auto &player : gameState.players)
         {
             auto name = builder.CreateString(player->name.c_str());
-            auto playerOffset = DeadFish::CreateInitPlayer(builder, player->id, name, player->species);
+            auto playerOffset = DeadFish::CreateInitPlayer(builder, name, player->species);
             playerOffsets.push_back(playerOffset);
         }
         auto players = builder.CreateVector(playerOffsets);
         auto metadata = DeadFish::CreateInitMetadata(builder, 0, players, targetPlayer->id);
-
-        auto message = DeadFish::CreateServerMessage(builder,
-                                                     DeadFish::ServerMessageUnion::ServerMessageUnion_InitMetadata,
-                                                     metadata.Union());
-
-        builder.Finish(message);
-        auto data = builder.GetBufferPointer();
-
-        websocket_server.send(targetPlayer->conn_hdl, std::string(data, data + builder.GetSize()), websocketpp::frame::opcode::binary);
+        sendServerMessage(targetPlayer.get(), builder, DeadFish::ServerMessageUnion_InitMetadata, metadata.Union());
     }
 }
 
