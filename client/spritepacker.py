@@ -33,8 +33,6 @@ for f in sorted(files):
         # cover = resizeimage.resize_cover(image, [200, 100])
         # cover.save('test-image-cover.jpeg', image.format)
 
-imgs += imgs
-
 rows = int((len(imgs)/IMGSINROW))+1
 finalimg = Image.new("RGBA", (IMGSINROW*IMGSIZE, rows*IMGSIZE))
 print("finalimg size", finalimg.size)
