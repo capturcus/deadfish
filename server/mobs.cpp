@@ -11,6 +11,7 @@ const float CLOSE = 0.05f;
 const float ANGULAR_CLOSE = 0.1f;
 const float TARGET_OFFSET = 0.3f;
 const float RANDOM_OFFSET = 0.15f;
+const int DEATH_TIMEOUT = 20 * 2;
 
 std::ostream &operator<<(std::ostream &os, glm::vec2 &v)
 {
@@ -85,6 +86,12 @@ void Player::reset() {
 
 bool Player::update()
 {
+    if (this->deathTimeout > 0) {
+        this->deathTimeout--;
+        if (this->deathTimeout == 0)
+            spawnPlayer(this);
+        return true;
+    }
     if (this->attackTimeout > 0) {
         this->attackTimeout--;
         if (this->attackTimeout == 0) {
@@ -93,9 +100,10 @@ bool Player::update()
         }
     }
     if (this->toBeDeleted) {
-        // respawn player
+        // kill player
+        this->targetPosition = b2g(this->body->GetPosition());
         this->reset();
-        spawnPlayer(this);
+        this->deathTimeout = DEATH_TIMEOUT;
     }
     if (this->killTarget) {
         this->targetPosition = b2g(this->killTarget->body->GetPosition());

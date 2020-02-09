@@ -99,10 +99,15 @@ struct FOVCallback
 
 bool playerSeeMob(Player *const p, Mob *const m)
 {
+    auto p2 = dynamic_cast<Player*>(m);
+    if (p2 && p2->deathTimeout > 0)
+        return false; // can't see dead ppl lol
     FOVCallback fovCallback;
     fovCallback.target = m;
-    gameState.b2world->RayCast(&fovCallback, p->body->GetPosition(), m->body->GetPosition());
-    return fovCallback.closest->GetBody() == m->body;
+    auto ppos = p->deathTimeout > 0 ? g2b(p->targetPosition) : p->body->GetPosition();
+    auto mpos = m->body->GetPosition();
+    gameState.b2world->RayCast(&fovCallback, ppos, mpos);
+    return fovCallback.closest && fovCallback.closest->GetBody() == m->body;
 }
 
 float revLerp(float min, float max, float val)
@@ -144,6 +149,10 @@ flatbuffers::Offset<void> makeWorldState(Player *const player, flatbuffers::Flat
     }
     for (auto &p : gameState.players)
     {
+        if (p->deathTimeout > 0) {
+            // is dead, don't send
+            continue;
+        }
         bool differentPlayer = p->id != player->id;
         bool canSeeOther;
         if (differentPlayer)
@@ -153,9 +162,7 @@ flatbuffers::Offset<void> makeWorldState(Player *const player, flatbuffers::Flat
             indicators.push_back(indicator);
         }
         if (differentPlayer && !canSeeOther)
-        {
             continue;
-        }
         auto posVec = DeadFish::Vec2(p->body->GetPosition().x, p->body->GetPosition().y);
         auto mob = DeadFish::CreateMob(builder,
                                        p->id,
@@ -510,9 +517,7 @@ void gameThread()
         for (int i = 0; i < gameState.civilians.size(); i++)
         {
             if (!gameState.civilians[i]->update() || gameState.civilians[i]->toBeDeleted)
-            {
                 despawns.push_back(i);
-            }
         }
         for (int i = despawns.size() - 1; i >= 0; i--)
         {
@@ -521,19 +526,16 @@ void gameThread()
         }
 
         for (auto &p : gameState.players)
-        {
             p->update();
-        }
 
+        // spawn civilians if need be
         if (civilianTimer == 0 && gameState.civilians.size() < MAX_CIVILIANS)
         {
             spawnCivilian();
             civilianTimer = CIVILIAN_TIME;
         }
         else
-        {
             civilianTimer = std::max(0, civilianTimer - 1);
-        }
 
         // send data to everyone
         for (auto &p : gameState.players)
