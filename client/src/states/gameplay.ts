@@ -169,7 +169,7 @@ export default class Gameplay extends Phaser.State {
 
         sprite.animations.play('idle', 3, true);
         sprite.inputEnabled = true;
-        sprite.hitArea = new PIXI.Rectangle(-25, -50, 50, 100);
+        sprite.hitArea = new Phaser.Circle(0, 0, 100);
 
         return sprite;
     }
@@ -291,16 +291,6 @@ export default class Gameplay extends Phaser.State {
         indicators.sort((a,b) => a.force-b.force);
         this.myGraphics.clear();
         let outer = indicators.length;
-        // let arc = (i) => {
-        //     if (i.force !== 1) {
-        //     this.myGraphics.arc(0, 0, 60+outer,
-        //         i.angle+i.force*FORCE_MULTIPLIER,
-        //         i.angle-i.force*FORCE_MULTIPLIER,
-        //         true);
-        //     } else {
-        //         this.myGraphics.drawCircle(0, 0, (60+outer)*2);
-        //     }
-        // };
         for (let i of indicators) {
             if (i.visible)
                 this.myGraphics.beginFill(Phaser.Color.BLUE, 0.5);
@@ -329,6 +319,10 @@ export default class Gameplay extends Phaser.State {
                 this.globalGraphics.beginFill(Phaser.Color.RED, 0.2);
                 this.globalGraphics.drawCircle(mob.sprite.x, mob.sprite.y, 100);
                 continue;
+            }
+            if (mob.sprite.input.pointerOver()) {
+                this.globalGraphics.beginFill(Phaser.Color.GRAY, 0.2);
+                this.globalGraphics.drawCircle(mob.sprite.x, mob.sprite.y, 100);
             }
             if (mob.id !== FBUtil.gameData.initMeta.my_id &&
                 Phaser.Math.distance(mob.sprite.x, mob.sprite.y, this.mySprite.x, this.mySprite.y) <= 100) {
