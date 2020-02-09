@@ -369,11 +369,15 @@ void killPlayer(Player *const p, Player *const target)
     target->toBeDeleted = true;
     p->points += KILL_REWARD;
 
-    // send the killedplayer message
+    // send the deathreport message
     flatbuffers::FlatBufferBuilder builder;
-    auto name = builder.CreateString(target->name);
-    auto ev = DeadFish::CreateKilledPlayer(builder, name);
-    sendServerMessage(p, builder, DeadFish::ServerMessageUnion_KilledPlayer, ev.Union());
+    auto killer = builder.CreateString(p->name);
+    auto killed = builder.CreateString(target->name);
+    auto ev = DeadFish::CreateDeathReport(builder, killer, killed);
+    auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_DeathReport, ev.Union());
+    for (auto& p : gameState.players) {
+        websocket_server.send(p->conn_hdl, data, websocketpp::frame::opcode::binary);
+    }
 
     sendHighscores();
 }

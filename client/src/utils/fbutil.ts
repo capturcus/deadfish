@@ -7,6 +7,7 @@ export namespace FBUtil {
         level: any;
         initMeta: any;
         highscores: any = [];
+        myName: string;
     }
 
     export let gameData: GameData = new GameData();
@@ -104,13 +105,13 @@ export namespace FBUtil {
         }
     }
 
-    export const ParseKilledPlayer = (b: Uint8Array): Generated.DeadFish.KilledPlayer => {
+    export const ParseDeathReport = (b: Uint8Array): Generated.DeadFish.DeathReport => {
         let buffer = new flatbuffers.ByteBuffer(b);
         let serverMsg = Generated.DeadFish.ServerMessage.getRootAsServerMessage(buffer);
         switch (serverMsg.eventType()) {
-            case Generated.DeadFish.ServerMessageUnion.KilledPlayer:
+            case Generated.DeadFish.ServerMessageUnion.DeathReport:
                 {
-                    let ev = serverMsg.event(new Generated.DeadFish.KilledPlayer());
+                    let ev = serverMsg.event(new Generated.DeadFish.DeathReport());
                     return ev;
                 }
                 break;

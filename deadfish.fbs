@@ -1,14 +1,5 @@
 namespace DeadFish;
 
-enum Error: byte {
-  NameEmpty,
-  NameAlreadyTaken
-}
-
-table ErrorWrapper {
-  error: Error;
-}
-
 // level
 
 struct Vec2 {
@@ -74,7 +65,6 @@ union ClientMessageUnion {
   CommandKill,
   CommandRun,
   JoinRequest,
-  ErrorWrapper,
   PlayerReady
 }
 
@@ -109,10 +99,6 @@ table WorldState {
   indicators:[Indicator];
 }
 
-table PlayerDied {
-  killedBy:uint16;
-}
-
 table HighscoreEntry {
   playerName:string;
   playerPoints:int16;
@@ -122,8 +108,9 @@ table HighscoreUpdate {
   players:[HighscoreEntry];
 }
 
-table KilledPlayer {
-  playerName:string;
+table DeathReport {
+  killer:string;
+  killed:string;
 }
 
 enum SimpleServerEventType: byte {
@@ -133,10 +120,6 @@ enum SimpleServerEventType: byte {
 
 table SimpleServerEvent {
   type:SimpleServerEventType;
-}
-
-table ContractChange {
-  species:uint16;
 }
 
 table InitPlayer {
@@ -151,14 +134,11 @@ table InitMetadata {
 }
 
 union ServerMessageUnion {
-  PlayerDied,
+  DeathReport,
   HighscoreUpdate,
-  KilledPlayer,
   SimpleServerEvent,
-  ContractChange,
   InitMetadata,
   WorldState,
-  ErrorWrapper,
   Level
 }
 

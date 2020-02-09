@@ -210,10 +210,14 @@ export default class Gameplay extends Phaser.State {
         let dataState = FBUtil.ParseWorldState(buffer);
         if (dataState === null) {
             console.log("other type than world");
-            let killedPlayer = FBUtil.ParseKilledPlayer(buffer);
-            if (killedPlayer !== null) {
-                console.log("killed player", killedPlayer.playerName());
-                this.showText("You killed "+killedPlayer.playerName()+"!", "#f00");
+            let deathReport = FBUtil.ParseDeathReport(buffer);
+            if (deathReport !== null) {
+                if (deathReport.killer() == FBUtil.gameData.myName)
+                    this.showText("You killed "+deathReport.killed(), "#ff0000");
+                else if (deathReport.killed() == FBUtil.gameData.myName)
+                    this.showText("You were killed by "+deathReport.killer(), "#ff0000");
+                else
+                    this.showText(deathReport.killer() + " killed " + deathReport.killer(), "#000");
                 return;
             }
             let highscores = FBUtil.ParseHighscoreUpdate(buffer);

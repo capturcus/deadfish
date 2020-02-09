@@ -31,11 +31,12 @@ export default class Title extends Phaser.State {
         butt.onclick = (ev) => {
             let nameText: any = document.getElementById("myName");
             let serverText: any = document.getElementById("myText");
-            if (nameText.value === "") {
+            fbutil.FBUtil.gameData.myName = nameText.value;
+            if (fbutil.FBUtil.gameData.myName === "") {
                 alert("please name yourself");
                 return;
             }
-            let data = fbutil.FBUtil.MakeJoinRequest(nameText.value);
+            let data = fbutil.FBUtil.MakeJoinRequest(fbutil.FBUtil.gameData.myName);
             WebSocketService.instance.init("ws://"+serverText.value);
             WebSocketService.instance.getWebSocket().onerror = (e) => {
                 alert("failed to connect to server");
