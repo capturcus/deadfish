@@ -435,7 +435,7 @@ void gameThread()
 
         // load level
         gameState.level = std::make_unique<Level>();
-        std::string path("../../levels/big.bin");
+        auto path = get_config_value<std::string>("level");
         loadLevel(path);
 
         // send level to clients

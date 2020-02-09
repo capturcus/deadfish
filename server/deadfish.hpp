@@ -8,12 +8,14 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <glm/vec2.hpp>
+#include "inih/INIReader.h"
 #include "deadfish_generated.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 
 // const float METERS2PIXELS = 100.f;
 // const float PIXELS2METERS = 0.01f;
+const std::string INI_PATH = "./deadfish.ini";
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 
@@ -120,7 +122,30 @@ public:
     inline std::unique_ptr<std::lock_guard<std::mutex>> lock() {
         return std::make_unique<std::lock_guard<std::mutex>>(mut);
     }
+    INIReader reader = INIReader(INI_PATH);
 };
 
 extern GameState gameState;
 extern server websocket_server;
+
+template <typename T>
+T get_config_value(const char* key) {
+    if constexpr (std::is_same<T, int>::value) {
+        int ret = gameState.reader.GetInteger("default", key, INT_MAX);
+        if (ret == INT_MAX) {
+            std::cout << "failed to get int " << key << "\n";
+            exit(1);
+        }
+        return ret;
+    } else if constexpr (std::is_same<T, std::string>::value) {
+        std::string ret = gameState.reader.Get("default", key, "dkasgfidjsbgfjisbdgidfsjigbdj");
+        if (ret == "dkasgfidjsbgfjisbdgidfsjigbdj") {
+            std::cout << "failed to get string " << key << "\n";
+            exit(1);
+        }
+        return ret;
+    } else {
+        std::cout << "config unsupported type\n";
+        exit(1);
+    }
+}

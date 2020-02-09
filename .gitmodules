@@ -1,0 +1,3 @@
+[submodule "server/inih"]
+	path = server/inih
+	url = https://github.com/jtilly/inih
