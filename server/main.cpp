@@ -118,10 +118,7 @@ void on_close(websocketpp::connection_hdl hdl)
 
 int main()
 {
-    if (gameState.reader.ParseError() != 0) {
-        std::cout << "Can't load " << INI_PATH << "\n";
-        return 1;
-    }
+    boost::property_tree::ini_parser::read_ini(INI_PATH, gameState.config);
 
     srand(time(0));
 
@@ -133,7 +130,7 @@ int main()
     websocket_server.set_close_handler(&on_close);
 
     websocket_server.init_asio();
-    websocket_server.listen(get_config_value<int>("port"));
+    websocket_server.listen(gameState.config.get<int>("default.port"));
     websocket_server.start_accept();
 
     std::cout << "server started\n";
