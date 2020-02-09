@@ -114,6 +114,7 @@ table DeathReport {
 }
 
 enum SimpleServerEventType: byte {
+  GameEnded,
   KilledCivilian,
   TooFarToKill
 }

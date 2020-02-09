@@ -12,6 +12,7 @@ const float KILL_DISTANCE = 1.f;
 const float INSTA_KILL_DISTANCE = 0.61f;
 const int CIVILIAN_PENALTY = -1;
 const int KILL_REWARD = 5;
+const uint64_t ROUND_LENGTH = 10 * 60 * 20; // 10 minutes
 
 bool operator==(websocketpp::connection_hdl &a, websocketpp::connection_hdl &b)
 {
@@ -60,6 +61,12 @@ void sendServerMessage(Player *const player,
 {
     auto str = makeServerMessage(builder, type, offset);
     websocket_server.send(player->conn_hdl, str, websocketpp::frame::opcode::binary);
+}
+
+void sendToAll(std::string& data) {
+    for (auto& p : gameState.players) {
+        websocket_server.send(p->conn_hdl, data, websocketpp::frame::opcode::binary);
+    }
 }
 
 Player *const getPlayerByConnHdl(websocketpp::connection_hdl &hdl)
@@ -352,10 +359,7 @@ void sendHighscores()
     auto v = builder.CreateVector(entries);
     auto update = DeadFish::CreateHighscoreUpdate(builder, v);
     auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_HighscoreUpdate, update.Union());
-    for (auto &p : gameState.players)
-    {
-        websocket_server.send(p->conn_hdl, data, websocketpp::frame::opcode::binary);
-    }
+    sendToAll(data);
 }
 
 void killCivilian(Player *const p, Civilian *const c)
@@ -382,9 +386,7 @@ void killPlayer(Player *const p, Player *const target)
     auto killed = builder.CreateString(target->name);
     auto ev = DeadFish::CreateDeathReport(builder, killer, killed);
     auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_DeathReport, ev.Union());
-    for (auto& p : gameState.players) {
-        websocket_server.send(p->conn_hdl, data, websocketpp::frame::opcode::binary);
-    }
+    sendToAll(data);
 
     sendHighscores();
 }
@@ -488,11 +490,8 @@ void gameThread()
 
         // send level to clients
         auto levelOffset = serializeLevel(builder);
-        auto str = makeServerMessage(builder, DeadFish::ServerMessageUnion_Level, levelOffset.Union());
-        for (auto &player : gameState.players)
-        {
-            websocket_server.send(player->conn_hdl, str, websocketpp::frame::opcode::binary);
-        }
+        auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_Level, levelOffset.Union());
+        sendToAll(data);
 
         for (auto &player : gameState.players)
         {
@@ -503,11 +502,23 @@ void gameThread()
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     int civilianTimer = 0;
+    uint64_t roundTimer = ROUND_LENGTH;
 
     while (1)
     {
         auto maybe_guard = gameState.lock();
         auto frameStart = std::chrono::system_clock::now();
+
+        roundTimer--;
+        if (roundTimer == 0) {
+            // send game end message to everyone
+            builder.Clear();
+            auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_GameEnded);
+            auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_SimpleServerEvent, ev.Union());
+            sendToAll(data);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            exit(0);
+        }
 
         // update physics
         gameState.b2world->Step(1 / 20.0, 8, 3);

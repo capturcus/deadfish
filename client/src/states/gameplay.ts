@@ -11,6 +11,13 @@ const PIXELS2METERS = 0.01;
 const METERS2PIXELS = 100;
 
 const CIRCLE_WIDTH = 15;
+const ROUND_LENGTH = 10 * 60;
+
+function pad(num:number, size:number): string {
+    let s = num+"";
+    while (s.length < size) s = "0" + s;
+    return s;
+}
 
 export default class Gameplay extends Phaser.State {
     t: number;
@@ -21,6 +28,8 @@ export default class Gameplay extends Phaser.State {
     running: boolean = false;
     bushGroup: Phaser.Group;
     textGroup: Phaser.Group;
+    secondsLeft: number = ROUND_LENGTH;
+    timerText: Phaser.Text;
 
     public sendCommandRunning(running: boolean) {
         let builder = new flatbuffers.Builder(1);
@@ -68,11 +77,11 @@ export default class Gameplay extends Phaser.State {
         let spr = this.add.text(0, 300, text, {
             "fontSize": 60
         });
-        spr.position.x = this.game.width/2-spr.width/2;
+        spr.position.x = this.game.width / 2 - spr.width / 2;
         this.textGroup.add(spr);
         spr.addColor(color, 0);
-        this.game.add.tween(spr.cameraOffset).to({y: 0}, 1000, Phaser.Easing.Linear.None, true);
-        this.game.add.tween(spr).to({alpha: 0}, 1500, Phaser.Easing.Linear.None, true);
+        this.game.add.tween(spr.cameraOffset).to({ y: 0 }, 1000, Phaser.Easing.Linear.None, true);
+        this.game.add.tween(spr).to({ alpha: 0 }, 1500, Phaser.Easing.Linear.None, true);
         this.game.time.events.add(1500, () => {
             spr.destroy();
             spr = undefined;
@@ -84,7 +93,7 @@ export default class Gameplay extends Phaser.State {
         let highscores = document.getElementById("highscorestable");
         let html = "";
         for (let p of FBUtil.gameData.highscores) {
-            html += "<tr><td>"+p.name+"</td><td>"+p.points+"</td></tr>";
+            html += "<tr><td>" + p.name + "</td><td>" + p.points + "</td></tr>";
         }
         highscores.innerHTML = html;
     }
@@ -93,6 +102,19 @@ export default class Gameplay extends Phaser.State {
         let highscores = document.getElementById("highscorestable");
         highscores.setAttribute("style", "display: block;");
         this.updateHighscores();
+    }
+
+    public secondsToText(): string {
+        let secs = this.secondsLeft % 60;
+        let mins = Math.floor(this.secondsLeft / 60);
+        return pad(mins, 2) + ":" + pad(secs, 2);
+    }
+
+    advanceTimer() {
+        if(!FBUtil.gameData.gameRunning)
+            return;
+        this.secondsLeft--;
+        this.timerText.text = this.secondsToText();
     }
 
     public create(): void {
@@ -105,13 +127,21 @@ export default class Gameplay extends Phaser.State {
 
         this.game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
 
-        this.myGraphics = this.game.add.graphics(this.game.width/2-50, this.game.height/2+100);
+        this.myGraphics = this.game.add.graphics(this.game.width / 2 - 50, this.game.height / 2 + 100);
         this.globalGraphics = this.game.add.graphics(0, 0);
         this.bushGroup = this.game.add.group();
         this.textGroup = this.game.add.group();
+        this.timerText = this.game.add.text(0, 20, this.secondsToText(), {
+            "fontSize": 60
+        });
+        this.timerText.position.x = this.game.width - (this.timerText.width / 2) - 100;
+        this.timerText.fixedToCamera = true;
+        this.textGroup.add(this.timerText);
+
+        setInterval(this.advanceTimer.bind(this), 1000);
 
         for (let player of FBUtil.gameData.initMeta.players) {
-            FBUtil.gameData.highscores.push({name: player.name, points: 0});
+            FBUtil.gameData.highscores.push({ name: player.name, points: 0 });
         }
 
         this.game.input.keyboard.onDownCallback = ((ev) => {
@@ -132,7 +162,7 @@ export default class Gameplay extends Phaser.State {
                     this.sendCommandRunning(this.running);
                 }
             }
-            if (ev.key === "a") {
+            if (ev.key === "a" && FBUtil.gameData.gameRunning) {
                 let highscores = document.getElementById("highscorestable");
                 highscores.setAttribute("style", "display: none;");
             }
@@ -151,7 +181,7 @@ export default class Gameplay extends Phaser.State {
             sprite.anchor.x = 0.5;
             sprite.anchor.y = 0.5;
         }
-    
+
         WebSocketService.instance.getWebSocket().onmessage = (ev) => {
             (new Response(ev.data).arrayBuffer()).then(this.handleData.bind(this));
         };
@@ -205,6 +235,18 @@ export default class Gameplay extends Phaser.State {
             if (ev === Generated.DeadFish.SimpleServerEventType.KilledCivilian) {
                 this.showText("You killed a civilian. You monster.", "#000");
             }
+            if (ev === Generated.DeadFish.SimpleServerEventType.GameEnded) {
+                FBUtil.gameData.gameRunning = false;
+                let spr = this.game.add.text(0, 100, "GAME OVER", {
+                    "fontSize": 80,
+                    stroke: "#000",
+                    strokeThickness: 10
+                });
+                spr.position.x = this.game.width / 2 - spr.width / 2;
+                spr.addColor("#ff0000", 0);
+                spr.fixedToCamera = true;
+                this.renderHighscores();
+            }
             return;
         }
         let dataState = FBUtil.ParseWorldState(buffer);
@@ -213,9 +255,9 @@ export default class Gameplay extends Phaser.State {
             let deathReport = FBUtil.ParseDeathReport(buffer);
             if (deathReport !== null) {
                 if (deathReport.killer() == FBUtil.gameData.myName)
-                    this.showText("You killed "+deathReport.killed(), "#ff0000");
+                    this.showText("You killed " + deathReport.killed(), "#ff0000");
                 else if (deathReport.killed() == FBUtil.gameData.myName)
-                    this.showText("You were killed by "+deathReport.killer(), "#ff0000");
+                    this.showText("You were killed by " + deathReport.killer(), "#ff0000");
                 else
                     this.showText(deathReport.killer() + " killed " + deathReport.killer(), "#000");
                 return;
@@ -225,7 +267,7 @@ export default class Gameplay extends Phaser.State {
                 FBUtil.gameData.highscores = [];
                 for (let i = 0; i < highscores.playersLength(); i++) {
                     let player = highscores.players(i);
-                    FBUtil.gameData.highscores.push({"name": player.playerName(), "points": player.playerPoints()});
+                    FBUtil.gameData.highscores.push({ "name": player.playerName(), "points": player.playerPoints() });
                 }
                 FBUtil.gameData.highscores.sort((a, b) => b.points - a.points);
 
@@ -279,7 +321,7 @@ export default class Gameplay extends Phaser.State {
         for (let i = 0; i < dataState.indicatorsLength(); i++) {
             indicators.push({
                 angle: dataState.indicators(i).angle(),
-                force: 1-dataState.indicators(i).force(),
+                force: 1 - dataState.indicators(i).force(),
                 visible: dataState.indicators(i).visible()
             });
         }
@@ -287,8 +329,8 @@ export default class Gameplay extends Phaser.State {
     }
 
     public drawIndicators(indicators) {
-        const FORCE_MULTIPLIER = Math.PI/2;
-        indicators.sort((a,b) => a.force-b.force);
+        const FORCE_MULTIPLIER = Math.PI / 2;
+        indicators.sort((a, b) => a.force - b.force);
         this.myGraphics.clear();
         let outer = indicators.length;
         for (let i of indicators) {
@@ -296,15 +338,15 @@ export default class Gameplay extends Phaser.State {
                 this.myGraphics.beginFill(Phaser.Color.BLUE, 0.5);
             else
                 this.myGraphics.beginFill(Phaser.Color.GRAY, 0.2);
-            this.myGraphics.drawCircle(0, 0, 60+outer*CIRCLE_WIDTH+CIRCLE_WIDTH*i.force);
+            this.myGraphics.drawCircle(0, 0, 60 + outer * CIRCLE_WIDTH + CIRCLE_WIDTH * i.force);
             this.myGraphics.beginFill(Phaser.Color.WHITE, 1);
-            this.myGraphics.drawCircle(0, 0, 60+outer*CIRCLE_WIDTH);
+            this.myGraphics.drawCircle(0, 0, 60 + outer * CIRCLE_WIDTH);
             outer--;
         }
     }
 
     public update(): void {
-        if (!this.mySprite)
+        if (!this.mySprite || !FBUtil.gameData.gameRunning)
             return;
         this.myGraphics.position = this.mySprite.position;
         let offsetX = this.input.activePointer.x - (this.game.width / 2);
@@ -320,7 +362,8 @@ export default class Gameplay extends Phaser.State {
                 this.globalGraphics.drawCircle(mob.sprite.x, mob.sprite.y, 100);
                 continue;
             }
-            if (mob.sprite.input.pointerOver()) {
+            if (mob.id !== FBUtil.gameData.initMeta.my_id &&
+                mob.sprite.input.pointerOver()) {
                 this.globalGraphics.beginFill(Phaser.Color.GRAY, 0.2);
                 this.globalGraphics.drawCircle(mob.sprite.x, mob.sprite.y, 100);
             }

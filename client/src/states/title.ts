@@ -43,7 +43,7 @@ export default class Title extends Phaser.State {
             }
             WebSocketService.instance.getWebSocket().onclose = (e) => {
                 // alert("lost connection to server");
-                location.reload();
+                // location.reload();
             }
             WebSocketService.instance.getWebSocket().onopen = (ev) => {
                 console.log("connected");

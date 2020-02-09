@@ -8,6 +8,7 @@ export namespace FBUtil {
         initMeta: any;
         highscores: any = [];
         myName: string;
+        gameRunning: boolean = true;
     }
 
     export let gameData: GameData = new GameData();
