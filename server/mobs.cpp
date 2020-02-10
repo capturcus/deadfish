@@ -89,7 +89,7 @@ bool Player::update()
     if (this->deathTimeout > 0) {
         this->deathTimeout--;
         if (this->deathTimeout == 0)
-            spawnPlayer(this);
+            spawnPlayer(*this);
         return true;
     }
     if (this->attackTimeout > 0) {
@@ -155,7 +155,7 @@ void Player::handleCollision(Collideable* other) {
         return;
     if(this->killTarget && this->killTarget == mob) {
         // the player wants to kill the mob and collided with him, execute the kill
-        executeKill(this, mob);
+        executeKill(*this, *mob);
     }
 }
 

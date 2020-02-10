@@ -54,13 +54,13 @@ std::string makeServerMessage(flatbuffers::FlatBufferBuilder &builder,
     return str;
 }
 
-void sendServerMessage(Player *const player,
+void sendServerMessage(Player& player,
     flatbuffers::FlatBufferBuilder &builder,
     DeadFish::ServerMessageUnion type,
     flatbuffers::Offset<void> offset)
 {
     auto str = makeServerMessage(builder, type, offset);
-    websocket_server.send(player->conn_hdl, str, websocketpp::frame::opcode::binary);
+    websocket_server.send(player.conn_hdl, str, websocketpp::frame::opcode::binary);
 }
 
 void sendToAll(std::string& data) {
@@ -69,19 +69,19 @@ void sendToAll(std::string& data) {
     }
 }
 
-Player *const getPlayerByConnHdl(websocketpp::connection_hdl &hdl)
+Player& getPlayerByConnHdl(websocketpp::connection_hdl &hdl)
 {
     auto player = gameState.players.begin();
     while (player != gameState.players.end())
     {
         if ((*player)->conn_hdl == hdl)
         {
-            return player->get();
+            return *(player->get());
         }
         player++;
     }
     std::cout << "getPlayerByConnHdl PLAYER NOT FOUND\n";
-    return nullptr;
+    exit(1);
 }
 
 struct FOVCallback
@@ -101,20 +101,22 @@ struct FOVCallback
     }
     float minfraction = 1.f;
     b2Fixture *closest = nullptr;
-    Mob *target = nullptr;
+    Mob* target = nullptr;
 };
 
-bool playerSeeMob(Player *const p, Mob *const m)
+bool playerSeeMob(Player& p, Mob& m)
 {
-    auto p2 = dynamic_cast<Player*>(m);
-    if (p2 && p2->deathTimeout > 0)
-        return false; // can't see dead ppl lol
+    try {
+        auto p2 = dynamic_cast<Player&>(m);
+        if (p2.deathTimeout > 0)
+            return false; // can't see dead ppl lol
+    } catch(...) {}
     FOVCallback fovCallback;
-    fovCallback.target = m;
-    auto ppos = p->deathTimeout > 0 ? g2b(p->targetPosition) : p->body->GetPosition();
-    auto mpos = m->body->GetPosition();
+    fovCallback.target = &m;
+    auto ppos = p.deathTimeout > 0 ? g2b(p.targetPosition) : p.body->GetPosition();
+    auto mpos = m.body->GetPosition();
     gameState.b2world->RayCast(&fovCallback, ppos, mpos);
-    return fovCallback.closest && fovCallback.closest->GetBody() == m->body;
+    return fovCallback.closest && fovCallback.closest->GetBody() == m.body;
 }
 
 float revLerp(float min, float max, float val)
@@ -128,21 +130,21 @@ float revLerp(float min, float max, float val)
 
 flatbuffers::Offset<DeadFish::Indicator>
 makePlayerIndicator(flatbuffers::FlatBufferBuilder &builder,
-                    Player *const rootPlayer,
-                    Player *const otherPlayer)
+                    Player& rootPlayer,
+                    Player& otherPlayer)
 {
-    glm::vec2 toTarget = b2g(otherPlayer->body->GetPosition()) - b2g(rootPlayer->body->GetPosition());
+    glm::vec2 toTarget = b2g(otherPlayer.body->GetPosition()) - b2g(rootPlayer.body->GetPosition());
     float force = revLerp(6, 12, glm::length(toTarget));
     return DeadFish::CreateIndicator(builder, 0, force, false);
 }
 
-flatbuffers::Offset<void> makeWorldState(Player *const player, flatbuffers::FlatBufferBuilder &builder)
+flatbuffers::Offset<void> makeWorldState(Player& player, flatbuffers::FlatBufferBuilder &builder)
 {
     std::vector<flatbuffers::Offset<DeadFish::Mob>> mobs;
     std::vector<flatbuffers::Offset<DeadFish::Indicator>> indicators;
     for (auto &n : gameState.civilians)
     {
-        if (!playerSeeMob(player, n.get()))
+        if (!playerSeeMob(player, *n.get()))
             continue;
 
         auto posVec = DeadFish::Vec2(n->body->GetPosition().x, n->body->GetPosition().y);
@@ -160,12 +162,12 @@ flatbuffers::Offset<void> makeWorldState(Player *const player, flatbuffers::Flat
             // is dead, don't send
             continue;
         }
-        bool differentPlayer = p->id != player->id;
+        bool differentPlayer = p->id != player.id;
         bool canSeeOther;
         if (differentPlayer)
         {
-            canSeeOther = playerSeeMob(player, p.get());
-            auto indicator = makePlayerIndicator(builder, player, p.get());
+            canSeeOther = playerSeeMob(player, *p.get());
+            auto indicator = makePlayerIndicator(builder, player, *p.get());
             indicators.push_back(indicator);
         }
         if (differentPlayer && !canSeeOther)
@@ -206,13 +208,13 @@ class TestContactListener : public b2ContactListener
     }
 };
 
-void physicsInitMob(Mob *m, glm::vec2 pos, float angle, float radius, uint16 categoryBits = 1)
+void physicsInitMob(Mob& m, glm::vec2 pos, float angle, float radius, uint16 categoryBits = 1)
 {
     b2BodyDef myBodyDef;
     myBodyDef.type = b2_dynamicBody;      //this will be a dynamic body
     myBodyDef.position.Set(pos.x, pos.y); //set the starting position
     myBodyDef.angle = angle;              //set the starting angle
-    m->body = gameState.b2world->CreateBody(&myBodyDef);
+    m.body = gameState.b2world->CreateBody(&myBodyDef);
     b2CircleShape circleShape;
     circleShape.m_radius = radius;
 
@@ -221,8 +223,8 @@ void physicsInitMob(Mob *m, glm::vec2 pos, float angle, float radius, uint16 cat
     fixtureDef.density = 1;
     fixtureDef.friction = 0;
     fixtureDef.filter.categoryBits = categoryBits;
-    m->body->CreateFixture(&fixtureDef);
-    m->body->SetUserData(m);
+    m.body->CreateFixture(&fixtureDef);
+    m.body->SetUserData(&m);
 }
 
 std::vector<int> civiliansSpeciesCount()
@@ -269,12 +271,12 @@ void spawnCivilian()
     // std::cout << "spawning species " << lowestSpecies << "\n";
     c->previousNavpoint = spawnName;
     c->currentNavpoint = spawnName;
-    physicsInitMob(c, spawn->position, 0, 0.3f);
+    physicsInitMob(*c, spawn->position, 0, 0.3f);
     c->setNextNavpoint();
     gameState.civilians.push_back(std::unique_ptr<Civilian>(c));
 }
 
-void spawnPlayer(Player *const p)
+void spawnPlayer(Player& player)
 {
     // find spawns
     uint64_t maxMinDist = 0;
@@ -302,35 +304,44 @@ void spawnPlayer(Player *const p)
         }
     }
     auto spawn = gameState.level->navpoints[maxSpawn].get();
-    physicsInitMob(p, spawn->position, 0, 0.3f, 3);
+    physicsInitMob(player, spawn->position, 0, 0.3f, 3);
     // physicsInitMob(p, spawn->position, 0, 0.3f);
-    p->targetPosition = spawn->position;
+    player.targetPosition = spawn->position;
 }
 
-void executeCommandKill(Player *const player, uint16_t id)
+Mob& findMobById(uint16_t id) {
+    auto it = std::find_if(gameState.civilians.begin(), gameState.civilians.end(),
+        [id](const auto& c) { return c->id == id; });
+    if (it != gameState.civilians.end())
+        return *(*it);
+
+    auto it2 = std::find_if(gameState.players.begin(), gameState.players.end(),
+        [id](const auto& p) { return p->id == id; });
+    if (it2 != gameState.players.end())
+        return *(*it2);
+    // for (auto it = gameState.civilians.begin(); it != gameState.civilians.end(); it++)
+    // {
+    //     if ((*it)->id == id)
+    //     {
+    //         return *(*it);
+    //     }
+    // }
+    // for (auto it = gameState.players.begin(); it != gameState.players.end(); it++)
+    // {
+    //     if ((*it)->id == id)
+    //     {
+    //         return *(*it);
+    //     }
+    // }
+    std::cout << "could not find mob by id " << id << "\n";
+    exit(1);
+}
+
+void executeCommandKill(Player& player, uint16_t id)
 {
-    player->lastAttack = std::chrono::system_clock::now();
-    // std::cout << "player " << player->name << " trying to kill " << id << "\n";
-    Civilian *civ = nullptr;
-    for (auto &c : gameState.civilians)
-    {
-        if (c->id == id)
-        {
-            civ = c.get();
-            break;
-        }
-    }
-    Player *pl = nullptr;
-    for (auto &p : gameState.players)
-    {
-        if (p->id == id)
-        {
-            pl = p.get();
-            break;
-        }
-    }
-    Mob *m = civ ? (Mob *)civ : (Mob *)pl;
-    auto distance = b2Distance(m->body->GetPosition(), player->body->GetPosition());
+    player.lastAttack = std::chrono::system_clock::now();
+    auto& m = findMobById(id);
+    auto distance = b2Distance(m.body->GetPosition(), player.body->GetPosition());
     if (distance < INSTA_KILL_DISTANCE)
     {
         executeKill(player, m);
@@ -338,7 +349,7 @@ void executeCommandKill(Player *const player, uint16_t id)
     }
     if (distance < KILL_DISTANCE)
     {
-        player->killTarget = m;
+        player.killTarget = &m;
         return;
     }
     // send message too far
@@ -362,10 +373,10 @@ void sendHighscores()
     sendToAll(data);
 }
 
-void killCivilian(Player *const p, Civilian *const c)
+void killCivilian(Player& p, Civilian& c)
 {
-    c->toBeDeleted = true;
-    p->points += CIVILIAN_PENALTY;
+    c.toBeDeleted = true;
+    p.points += CIVILIAN_PENALTY;
 
     // send the killednpc message
     flatbuffers::FlatBufferBuilder builder;
@@ -375,15 +386,15 @@ void killCivilian(Player *const p, Civilian *const c)
     sendHighscores();
 }
 
-void killPlayer(Player *const p, Player *const target)
+void killPlayer(Player& p, Player& target)
 {
-    target->toBeDeleted = true;
-    p->points += KILL_REWARD;
+    target.toBeDeleted = true;
+    p.points += KILL_REWARD;
 
     // send the deathreport message
     flatbuffers::FlatBufferBuilder builder;
-    auto killer = builder.CreateString(p->name);
-    auto killed = builder.CreateString(target->name);
+    auto killer = builder.CreateString(p.name);
+    auto killed = builder.CreateString(target.name);
     auto ev = DeadFish::CreateDeathReport(builder, killer, killed);
     auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_DeathReport, ev.Union());
     sendToAll(data);
@@ -391,44 +402,34 @@ void killPlayer(Player *const p, Player *const target)
     sendHighscores();
 }
 
-void executeKill(Player *const p, Mob *const m)
+void executeKill(Player& p, Mob& m)
 {
     // maybe he killed us first?
-    auto p2 = dynamic_cast<Player *>(m);
-    if (p2 &&
-        p2->killTarget &&
-        p2->killTarget->id == p->id &&
-        p2->lastAttack < p->lastAttack)
-    {
-        // he did kill us first
-        executeKill(p2, p);
-        return;
-    }
-    p->killTarget = nullptr;
-    p->state = MobState::ATTACKING;
-    p->attackTimeout = 40;
-    p->lastAttack = std::chrono::system_clock::from_time_t(0);
+    try {
+        auto p2 = dynamic_cast<Player&>(m);
+        if (p2.killTarget &&
+            p2.killTarget->id == p.id &&
+            p2.lastAttack < p.lastAttack)
+        {
+            // he did kill us first
+            executeKill(p2, p);
+            return;
+        }
+    } catch(...) {}
+    p.killTarget = nullptr;
+    p.state = MobState::ATTACKING;
+    p.attackTimeout = 40;
+    p.lastAttack = std::chrono::system_clock::from_time_t(0);
     // was it a civilian?
-    for (auto it = gameState.civilians.begin(); it != gameState.civilians.end(); it++)
-    {
-        if ((*it)->id == m->id)
-        {
-            // it was a civ
-            killCivilian(p, it->get());
-            return;
-        }
-    }
-
+    try {
+        auto& c = dynamic_cast<Civilian&>(m);
+        killCivilian(p, c);
+    } catch(...) {}
     // was it a player?
-    for (auto it = gameState.players.begin(); it != gameState.players.end(); it++)
-    {
-        if ((*it)->id == m->id)
-        {
-            // it was a PLAYER
-            killPlayer(p, it->get());
-            return;
-        }
-    }
+    try {
+        auto& p2 = dynamic_cast<Player&>(m);
+        killPlayer(p, p2);
+    } catch(...) {}
 }
 
 void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
@@ -437,8 +438,8 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
     const auto clientMessage = flatbuffers::GetRoot<DeadFish::ClientMessage>(payload.c_str());
     const auto guard = gameState.lock();
 
-    auto p = getPlayerByConnHdl(hdl);
-    if (p->state == MobState::ATTACKING)
+    auto& p = getPlayerByConnHdl(hdl);
+    if (p.state == MobState::ATTACKING)
         return;
 
     switch (clientMessage->event_type())
@@ -446,16 +447,16 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
     case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandMove:
     {
         const auto event = clientMessage->event_as_CommandMove();
-        p->targetPosition = glm::vec2(event->target()->x(), event->target()->y());
-        p->state = p->state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
-        p->killTarget = nullptr;
-        p->lastAttack = std::chrono::system_clock::from_time_t(0);
+        p.targetPosition = glm::vec2(event->target()->x(), event->target()->y());
+        p.state = p.state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
+        p.killTarget = nullptr;
+        p.lastAttack = std::chrono::system_clock::from_time_t(0);
     }
     break;
     case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandRun:
     {
         const auto event = clientMessage->event_as_CommandRun();
-        p->state = event->run() ? MobState::RUNNING : MobState::WALKING;
+        p.state = event->run() ? MobState::RUNNING : MobState::WALKING;
     }
     break;
     case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandKill:
@@ -495,7 +496,7 @@ void gameThread()
 
         for (auto &player : gameState.players)
         {
-            spawnPlayer(player.get());
+            spawnPlayer(*player.get());
         }
     }
 
@@ -552,8 +553,8 @@ void gameThread()
         for (auto &p : gameState.players)
         {
             builder.Clear();
-            auto offset = makeWorldState(p.get(), builder);
-            sendServerMessage(p.get(), builder, DeadFish::ServerMessageUnion_WorldState, offset);
+            auto offset = makeWorldState(*p.get(), builder);
+            sendServerMessage(*p.get(), builder, DeadFish::ServerMessageUnion_WorldState, offset);
         }
 
         // Drop the lock

@@ -23,7 +23,7 @@ void sendInitMetadata()
         }
         auto players = builder.CreateVector(playerOffsets);
         auto metadata = DeadFish::CreateInitMetadata(builder, 0, players, targetPlayer->id);
-        sendServerMessage(targetPlayer.get(), builder, DeadFish::ServerMessageUnion_InitMetadata, metadata.Union());
+        sendServerMessage(*targetPlayer.get(), builder, DeadFish::ServerMessageUnion_InitMetadata, metadata.Union());
     }
 }
 
@@ -63,8 +63,8 @@ void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg)
     break;
     case DeadFish::ClientMessageUnion::ClientMessageUnion_PlayerReady:
     {
-        auto pl = getPlayerByConnHdl(hdl);
-        pl->ready = true;
+        auto& pl = getPlayerByConnHdl(hdl);
+        pl.ready = true;
         for (auto& p : gameState.players) {
             if (!p->ready)
                 return;
