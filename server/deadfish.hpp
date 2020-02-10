@@ -48,6 +48,9 @@ struct Collideable {
     virtual void handleCollision(Collideable* other) {}
 
     virtual ~Collideable(){}
+
+    Collideable(){}
+    Collideable(const Collideable&) = delete;
 };
 
 struct Mob : public Collideable {
