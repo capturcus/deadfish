@@ -76,7 +76,8 @@ bool Mob::update()
     return true;
 }
 
-void Player::reset() {
+void Player::reset()
+{
     gameState.b2world->DestroyBody(this->body);
     this->killTarget = nullptr;
     this->toBeDeleted = false;
@@ -86,26 +87,31 @@ void Player::reset() {
 
 bool Player::update()
 {
-    if (this->deathTimeout > 0) {
+    if (this->deathTimeout > 0)
+    {
         this->deathTimeout--;
         if (this->deathTimeout == 0)
             spawnPlayer(*this);
         return true;
     }
-    if (this->attackTimeout > 0) {
+    if (this->attackTimeout > 0)
+    {
         this->attackTimeout--;
-        if (this->attackTimeout == 0) {
+        if (this->attackTimeout == 0)
+        {
             this->state = MobState::WALKING;
             this->lastAttack = std::chrono::system_clock::from_time_t(0);
         }
     }
-    if (this->toBeDeleted) {
+    if (this->toBeDeleted)
+    {
         // kill player
         this->targetPosition = b2g(this->body->GetPosition());
         this->reset();
         this->deathTimeout = DEATH_TIMEOUT;
     }
-    if (this->killTarget) {
+    if (this->killTarget)
+    {
         this->targetPosition = b2g(this->killTarget->body->GetPosition());
     }
     return Mob::update();
@@ -114,9 +120,11 @@ bool Player::update()
 bool Civilian::update()
 {
     float dist = glm::distance(b2g(this->body->GetPosition()), this->targetPosition);
-    if (dist < CLOSE) {
+    if (dist < CLOSE)
+    {
         // the civilian reached his destination
-        if (gameState.level->navpoints[this->currentNavpoint]->isspawn) {
+        if (gameState.level->navpoints[this->currentNavpoint]->isspawn)
+        {
             // we arrived at spawn, despawn
             return false;
         }
@@ -144,23 +152,32 @@ void Civilian::setNextNavpoint()
     this->currentNavpoint = neighbors[rand() % neighbors.size()];
     auto targetPoint = gameState.level->navpoints[this->currentNavpoint]->position;
     auto pos = b2g(this->body->GetPosition());
-    auto offset = glm::rotate(glm::normalize(targetPoint - pos), glm::pi<float>()/2)*TARGET_OFFSET;
+    auto offset = glm::rotate(glm::normalize(targetPoint - pos), glm::pi<float>() / 2) * TARGET_OFFSET;
     offset += glm::linearRand(glm::vec2(-RANDOM_OFFSET, -RANDOM_OFFSET), {RANDOM_OFFSET, RANDOM_OFFSET});
     this->targetPosition = targetPoint + offset;
 }
 
-void Player::handleCollision(Collideable* other) {
-    auto mob = dynamic_cast<Mob*>(other);
-    if (!mob)
-        return;
-    if(this->killTarget && this->killTarget == mob) {
-        // the player wants to kill the mob and collided with him, execute the kill
-        executeKill(*this, *mob);
+void Player::handleCollision(Collideable &other)
+{
+    try
+    {
+        auto &mob = dynamic_cast<Mob &>(other);
+
+        if (this->killTarget && this->killTarget->id == mob.id)
+        {
+            // the player wants to kill the mob and collided with him, execute the kill
+            executeKill(*this, mob);
+        }
+    }
+    catch (...)
+    {
     }
 }
 
-Mob::~Mob() {
-    if (this->body) {
+Mob::~Mob()
+{
+    if (this->body)
+    {
         gameState.b2world->DestroyBody(this->body);
         this->body = nullptr;
     }

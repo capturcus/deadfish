@@ -206,9 +206,9 @@ class TestContactListener : public b2ContactListener
         auto collideableB = (Collideable *)contact->GetFixtureB()->GetBody()->GetUserData();
 
         if (collideableA && !collideableA->toBeDeleted)
-            collideableA->handleCollision(collideableB);
+            collideableA->handleCollision(*collideableB);
         if (collideableB && !collideableB->toBeDeleted)
-            collideableB->handleCollision(collideableA);
+            collideableB->handleCollision(*collideableA);
     }
 
     void EndContact(b2Contact *contact)
@@ -329,20 +329,6 @@ Mob &findMobById(uint16_t id)
                             [id](const auto &p) { return p->id == id; });
     if (it2 != gameState.players.end())
         return *(*it2);
-    // for (auto it = gameState.civilians.begin(); it != gameState.civilians.end(); it++)
-    // {
-    //     if ((*it)->id == id)
-    //     {
-    //         return *(*it);
-    //     }
-    // }
-    // for (auto it = gameState.players.begin(); it != gameState.players.end(); it++)
-    // {
-    //     if ((*it)->id == id)
-    //     {
-    //         return *(*it);
-    //     }
-    // }
     std::cout << "could not find mob by id " << id << "\n";
     exit(1);
 }

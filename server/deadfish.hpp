@@ -45,7 +45,7 @@ enum class MobState {
 
 struct Collideable {
     bool toBeDeleted = false;
-    virtual void handleCollision(Collideable* other) {}
+    virtual void handleCollision(Collideable& other) {}
 
     virtual ~Collideable(){}
 
@@ -58,7 +58,7 @@ struct Mob : public Collideable {
     uint16_t species = 0;
     b2Body* body = nullptr;
     MobState state = MobState::WALKING;
-    virtual void handleCollision(Collideable* other) override {}
+    virtual void handleCollision(Collideable& other) override {}
 
     glm::vec2 targetPosition;
 
@@ -76,7 +76,7 @@ struct Player : public Mob {
     int points = 0;
     uint16_t deathTimeout = 0;
     
-    void handleCollision(Collideable* other) override;
+    void handleCollision(Collideable& other) override;
     bool update() override;
     void reset();
 };
