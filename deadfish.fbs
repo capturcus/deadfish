@@ -19,6 +19,7 @@ table Bush {
 
 table NavPoint {
   position: Vec2;
+  radius: float;
   name: string;
   neighbors: [string];
   isspawn: bool;

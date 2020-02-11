@@ -100,6 +100,7 @@ struct Stone : public Collideable {
 
 struct NavPoint {
     glm::vec2 position;
+    float radius;
     std::vector<std::string> neighbors;
     bool isspawn;
     bool isplayerspawn;

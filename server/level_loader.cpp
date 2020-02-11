@@ -119,6 +119,7 @@ void loadLevel(std::string& path) {
         n->isspawn = navpoint->isspawn();
         n->isplayerspawn = navpoint->isplayerspawn();
         n->position = glm::vec2(navpoint->position()->x(), navpoint->position()->y());
+        n->radius = navpoint->radius();
         for (int j = 0; j < navpoint->neighbors()->size(); j++) {
             n->neighbors.push_back(navpoint->neighbors()->Get(j)->c_str());
         }

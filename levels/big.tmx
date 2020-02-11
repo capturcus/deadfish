@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.3.1" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="40" height="32" tilewidth="64" tileheight="64" infinite="0" nextlayerid="4" nextobjectid="1104">
+<map version="1.2" tiledversion="1.3.2" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="40" height="32" tilewidth="64" tileheight="64" infinite="0" nextlayerid="4" nextobjectid="1134">
  <editorsettings>
   <export target="test.json" format="json"/>
  </editorsettings>
@@ -461,167 +461,109 @@
   <object id="1077" type="playerwall" x="-44" y="-106" width="430" height="136"/>
   <object id="1078" type="playerwall" x="2184" y="1930" width="372" height="164"/>
   <object id="1079" type="playerwall" x="2464" y="1716" width="186" height="270"/>
-  <object id="1080" name="spawnleft" type="waypoint" x="12" y="-208">
+  <object id="1106" name="w9" type="waypoint" x="774" y="398" width="104" height="104">
+   <properties>
+    <property name="wps" value="w1,w6"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="1108" name="w2" type="waypoint" x="222" y="956" width="220" height="220">
+   <properties>
+    <property name="wps" value="w1,w3"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="1111" name="w3" type="waypoint" x="618" y="1594" width="266" height="266">
+   <properties>
+    <property name="isplayerspawn" type="bool" value="true"/>
+    <property name="wps" value="w2,w7"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="1112" name="w8" type="waypoint" x="1836" y="1672" width="122" height="122">
+   <properties>
+    <property name="wps" value="w7,w4"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="1114" name="w7" type="waypoint" x="1274" y="1480" width="422" height="422">
+   <properties>
+    <property name="wps" value="w3,pspawn6,w8,w6"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="1116" name="w6" type="waypoint" x="1046" y="238" width="372" height="372">
+   <properties>
+    <property name="wps" value="w9,pspawn5,w7,w5"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="1118" name="pspawn6" type="waypoint" x="1574" y="890" width="282" height="282">
+   <properties>
+    <property name="isplayerspawn" type="bool" value="true"/>
+    <property name="wps" value="w7,pspawn5"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="1119" name="pspawn5" type="waypoint" x="716" y="1014" width="294" height="294">
+   <properties>
+    <property name="isplayerspawn" type="bool" value="true"/>
+    <property name="wps" value="w6,pspawn6"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="1121" name="w5" type="waypoint" x="2018" y="544" width="316" height="316">
+   <properties>
+    <property name="wps" value="w6,w4"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="1122" name="w4" type="waypoint" x="2056" y="1550" width="244" height="244">
+   <properties>
+    <property name="wps" value="w8,w5,spawnright"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="1123" name="w1" type="waypoint" x="314" y="312" width="346" height="346">
+   <properties>
+    <property name="wps" value="spawnleft,w2,w9"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="1124" name="spawnright" type="waypoint" x="2546" y="2134" width="146" height="146">
    <properties>
     <property name="isspawn" type="bool" value="true"/>
-    <property name="wps" value="w16"/>
+    <property name="wps" value="w4"/>
    </properties>
-   <point/>
+   <ellipse/>
   </object>
-  <object id="1081" name="spawnright" type="waypoint" x="2669.33" y="2252">
+  <object id="1126" name="spawnleft" type="waypoint" x="-60" y="-258" width="182" height="182">
    <properties>
     <property name="isspawn" type="bool" value="true"/>
     <property name="wps" value="w1"/>
    </properties>
-   <point/>
+   <ellipse/>
   </object>
-  <object id="1082" name="w1" type="waypoint" x="2182.67" y="1700">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="w12,w2,spawnright"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1083" name="w2" type="waypoint" x="2274.67" y="1029.33">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="w3,w1"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1084" name="w3" type="waypoint" x="1838.67" y="414.667">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="w6,w5,w4,w2"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1085" name="w4" type="waypoint" x="1348" y="322.667">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="w6,w5,w3"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1086" name="w6" type="waypoint" x="1186.67" y="918.667">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="w9,w8,w7,w5,w4,w3"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1087" name="w5" type="waypoint" x="1072" y="518.667">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="w8,w7,w6,w4,w3"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1088" name="w7" type="waypoint" x="746.667" y="1012">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="w8,w6,w5"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1089" name="w8" type="waypoint" x="858.667" y="1264">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="w7,w6,w5"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1090" name="w9" type="waypoint" x="1420" y="1369.33">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="w13,w12,w11,w10,w6"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1091" name="w10" type="waypoint" x="1704" y="964">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="w11,w9"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1092" name="w11" type="waypoint" x="1801.33" y="1278.67">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="w12,w10,w9"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1093" name="w12" type="waypoint" x="1548" y="1774.67">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="w13,w9,w1"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1094" name="w13" type="waypoint" x="1105.33" y="1792">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="w14,w12,w9"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1095" name="w14" type="waypoint" x="662.667" y="1734.67">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="w15,w13"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1096" name="w15" type="waypoint" x="340" y="1050.67">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="w16,w14"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1097" name="w16" type="waypoint" x="514.667" y="488">
-   <properties>
-    <property name="isspawn" type="bool" value="false"/>
-    <property name="wps" value="spawnleft,w5,w15"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1098" name="pspawn1" type="waypoint" x="1740" y="1106.67">
+  <object id="1127" name="pspawn3" type="waypoint" x="1726" y="264" width="188" height="188">
    <properties>
     <property name="isplayerspawn" type="bool" value="true"/>
    </properties>
-   <point/>
+   <ellipse/>
   </object>
-  <object id="1099" name="pspawn2" type="waypoint" x="801.333" y="1130.67">
+  <object id="1130" name="pspawn2" type="waypoint" x="196" y="174" width="176" height="176">
    <properties>
     <property name="isplayerspawn" type="bool" value="true"/>
    </properties>
-   <point/>
+   <ellipse/>
   </object>
-  <object id="1100" name="pspawn3" type="waypoint" x="1608" y="354.667">
+  <object id="1132" name="pspawn4" type="waypoint" x="384" y="1398" width="228" height="228">
    <properties>
     <property name="isplayerspawn" type="bool" value="true"/>
    </properties>
-   <point/>
+   <ellipse/>
   </object>
-  <object id="1101" name="pspawn4" type="waypoint" x="437.333" y="1605.33">
-   <properties>
-    <property name="isplayerspawn" type="bool" value="true"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1102" name="pspawn5" type="waypoint" x="2182.87" y="1518.8">
-   <properties>
-    <property name="isplayerspawn" type="bool" value="true"/>
-   </properties>
-   <point/>
-  </object>
-  <object id="1103" name="pspawn6" type="waypoint" x="552.489" y="567.655">
-   <properties>
-    <property name="isplayerspawn" type="bool" value="true"/>
-   </properties>
-   <point/>
+  <object id="1133" name="pspawn1" type="waypoint" x="2240" y="1744" width="160" height="160">
+   <ellipse/>
   </object>
  </objectgroup>
 </map>

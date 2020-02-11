@@ -133,6 +133,16 @@ bool Civilian::update()
     return Mob::update();
 }
 
+glm::vec2 randFromCircle(glm::vec2 center, float radius)
+{
+    float x = (center.x - radius) + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (2 * radius)));
+    float y = (center.y - radius) + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (2 * radius)));
+    glm::vec2 ret = {x, y};
+    if (glm::distance(ret, center) <= radius)
+        return ret;
+    return randFromCircle(center, radius);
+}
+
 void Civilian::setNextNavpoint()
 {
     auto &spawn = gameState.level->navpoints[this->currentNavpoint];
@@ -150,11 +160,8 @@ void Civilian::setNextNavpoint()
         neighbors.erase(toDelete);
     this->previousNavpoint = this->currentNavpoint;
     this->currentNavpoint = neighbors[rand() % neighbors.size()];
-    auto targetPoint = gameState.level->navpoints[this->currentNavpoint]->position;
-    auto pos = b2g(this->body->GetPosition());
-    auto offset = glm::rotate(glm::normalize(targetPoint - pos), glm::pi<float>() / 2) * TARGET_OFFSET;
-    offset += glm::linearRand(glm::vec2(-RANDOM_OFFSET, -RANDOM_OFFSET), {RANDOM_OFFSET, RANDOM_OFFSET});
-    this->targetPosition = targetPoint + offset;
+    auto& targetPoint = gameState.level->navpoints[this->currentNavpoint];
+    this->targetPosition = randFromCircle(targetPoint->position, targetPoint->radius);
 }
 
 void Player::handleCollision(Collideable &other)

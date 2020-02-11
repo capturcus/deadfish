@@ -73,6 +73,13 @@ def handle_meta(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder
             isspawn = False
             isplayerspawn = False
 
+            width = float(o.getAttribute('width'))
+            height = float(o.getAttribute('height'))
+            if width != height:
+                print("waypoint", name, "is an ellipse, not a circle, width:", width, "height:", height)
+                exit(1)
+            radius = (width / 2.0) * GLOBAL_SCALE
+
             for prop in o.getElementsByTagName('property'):
                 prop_name = prop.getAttribute('name')
                 value = prop.getAttribute('value')
@@ -94,6 +101,7 @@ def handle_meta(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder
             DeadFish.NavPoint.NavPointStart(builder)
             pos = DeadFish.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
             DeadFish.NavPoint.NavPointAddPosition(builder, pos)
+            DeadFish.NavPoint.NavPointAddRadius(builder, radius)
             DeadFish.NavPoint.NavPointAddName(builder, name)
             DeadFish.NavPoint.NavPointAddNeighbors(builder, neighs)
             DeadFish.NavPoint.NavPointAddIsspawn(builder, isspawn)

@@ -126,6 +126,12 @@ bool playerSeeMob(Player &p, Mob &m)
     return fovCallback.closest && fovCallback.closest->GetBody() == m.body;
 }
 
+bool mobSeePoint(Mob &m, b2Vec2 &point) {
+    FOVCallback fovCallback;
+    gameState.b2world->RayCast(&fovCallback, m.body->GetPosition(), point);
+    return fovCallback.minfraction == 1.f;
+}
+
 float revLerp(float min, float max, float val)
 {
     if (val < min)
@@ -205,10 +211,12 @@ class TestContactListener : public b2ContactListener
         auto collideableA = (Collideable *)contact->GetFixtureA()->GetBody()->GetUserData();
         auto collideableB = (Collideable *)contact->GetFixtureB()->GetBody()->GetUserData();
 
-        if (collideableA && !collideableA->toBeDeleted)
+        if (collideableA && !collideableA->toBeDeleted &&
+            collideableB && !collideableB->toBeDeleted)
+        {
             collideableA->handleCollision(*collideableB);
-        if (collideableB && !collideableB->toBeDeleted)
             collideableB->handleCollision(*collideableA);
+        }
     }
 
     void EndContact(b2Contact *contact)
