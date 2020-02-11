@@ -62,7 +62,7 @@ struct Mob : public Collideable {
 
     glm::vec2 targetPosition;
 
-    virtual bool update();
+    virtual void update();
     virtual ~Mob();
 };
 
@@ -77,16 +77,19 @@ struct Player : public Mob {
     uint16_t deathTimeout = 0;
     
     void handleCollision(Collideable& other) override;
-    bool update() override;
+    void update() override;
     void reset();
 };
 
 struct Civilian : public Mob {
     std::string currentNavpoint;
     std::string previousNavpoint;
+    int slowFrames = 0;
+    b2Vec2 lastPos;
 
-    bool update() override;
+    void update() override;
     void setNextNavpoint();
+    void collisionResolution();
 };
 
 struct Bush {

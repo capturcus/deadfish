@@ -7,7 +7,7 @@
 
 const int FRAME_TIME = 50; // 20 fps
 const int CIVILIAN_TIME = 40;
-const int MAX_CIVILIANS = 30;
+const int MAX_CIVILIANS = 100;
 const float KILL_DISTANCE = 1.f;
 const float INSTA_KILL_DISTANCE = 0.61f;
 const int CIVILIAN_PENALTY = -1;
@@ -290,6 +290,8 @@ void spawnCivilian()
     physicsInitMob(c, spawn->position, 0, 0.3f);
     c->setNextNavpoint();
     gameState.civilians.push_back(std::unique_ptr<Civilian>(c));
+    std::cout << "spawning civilian of species " << lowestSpecies <<
+        " at " << spawnName << "to a total of " << gameState.civilians.size() << "\n";
 }
 
 void spawnPlayer(Player &player)
@@ -545,7 +547,8 @@ void gameThread()
         std::vector<int> despawns;
         for (int i = 0; i < gameState.civilians.size(); i++)
         {
-            if (!gameState.civilians[i]->update() || gameState.civilians[i]->toBeDeleted)
+            gameState.civilians[i]->update();
+            if (gameState.civilians[i]->toBeDeleted)
                 despawns.push_back(i);
         }
         for (int i = despawns.size() - 1; i >= 0; i--)

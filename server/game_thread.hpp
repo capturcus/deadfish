@@ -13,3 +13,4 @@ void sendServerMessage(Player& player,
 std::string makeServerMessage(flatbuffers::FlatBufferBuilder &builder,
     DeadFish::ServerMessageUnion type,
     flatbuffers::Offset<void> offset);
+bool mobSeePoint(Mob &m, b2Vec2 &point);
