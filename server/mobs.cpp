@@ -4,18 +4,6 @@
 #include <iostream>
 #include "game_thread.hpp"
 
-const float TURN_SPEED = 4.f;
-const float WALK_SPEED = 1.f;
-const float RUN_SPEED = 2.f;
-const float CLOSE = 0.05f;
-const float ANGULAR_CLOSE = 0.1f;
-const float TARGET_OFFSET = 0.3f;
-const float RANDOM_OFFSET = 0.15f;
-const int DEATH_TIMEOUT = 20 * 2;
-const float TOO_SLOW = 0.4f;
-const int CIV_SLOW_FRAMES = 40;
-const int CIV_RESET_FRAMES = 80;
-
 std::ostream &operator<<(std::ostream &os, glm::vec2 &v)
 {
     os << v.x << "," << v.y;
@@ -211,19 +199,30 @@ void Civilian::setNextNavpoint()
 
 void Player::handleCollision(Collideable &other)
 {
+    if (this->toBeDeleted)
+        return;
+    
     try
     {
         auto &mob = dynamic_cast<Mob &>(other);
 
         if (this->killTarget && this->killTarget->id == mob.id)
         {
+            this->setAttacking();
             // the player wants to kill the mob and collided with him, execute the kill
-            executeKill(*this, mob);
+            mob.handleKill(*this);
         }
     }
     catch (...)
     {
     }
+}
+
+void Player::setAttacking() {
+    this->killTarget = nullptr;
+    this->state = MobState::ATTACKING;
+    this->attackTimeout = 40;
+    this->lastAttack = std::chrono::system_clock::from_time_t(0);
 }
 
 Mob::~Mob()
@@ -233,4 +232,45 @@ Mob::~Mob()
         gameState.b2world->DestroyBody(this->body);
         this->body = nullptr;
     }
+}
+
+void Civilian::handleKill(Player& killer) {
+    this->toBeDeleted = true;
+    killer.points += CIVILIAN_PENALTY;
+
+    // send the killednpc message
+    flatbuffers::FlatBufferBuilder builder;
+    auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_KilledCivilian);
+    sendServerMessage(killer, builder, DeadFish::ServerMessageUnion_SimpleServerEvent, ev.Union());
+
+    sendHighscores();
+}
+
+void Player::handleKill(Player& killer) {
+    // did i kill him first?
+    if (this->killTarget &&
+        this->killTarget->id == killer.id &&
+        this->lastAttack < killer.lastAttack)
+    {
+        // i did kill him first
+        killer.handleKill(*this);
+        return;
+    }
+
+    this->toBeDeleted = true;
+    killer.points += KILL_REWARD;
+
+    // send the deathreport message
+    flatbuffers::FlatBufferBuilder builder;
+    auto killerOffset = builder.CreateString(killer.name);
+    auto killedOffset = builder.CreateString(this->name);
+    auto ev = DeadFish::CreateDeathReport(builder, killerOffset, killedOffset);
+    auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_DeathReport, ev.Union());
+    sendToAll(data);
+
+    sendHighscores();
+}
+
+bool Player::isDead() {
+    return this->deathTimeout > 0;
 }

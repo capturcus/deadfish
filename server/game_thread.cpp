@@ -5,15 +5,6 @@
 #include "game_thread.hpp"
 #include "level_loader.hpp"
 
-const int FRAME_TIME = 50; // 20 fps
-const int CIVILIAN_TIME = 40;
-const int MAX_CIVILIANS = 100;
-const float KILL_DISTANCE = 1.f;
-const float INSTA_KILL_DISTANCE = 0.61f;
-const int CIVILIAN_PENALTY = -1;
-const int KILL_REWARD = 5;
-const uint64_t ROUND_LENGTH = 10 * 60 * 20; // 10 minutes
-
 bool operator==(websocketpp::connection_hdl &a, websocketpp::connection_hdl &b)
 {
     return a.lock().get() == b.lock().get();
@@ -93,7 +84,7 @@ struct FOVCallback
     float32 ReportFixture(b2Fixture *fixture, const b2Vec2 &point, const b2Vec2 &normal, float32 fraction)
     {
         auto data = (Collideable *)fixture->GetBody()->GetUserData();
-        if (data && data != target && dynamic_cast<Mob *>(data))
+        if (data && data != target && !data->obstructsSight())
             return 1.f;
         if (fraction < minfraction)
         {
@@ -109,15 +100,8 @@ struct FOVCallback
 
 bool playerSeeMob(Player &p, Mob &m)
 {
-    try
-    {
-        auto &p2 = dynamic_cast<Player &>(m);
-        if (p2.deathTimeout > 0)
-            return false; // can't see dead ppl lol
-    }
-    catch (...)
-    {
-    }
+    if (m.isDead())
+        return false; // can't see dead ppl lol
     FOVCallback fovCallback;
     fovCallback.target = &m;
     auto ppos = p.deathTimeout > 0 ? g2b(p.targetPosition) : p.body->GetPosition();
@@ -291,7 +275,7 @@ void spawnCivilian()
     c->setNextNavpoint();
     gameState.civilians.push_back(std::unique_ptr<Civilian>(c));
     std::cout << "spawning civilian of species " << lowestSpecies <<
-        " at " << spawnName << "to a total of " << gameState.civilians.size() << "\n";
+        " at " << spawnName << " to a total of " << gameState.civilians.size() << "\n";
 }
 
 void spawnPlayer(Player &player)
@@ -350,7 +334,8 @@ void executeCommandKill(Player &player, uint16_t id)
     auto distance = b2Distance(m.body->GetPosition(), player.body->GetPosition());
     if (distance < INSTA_KILL_DISTANCE)
     {
-        executeKill(player, m);
+        player.setAttacking();
+        m.handleKill(player);
         return;
     }
     if (distance < KILL_DISTANCE)
@@ -377,77 +362,6 @@ void sendHighscores()
     auto update = DeadFish::CreateHighscoreUpdate(builder, v);
     auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_HighscoreUpdate, update.Union());
     sendToAll(data);
-}
-
-void killCivilian(Player &p, Civilian &c)
-{
-    c.toBeDeleted = true;
-    p.points += CIVILIAN_PENALTY;
-
-    // send the killednpc message
-    flatbuffers::FlatBufferBuilder builder;
-    auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_KilledCivilian);
-    sendServerMessage(p, builder, DeadFish::ServerMessageUnion_SimpleServerEvent, ev.Union());
-
-    sendHighscores();
-}
-
-void killPlayer(Player &p, Player &target)
-{
-    target.toBeDeleted = true;
-    p.points += KILL_REWARD;
-
-    // send the deathreport message
-    flatbuffers::FlatBufferBuilder builder;
-    auto killer = builder.CreateString(p.name);
-    auto killed = builder.CreateString(target.name);
-    auto ev = DeadFish::CreateDeathReport(builder, killer, killed);
-    auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_DeathReport, ev.Union());
-    sendToAll(data);
-
-    sendHighscores();
-}
-
-void executeKill(Player &p, Mob &m)
-{
-    // maybe he killed us first?
-    try
-    {
-        auto &p2 = dynamic_cast<Player &>(m);
-        if (p2.killTarget &&
-            p2.killTarget->id == p.id &&
-            p2.lastAttack < p.lastAttack)
-        {
-            // he did kill us first
-            executeKill(p2, p);
-            return;
-        }
-    }
-    catch (...)
-    {
-    }
-    p.killTarget = nullptr;
-    p.state = MobState::ATTACKING;
-    p.attackTimeout = 40;
-    p.lastAttack = std::chrono::system_clock::from_time_t(0);
-    // was it a civilian?
-    try
-    {
-        auto &c = dynamic_cast<Civilian &>(m);
-        killCivilian(p, c);
-    }
-    catch (...)
-    {
-    }
-    // was it a player?
-    try
-    {
-        auto &p2 = dynamic_cast<Player &>(m);
-        killPlayer(p, p2);
-    }
-    catch (...)
-    {
-    }
 }
 
 void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
