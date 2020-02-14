@@ -197,7 +197,7 @@ export default class Gameplay extends Phaser.State {
     }
     
     public getSpriteBySpecies(species) {
-        let sprite = this.game.add.sprite(150, 150, Assets.Spritesheets.ImagesFish100100.getName());
+        let sprite = this.game.add.sprite(150, 150, Assets.Spritesheets.ImagesFish120120.getName());
         sprite.anchor.x = 0.5;
         sprite.anchor.y = 0.5;
 

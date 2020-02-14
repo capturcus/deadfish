@@ -34,6 +34,16 @@ export namespace Spritesheets {
         static getMargin(): number { return 0; }
         static getSpacing(): number { return 0; }
     }
+    export class ImagesFish120120 {
+        static getName(): string { return 'fish.[120,120]'; }
+
+        static getPNG(): string { return require('assets/images/fish.[120,120].png'); }
+        static getFrameWidth(): number { return 120; }
+        static getFrameHeight(): number { return 120; }
+        static getFrameMax(): number { return -1; }
+        static getMargin(): number { return 0; }
+        static getSpacing(): number { return 0; }
+    }
 }
 
 export namespace Atlases {

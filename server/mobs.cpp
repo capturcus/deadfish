@@ -91,6 +91,9 @@ void Player::update()
             this->state = MobState::WALKING;
             this->lastAttack = std::chrono::system_clock::from_time_t(0);
         }
+        this->body->SetAngularVelocity(0);
+        this->body->SetLinearVelocity({0, 0});
+        return; // disable dying while killing and moving while killing
     }
     if (this->toBeDeleted)
     {
