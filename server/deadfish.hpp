@@ -36,7 +36,8 @@ static inline b2Vec2 g2b(glm::vec2 v) {
 
 enum class GamePhase {
     LOBBY = 0,
-    GAME
+    GAME,
+    EXITING
 };
 
 enum class MobState {
@@ -141,7 +142,6 @@ public:
     std::vector<std::unique_ptr<Player>> players;
     std::vector<std::unique_ptr<Civilian>> civilians;
     GamePhase phase = GamePhase::LOBBY;
-    int lastSpecies = 0;
     std::unique_ptr<Level> level = nullptr;
 
     std::unique_ptr<b2World> b2world = nullptr;

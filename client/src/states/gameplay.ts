@@ -12,6 +12,7 @@ const METERS2PIXELS = 100;
 
 const CIRCLE_WIDTH = 15;
 const ROUND_LENGTH = 10 * 60;
+const ANIM_FPS = 20;
 
 function pad(num:number, size:number): string {
     let s = num+"";
@@ -187,17 +188,24 @@ export default class Gameplay extends Phaser.State {
         };
     }
 
+    public spriteNums(max: number, offset: number, species: number) {
+        let ret = [];
+        for (let i = 0; i < max; i++) {
+            ret.push(i+offset+species*80);
+        }
+        return ret;
+    }
+    
     public getSpriteBySpecies(species) {
-        const adjustForSpecies = (l) => l.map((x) => (x + 12 * species));
         let sprite = this.game.add.sprite(150, 150, Assets.Spritesheets.ImagesFish100100.getName());
         sprite.anchor.x = 0.5;
         sprite.anchor.y = 0.5;
 
-        sprite.animations.add('idle', adjustForSpecies([0, 1, 2]));
-        sprite.animations.add('walking', adjustForSpecies([3, 4, 5]));
-        sprite.animations.add('attacking', adjustForSpecies([6, 7, 8, 9, 10, 11]));
+        sprite.animations.add('idle', this.spriteNums(20, 0, species));
+        sprite.animations.add('walking', this.spriteNums(20, 20, species));
+        sprite.animations.add('attacking', this.spriteNums(40, 40, species));
 
-        sprite.animations.play('idle', 3, true);
+        sprite.animations.play('idle', ANIM_FPS, true);
         sprite.inputEnabled = true;
         sprite.hitArea = new Phaser.Circle(0, 0, 100);
 
@@ -308,7 +316,7 @@ export default class Gameplay extends Phaser.State {
                 mob.state = dataMob.state();
                 let animKey = this.mobStateToAnimKey(mob.state);
                 console.log("change to", animKey);
-                mob.sprite.animations.play(animKey, 3, true);
+                mob.sprite.animations.play(animKey, ANIM_FPS, true);
             }
         }
         for (let mob in this.mobs) {

@@ -426,13 +426,19 @@ void gameThread()
         auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_Level, levelOffset.Union());
         sendToAll(data);
 
+        // shuffle the players to give them random species
+        std::random_shuffle(gameState.players.begin(), gameState.players.end());
+
+        uint8_t lastSpecies = 0;
         for (auto &player : gameState.players)
         {
+            player->species = lastSpecies;
+            lastSpecies++;
             spawnPlayer(*player.get());
         }
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     int civilianTimer = 0;
     uint64_t roundTimer = ROUND_LENGTH;

@@ -38,7 +38,6 @@ void addNewPlayer(const std::string &name, websocketpp::connection_hdl hdl)
     p->id = newID();
     p->name = name;
     p->conn_hdl = hdl;
-    p->species = gameState.lastSpecies++;
 
     gameState.players.push_back(std::unique_ptr<Player>(p));
 
@@ -112,6 +111,7 @@ void on_close(websocketpp::connection_hdl hdl)
     if (gameState.phase == GamePhase::GAME && gameState.players.size() == 0)
     {
         std::cout << "no players left, exiting\n";
+        gameState.phase = GamePhase::EXITING;
         exit(0);
     }
 }
