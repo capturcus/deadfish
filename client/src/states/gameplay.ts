@@ -128,7 +128,7 @@ export default class Gameplay extends Phaser.State {
 
         this.game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
 
-        this.myGraphics = this.game.add.graphics(this.game.width / 2 - 50, this.game.height / 2 + 100);
+        this.myGraphics = this.game.add.graphics(0, 0);
         this.globalGraphics = this.game.add.graphics(0, 0);
         this.bushGroup = this.game.add.group();
         this.textGroup = this.game.add.group();

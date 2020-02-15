@@ -230,7 +230,7 @@ void Player::setAttacking() {
 
 Mob::~Mob()
 {
-    if (gameState.phase != GamePhase::EXITING && this->body)
+    if (this->body)
     {
         gameState.b2world->DestroyBody(this->body);
         this->body = nullptr;
