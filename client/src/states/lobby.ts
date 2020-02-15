@@ -3,10 +3,7 @@ import WebSocketService from '../websocket';
 import * as fbutil from '../utils/fbutil';
 import { DeadFish } from '../deadfish_generated';
 
-// const AUTO_READY = true;
-const AUTO_READY = false;
-
-export default class Title extends Phaser.State {
+export default class Lobby extends Phaser.State {
     text;
 
     private setText() {
@@ -29,27 +26,27 @@ export default class Title extends Phaser.State {
             "fontSize": 20
         });
         this.setText();
-        let that = this;
         document.getElementById("lobbyStuff").setAttribute("style", "height: 100vh;position: fixed;left: 50%;transform: translateX(-50%);top: 80vh;");
         document.getElementById("readyButton").onclick = ((ev) => {
             this.sendReady();
         });
         WebSocketService.instance.getWebSocket().onopen = (ev) => {};
-        WebSocketService.instance.getWebSocket().onmessage = (data) => {
-            (new Response(data.data).arrayBuffer()).then((arrayBuffer) => {
-                let buffer = new Uint8Array(arrayBuffer);
-                if(fbutil.FBUtil.ParseInitMetadata(buffer)) {
-                    console.log("was not init");
-                    if(fbutil.FBUtil.ParseLevel(buffer)) {
-                        document.getElementById("lobbyStuff").setAttribute("style", "display: none;");
-                        that.game.state.start('gameplay', true);
-                    }
-                }
-                this.setText();
-            });
+        WebSocketService.instance.getWebSocket().onmessage = (data) => this.onWebSocket(data);
+        this.sendReady();
+    }
+
+    async onWebSocket(data: MessageEvent) {
+        console.log("onWebSocket!");
+        let arrayBuffer = await new Response(data.data).arrayBuffer();
+        let buffer = new Uint8Array(arrayBuffer);
+        console.log(buffer);
+        if(fbutil.FBUtil.ParseInitMetadata(buffer)) {
+            console.log("was not init");
+            if(fbutil.FBUtil.ParseLevel(buffer)) {
+                document.getElementById("lobbyStuff").setAttribute("style", "display: none;");
+                this.game.state.start('gameplay', true);
+            }
         }
-        if (AUTO_READY) {
-            this.sendReady();
-        }
+        this.setText();
     }
 }

@@ -183,8 +183,8 @@ export default class Gameplay extends Phaser.State {
             sprite.anchor.y = 0.5;
         }
 
-        WebSocketService.instance.getWebSocket().onmessage = (ev) => {
-            (new Response(ev.data).arrayBuffer()).then(this.handleData.bind(this));
+        WebSocketService.instance.getWebSocket().onmessage = async (ev) => {
+            this.handleData(await new Response(ev.data).arrayBuffer());
         };
     }
 
