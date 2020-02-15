@@ -24,13 +24,15 @@ export default class Title extends Phaser.State {
         logo.x -= logo.width / 2;
 
         let nameText = document.getElementById("myName");
-        nameText.setAttribute("value", makePlayerId(5));
+        // nameText.setAttribute("value", makePlayerId(5));
+        nameText.setAttribute("value", "");
+        let serverText: any = document.getElementById("myText");
+        serverText.value = location.host.split(":")[0] + ":63987";
 
         // FIXME: Change the ID of the button
         let butt = document.getElementById("myButton");
         butt.onclick = (ev) => {
             let nameText: any = document.getElementById("myName");
-            let serverText: any = document.getElementById("myText");
             fbutil.FBUtil.gameData.myName = nameText.value;
             if (fbutil.FBUtil.gameData.myName === "") {
                 alert("please name yourself");
