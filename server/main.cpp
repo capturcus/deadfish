@@ -86,10 +86,6 @@ void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg)
     }
 }
 
-void on_connect(websocketpp::connection_hdl hdl)
-{
-}
-
 void on_close(websocketpp::connection_hdl hdl)
 {
     auto player = gameState.players.begin();
@@ -124,7 +120,6 @@ int main()
 
     websocket_server.get_alog().clear_channels(websocketpp::log::alevel::all);
 
-    websocket_server.set_open_handler(&on_connect);
     websocket_server.set_message_handler(&on_message);
     websocket_server.set_reuse_addr(true);
     websocket_server.set_close_handler(&on_close);
