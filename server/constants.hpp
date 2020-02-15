@@ -8,8 +8,7 @@ const float KILL_DISTANCE = 1.f;
 const float INSTA_KILL_DISTANCE = 0.61f;
 const int CIVILIAN_PENALTY = -1;
 const int KILL_REWARD = 5;
-// const uint64_t ROUND_LENGTH = 10 * 60 * 20; // 10 minutes
-const uint64_t ROUND_LENGTH = 5 * 20; // 10 minutes
+const uint64_t ROUND_LENGTH = 10 * 60 * 20; // 10 minutes
 
 const float TURN_SPEED = 4.f;
 const float WALK_SPEED = 1.f;
