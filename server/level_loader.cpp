@@ -18,7 +18,7 @@ void initPlayerwall(const DeadFish::PlayerWall *pw)
     boxFixtureDef.filter.maskBits = ~1;
     boxFixtureDef.filter.categoryBits = 1 << 1;
     staticBody->CreateFixture(&boxFixtureDef); //add fixture to body
-    gameState.level->playerwalls.emplace_back(new PlayerWall);
+    gameState.level->playerwalls.emplace_back(std::make_unique<PlayerWall>());
     staticBody->SetUserData(gameState.level->playerwalls.back().get());
     gameState.level->playerwalls.back()->body = staticBody;
 }
@@ -94,30 +94,30 @@ void loadLevel(std::string &path)
         exit(1);
     }
     auto size = in.tellg();
-    auto memblock = new char[size];
+    std::vector<char> memblock(size);
     in.seekg(0, std::ios::beg);
-    in.read(memblock, size);
+    in.read(memblock.data(), memblock.size());
     in.close();
 
-    auto level = flatbuffers::GetRoot<DeadFish::Level>(memblock);
+    auto level = flatbuffers::GetRoot<DeadFish::Level>(memblock.data());
 
     // bushes
     for (int i = 0; i < level->bushes()->size(); i++)
     {
         auto bush = level->bushes()->Get(i);
-        auto b = new Bush;
+        auto b = std::make_unique<Bush>();
         b->position = glm::vec2(bush->pos()->x(), bush->pos()->y());
         b->radius = bush->radius();
-        gameState.level->bushes.push_back(std::unique_ptr<Bush>(b));
+        gameState.level->bushes.push_back(std::move(b));
     }
 
     // stones
     for (int i = 0; i < level->stones()->size(); i++)
     {
         auto stone = level->stones()->Get(i);
-        auto s = new Stone;
-        initStone(s, stone);
-        gameState.level->stones.push_back(std::unique_ptr<Stone>(s));
+        auto s = std::make_unique<Stone>();
+        initStone(s.get(), stone);
+        gameState.level->stones.push_back(std::move(s));
     }
 
     // playerwalls
@@ -131,7 +131,7 @@ void loadLevel(std::string &path)
     for (int i = 0; i < level->navpoints()->size(); i++)
     {
         auto navpoint = level->navpoints()->Get(i);
-        auto n = new NavPoint;
+        auto n = std::make_unique<NavPoint>();
         n->isspawn = navpoint->isspawn();
         n->isplayerspawn = navpoint->isplayerspawn();
         n->position = glm::vec2(navpoint->position()->x(), navpoint->position()->y());
@@ -140,6 +140,6 @@ void loadLevel(std::string &path)
         {
             n->neighbors.push_back(navpoint->neighbors()->Get(j)->c_str());
         }
-        gameState.level->navpoints[navpoint->name()->c_str()] = std::unique_ptr<NavPoint>(n);
+        gameState.level->navpoints[navpoint->name()->c_str()] = std::move(n);
     }
 }

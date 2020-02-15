@@ -22,7 +22,7 @@ void sendInitMetadata()
             playerOffsets.push_back(playerOffset);
         }
         auto players = builder.CreateVector(playerOffsets);
-        auto metadata = DeadFish::CreateInitMetadata(builder, 0, players, targetPlayer->id);
+        auto metadata = DeadFish::CreateInitMetadata(builder, players, targetPlayer->id);
         sendServerMessage(*targetPlayer.get(), builder, DeadFish::ServerMessageUnion_InitMetadata, metadata.Union());
     }
 }
@@ -34,12 +34,12 @@ void addNewPlayer(const std::string &name, websocketpp::connection_hdl hdl)
         return;
     }
 
-    auto p = new Player();
+    auto p = std::make_unique<Player>();
     p->id = newID();
     p->name = name;
     p->conn_hdl = hdl;
 
-    gameState.players.push_back(std::unique_ptr<Player>(p));
+    gameState.players.push_back(std::move(p));
 
     sendInitMetadata();
 }
@@ -75,7 +75,6 @@ void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg)
             auto con = websocket_server.get_con_from_hdl(p->conn_hdl);
             con->set_message_handler(&gameOnMessage);
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         new std::thread(gameThread); // leak the shit out of it yooo
     }
     break;
@@ -107,7 +106,6 @@ void on_close(websocketpp::connection_hdl hdl)
     if (gameState.phase == GamePhase::GAME && gameState.players.size() == 0)
     {
         std::cout << "no players left, exiting\n";
-        gameState.phase = GamePhase::EXITING;
         exit(0);
     }
 }
@@ -131,4 +129,7 @@ int main()
     std::cout << "server started\n";
 
     websocket_server.run();
+
+    std::cout << "server stopped\n";
+    return 0;
 }

@@ -128,7 +128,7 @@ export default class Gameplay extends Phaser.State {
 
         this.game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
 
-        this.myGraphics = this.game.add.graphics(this.game.width / 2 - 50, this.game.height / 2 + 100);
+        this.myGraphics = this.game.add.graphics(0, 0);
         this.globalGraphics = this.game.add.graphics(0, 0);
         this.bushGroup = this.game.add.group();
         this.textGroup = this.game.add.group();
@@ -183,8 +183,8 @@ export default class Gameplay extends Phaser.State {
             sprite.anchor.y = 0.5;
         }
 
-        WebSocketService.instance.getWebSocket().onmessage = (ev) => {
-            (new Response(ev.data).arrayBuffer()).then(this.handleData.bind(this));
+        WebSocketService.instance.getWebSocket().onmessage = async (ev) => {
+            this.handleData(await new Response(ev.data).arrayBuffer());
         };
     }
 

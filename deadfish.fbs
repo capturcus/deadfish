@@ -130,7 +130,6 @@ table InitPlayer {
 }
 
 table InitMetadata {
-  levelId:uint16;
   players:[InitPlayer];
   yourid:uint16;
 }

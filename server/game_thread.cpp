@@ -63,6 +63,15 @@ void sendToAll(std::string &data)
     }
 }
 
+void stopAll()
+{
+    websocket_server.stop_perpetual();
+    for (auto& p : gameState.players)
+    {
+        websocket_server.close(p->conn_hdl, websocketpp::close::status::normal, "goodbye");
+    }
+}
+
 Player &getPlayerByConnHdl(websocketpp::connection_hdl &hdl)
 {
     auto player = gameState.players.begin();
@@ -252,7 +261,7 @@ void spawnCivilian()
     }
     auto &spawnName = spawns[rand() % spawns.size()];
     auto spawn = gameState.level->navpoints[spawnName].get();
-    auto c = new Civilian;
+    auto c = std::make_unique<Civilian>();
 
     // find species with lowest count of civilians
     auto civCounts = civiliansSpeciesCount();
@@ -271,9 +280,9 @@ void spawnCivilian()
     c->species = lowestSpecies;
     c->previousNavpoint = spawnName;
     c->currentNavpoint = spawnName;
-    physicsInitMob(c, spawn->position, 0, 0.3f);
+    physicsInitMob(c.get(), spawn->position, 0, 0.3f);
     c->setNextNavpoint();
-    gameState.civilians.push_back(std::unique_ptr<Civilian>(c));
+    gameState.civilians.push_back(std::move(c));
     std::cout << "spawning civilian of species " << lowestSpecies <<
         " at " << spawnName << " to a total of " << gameState.civilians.size() << "\n";
 }
@@ -438,8 +447,6 @@ void gameThread()
         }
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
     int civilianTimer = 0;
     uint64_t roundTimer = ROUND_LENGTH;
 
@@ -456,6 +463,7 @@ void gameThread()
             auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_GameEnded);
             auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_SimpleServerEvent, ev.Union());
             sendToAll(data);
+            // FIXME: Proper closing of all connections, so that this sleep is unnecessary
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
             exit(0);
         }

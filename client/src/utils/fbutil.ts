@@ -58,6 +58,31 @@ export namespace FBUtil {
         return builder.asUint8Array();
     }
 
+    function MakeParser<T extends flatbuffers.Table>(
+        typ: Generated.DeadFish.ServerMessageUnion,
+        cons: () => T,
+    ): (b: Uint8Array) => T | null {
+        return (b: Uint8Array): T | null => {
+            let buffer = new flatbuffers.ByteBuffer(b);
+            let serverMsg = Generated.DeadFish.ServerMessage.getRootAsServerMessage(buffer);
+            if (serverMsg.eventType() != typ) {
+                // FIXME: log error here
+                return null;
+            }
+            return serverMsg.event(cons());
+        };
+    }
+
+    // export const ParseSimpleServerEvent = MakeParser(
+    //     Generated.DeadFish.ServerMessageUnion.SimpleServerEvent,
+    //     () => new Generated.DeadFish.SimpleServerEvent(),
+    // );
+
+    // export const ParseInitMetadata = MakeParser(
+    //     Generated.DeadFish.ServerMessageUnion.InitMetadata,
+    //     () => new Generated.DeadFish.InitMetadata(),
+    // );
+
     export const ParseSimpleServerEvent = (b: Uint8Array): Generated.DeadFish.SimpleServerEventType => {
         let buffer = new flatbuffers.ByteBuffer(b);
         let serverMsg = Generated.DeadFish.ServerMessage.getRootAsServerMessage(buffer);
@@ -85,7 +110,6 @@ export namespace FBUtil {
                     let ev = serverMsg.event(new Generated.DeadFish.InitMetadata());
                     gameData.initMeta = {
                         my_id: ev.yourid(),
-                        level_id: ev.levelId(),
                         players: []
                     };
                     for (let i = 0; i<ev.playersLength(); i++) {
