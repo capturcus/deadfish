@@ -333,7 +333,7 @@ Mob &findMobById(uint16_t id)
     if (it2 != gameState.players.end())
         return *(*it2);
     std::cout << "could not find mob by id " << id << "\n";
-    exit(1);
+    abort();
 }
 
 void executeCommandKill(Player &player, uint16_t id)
