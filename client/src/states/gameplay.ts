@@ -267,7 +267,7 @@ export default class Gameplay extends Phaser.State {
                 else if (deathReport.killed() == FBUtil.gameData.myName)
                     this.showText("You were killed by " + deathReport.killer(), "#ff0000");
                 else
-                    this.showText(deathReport.killer() + " killed " + deathReport.killer(), "#000");
+                    this.showText(deathReport.killer() + " killed " + deathReport.killed(), "#000");
                 return;
             }
             let highscores = FBUtil.ParseHighscoreUpdate(buffer);

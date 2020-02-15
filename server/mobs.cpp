@@ -225,7 +225,7 @@ void Player::setAttacking() {
     this->killTarget = nullptr;
     this->state = MobState::ATTACKING;
     this->attackTimeout = 40;
-    this->lastAttack = std::chrono::system_clock::from_time_t(0);
+    // this->lastAttack = std::chrono::system_clock::from_time_t(0);
 }
 
 Mob::~Mob()
@@ -254,12 +254,15 @@ void Civilian::handleKill(Player& killer) {
 void Player::handleKill(Player& killer) {
     if (killer.isDead())
         return;
+    std::cout << std::chrono::system_clock::to_time_t(this->lastAttack) <<
+    " " << std::chrono::system_clock::to_time_t(killer.lastAttack) << "\n";
     // did i kill him first?
     if (this->killTarget &&
         this->killTarget->id == killer.id &&
         this->lastAttack < killer.lastAttack)
     {
         // i did kill him first
+        std::cout << "uno reverse card\n";
         killer.handleKill(*this);
         return;
     }
