@@ -32,7 +32,6 @@ export default class Lobby extends Phaser.State {
         });
         WebSocketService.instance.getWebSocket().onopen = (ev) => {};
         WebSocketService.instance.getWebSocket().onmessage = (data) => this.onWebSocket(data);
-        this.sendReady();
     }
 
     async onWebSocket(data: MessageEvent) {
