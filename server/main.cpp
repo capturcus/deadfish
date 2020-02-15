@@ -22,7 +22,7 @@ void sendInitMetadata()
             playerOffsets.push_back(playerOffset);
         }
         auto players = builder.CreateVector(playerOffsets);
-        auto metadata = DeadFish::CreateInitMetadata(builder, 0, players, targetPlayer->id);
+        auto metadata = DeadFish::CreateInitMetadata(builder, players, targetPlayer->id);
         sendServerMessage(*targetPlayer.get(), builder, DeadFish::ServerMessageUnion_InitMetadata, metadata.Union());
     }
 }

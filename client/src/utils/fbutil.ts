@@ -110,7 +110,6 @@ export namespace FBUtil {
                     let ev = serverMsg.event(new Generated.DeadFish.InitMetadata());
                     gameData.initMeta = {
                         my_id: ev.yourid(),
-                        level_id: ev.levelId(),
                         players: []
                     };
                     for (let i = 0; i<ev.playersLength(); i++) {
