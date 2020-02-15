@@ -238,6 +238,8 @@ Mob::~Mob()
 }
 
 void Civilian::handleKill(Player& killer) {
+    if (killer.isDead())
+        return;
     this->toBeDeleted = true;
     killer.points += CIVILIAN_PENALTY;
 
@@ -250,6 +252,8 @@ void Civilian::handleKill(Player& killer) {
 }
 
 void Player::handleKill(Player& killer) {
+    if (killer.isDead())
+        return;
     // did i kill him first?
     if (this->killTarget &&
         this->killTarget->id == killer.id &&
