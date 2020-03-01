@@ -13,6 +13,7 @@
 #include "constants.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
+#define UNUSED __attribute__((unused)) 
 
 // const float METERS2PIXELS = 100.f;
 // const float PIXELS2METERS = 0.01f;
@@ -47,7 +48,7 @@ enum class MobState {
 
 struct Collideable {
     bool toBeDeleted = false;
-    virtual void handleCollision(Collideable& other) {}
+    virtual void handleCollision(UNUSED Collideable& other) {}
     virtual bool obstructsSight() = 0;
 
     virtual ~Collideable(){}
@@ -61,7 +62,7 @@ struct Mob : public Collideable {
     uint16_t species = 0;
     b2Body* body = nullptr;
     MobState state = MobState::WALKING;
-    virtual void handleCollision(Collideable& other) override {}
+    virtual void handleCollision(UNUSED Collideable& other) override {}
     virtual void handleKill(Player& killer) = 0;
     virtual bool isDead() { return false; }
     virtual bool obstructsSight() override { return false; }

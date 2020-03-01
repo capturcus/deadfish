@@ -102,7 +102,7 @@ void loadLevel(std::string &path)
     auto level = flatbuffers::GetRoot<DeadFish::Level>(memblock.data());
 
     // bushes
-    for (int i = 0; i < level->bushes()->size(); i++)
+    for (size_t i = 0; i < level->bushes()->size(); i++)
     {
         auto bush = level->bushes()->Get(i);
         auto b = std::make_unique<Bush>();
@@ -112,7 +112,7 @@ void loadLevel(std::string &path)
     }
 
     // stones
-    for (int i = 0; i < level->stones()->size(); i++)
+    for (size_t i = 0; i < level->stones()->size(); i++)
     {
         auto stone = level->stones()->Get(i);
         auto s = std::make_unique<Stone>();
@@ -121,14 +121,14 @@ void loadLevel(std::string &path)
     }
 
     // playerwalls
-    for (int i = 0; i < level->playerwalls()->size(); i++)
+    for (size_t i = 0; i < level->playerwalls()->size(); i++)
     {
         auto playerwall = level->playerwalls()->Get(i);
         initPlayerwall(playerwall);
     }
 
     // navpoints
-    for (int i = 0; i < level->navpoints()->size(); i++)
+    for (size_t i = 0; i < level->navpoints()->size(); i++)
     {
         auto navpoint = level->navpoints()->Get(i);
         auto n = std::make_unique<NavPoint>();
@@ -136,7 +136,7 @@ void loadLevel(std::string &path)
         n->isplayerspawn = navpoint->isplayerspawn();
         n->position = glm::vec2(navpoint->position()->x(), navpoint->position()->y());
         n->radius = navpoint->radius();
-        for (int j = 0; j < navpoint->neighbors()->size(); j++)
+        for (size_t j = 0; j < navpoint->neighbors()->size(); j++)
         {
             n->neighbors.push_back(navpoint->neighbors()->Get(j)->c_str());
         }

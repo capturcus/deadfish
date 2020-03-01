@@ -150,7 +150,6 @@ void Civilian::collisionResolution() {
 
 void Civilian::update()
 {
-    auto speed = b2Distance(this->body->GetPosition(), this->lastPos);
     if (b2Distance(this->body->GetPosition(), this->lastPos) < (WALK_SPEED/20)*0.4f) {
         slowFrames++;
         if (slowFrames == CIV_SLOW_FRAMES) {

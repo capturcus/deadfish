@@ -90,7 +90,7 @@ Player &getPlayerByConnHdl(websocketpp::connection_hdl &hdl)
 struct FOVCallback
     : public b2RayCastCallback
 {
-    float32 ReportFixture(b2Fixture *fixture, const b2Vec2 &point, const b2Vec2 &normal, float32 fraction)
+    float32 ReportFixture(b2Fixture *fixture, UNUSED const b2Vec2 &point, UNUSED const b2Vec2 &normal, UNUSED float32 fraction)
     {
         auto data = (Collideable *)fixture->GetBody()->GetUserData();
         if (data && data != target && !data->obstructsSight())
@@ -211,11 +211,6 @@ class TestContactListener : public b2ContactListener
             collideableB->handleCollision(*collideableA);
         }
     }
-
-    void EndContact(b2Contact *contact)
-    {
-        // std::cout << "END CONTACT\n";
-    }
 };
 
 void physicsInitMob(Mob *m, glm::vec2 pos, float angle, float radius, uint16 categoryBits = 1)
@@ -267,7 +262,7 @@ void spawnCivilian()
     auto civCounts = civiliansSpeciesCount();
     int lowestSpecies = 0;
     int lowestSpeciesCount = INT_MAX;
-    for (int i = 0; i < civCounts.size(); i++)
+    for (size_t i = 0; i < civCounts.size(); i++)
     {
         if (civCounts[i] < lowestSpeciesCount)
         {
@@ -473,7 +468,7 @@ void gameThread()
 
         // update everyone
         std::vector<int> despawns;
-        for (int i = 0; i < gameState.civilians.size(); i++)
+        for (size_t i = 0; i < gameState.civilians.size(); i++)
         {
             gameState.civilians[i]->update();
             if (gameState.civilians[i]->toBeDeleted)
