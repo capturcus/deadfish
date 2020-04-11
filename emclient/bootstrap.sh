@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 emcmake cmake -S nCine-libraries -B nCine-libraries-build
 cmake --build nCine-libraries-build
 
