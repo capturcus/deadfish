@@ -1,51 +1,17 @@
+#include <iostream>
+#include <memory>
 #include <ncine/common_constants.h>
-#include "apptest_animsprites.h"
 #include <ncine/Application.h>
 #include <ncine/Texture.h>
 #include <ncine/AnimatedSprite.h>
 #include <ncine/AppConfiguration.h>
 #include <ncine/FileSystem.h>
+#include <ncine/imgui.h>
 
-inline void setDataPath(ncine::AppConfiguration &config)
-{
-#if defined(__ANDROID__)
-	const char *extStorage = getenv("EXTERNAL_STORAGE");
-	nctl::String dataPath;
-	dataPath = extStorage ? extStorage : "/sdcard";
-
-	// If the environment variable is found but not set then fallback
-	if (dataPath.isEmpty())
-		dataPath = "/sdcard";
-
-	dataPath += "/ncine/";
-	config.dataPath() = dataPath;
-#elif defined(__EMSCRIPTEN__)
-	config.dataPath() = "/";
-#else
-	#ifdef NCINE_TESTS_DATA_DIR
-	config.dataPath() = NCINE_TESTS_DATA_DIR;
-	#endif
-#endif
-}
-
-inline nctl::String prefixDataPath(const char *directory, const char *file)
-{
-	nctl::String partialPath = ncine::fs::joinPath(directory, file);
-	return ncine::fs::joinPath(ncine::fs::dataPath(), partialPath.data());
-}
-
-
-namespace {
-
-#ifdef __ANDROID__
-const char *TextureFile = "spritesheet.webp";
-#else
-const char *TextureFile = "spritesheet.png";
-#endif
-
-const float SpriteSpeed = 100.0f;
-
-}
+#include "main.h"
+#include "statemanager.hpp"
+#include "menustate.hpp"
+#include "lobbystate.hpp"
 
 nc::IAppEventHandler *createAppEventHandler()
 {
@@ -54,148 +20,52 @@ nc::IAppEventHandler *createAppEventHandler()
 
 void MyEventHandler::onPreInit(nc::AppConfiguration &config)
 {
-	setDataPath(config);
+	// config.withDebugOverlay = true;
+	config.dataPath() = "/";
 }
+
+// nctl::UniquePtr<nc::Texture> logo;
+// nctl::UniquePtr<nc::Sprite> logoSprite;
+// nc::Colorf bgColor(0.96875f, 0.97265625, 0.953125, 1.0f);
+
+StateManager manager;
 
 void MyEventHandler::onInit()
 {
-	nc::SceneNode &rootNode = nc::theApplication().rootNode();
-
-	texture_ = nctl::makeUnique<nc::Texture>((prefixDataPath("", TextureFile)).data());
-	animSprite_ = nctl::makeUnique<nc::AnimatedSprite>(&rootNode, texture_.get());
-	// Down
-	nctl::UniquePtr<nc::RectAnimation> animation =
-	    nctl::makeUnique<nc::RectAnimation>(0.12f, nc::RectAnimation::LoopMode::ENABLED, nc::RectAnimation::RewindMode::FROM_START);
-	animation->addRect(0, 0, 48, 48);
-	animation->addRect(48, 0, 48, 48);
-	animation->addRect(96, 0, 48, 48);
-	animation->addRect(144, 0, 48, 48);
-	animation->addRect(0, 48, 48, 48);
-	animation->addRect(48, 48, 48, 48);
-	animation->addRect(96, 48, 48, 48);
-	animation->addRect(144, 48, 48, 48);
-	animSprite_->addAnimation(nctl::move(animation));
-
-	animSprite_->setPosition(nc::theApplication().width() * 0.5f, nc::theApplication().height() * 0.5f);
-	animSprite_->setAnimationIndex(0);
-	animSprite_->setFrame(0);
-	animSprite_->setPaused(true);
-	destVector_ = animSprite_->position();
-	joyVector_ = nc::Vector2f::Zero;
+	// nc::SceneNode &rootNode = nc::theApplication().rootNode();
+	// // make sprites and stuff
+	// logo = nctl::makeUnique<nc::Texture>("/deadfish.png");
+	// auto res = nc::theApplication().appConfiguration().resolution;
+	// logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, logo.get(), res.x, res.y);
+	// logoSprite->setPosition(logoSprite->position() + ncine::Vector2f{-logoSprite->width()/2, 0});
+	manager.AddState("menu", std::make_unique<MenuState>(manager));
+	manager.AddState("lobby", std::make_unique<LobbyState>(manager));
+	manager.EnterState("menu");
 }
 
 void MyEventHandler::onFrameStart()
 {
-	nc::Vector2f reachVector = destVector_ - animSprite_->position();
+	// ImGui::Begin("DeadFish", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+	// 	ImGuiWindowFlags_NoCollapse);
+	// ImGui::SetWindowSize({350, 120});
+	// auto res = nc::theApplication().appConfiguration().resolution;
+	// ImGui::SetWindowPos({static_cast<float>(res.x)/2+175, 4*static_cast<float>(res.y)/5});
+	// static char buf1[64] = ""; ImGui::InputText("server", buf1, 64);
+	// static char buf2[64] = ""; ImGui::InputText("nickname", buf2, 64);
+	// ImGui::Button("connect", {300, 30});
+	// ImGui::End();
 
-	const nc::KeyboardState &keyState = nc::theApplication().inputManager().keyboardState();
-
-	if (keyState.isKeyDown(nc::KeySym::RIGHT) || keyState.isKeyDown(nc::KeySym::D) ||
-	    keyState.isKeyDown(nc::KeySym::LEFT) || keyState.isKeyDown(nc::KeySym::A) ||
-	    keyState.isKeyDown(nc::KeySym::UP) || keyState.isKeyDown(nc::KeySym::W) ||
-	    keyState.isKeyDown(nc::KeySym::DOWN) || keyState.isKeyDown(nc::KeySym::S))
-	{
-		if (reachVector.length() > 1.0f)
-			reachVector.normalize();
-	}
-
-	if (keyState.isKeyDown(nc::KeySym::RIGHT) || keyState.isKeyDown(nc::KeySym::D))
-	{
-		reachVector.x = 2.0f;
-		destVector_ = animSprite_->position() + reachVector;
-	}
-	else if (keyState.isKeyDown(nc::KeySym::LEFT) || keyState.isKeyDown(nc::KeySym::A))
-	{
-		reachVector.x = -2.0f;
-		destVector_ = animSprite_->position() + reachVector;
-	}
-	if (keyState.isKeyDown(nc::KeySym::UP) || keyState.isKeyDown(nc::KeySym::W))
-	{
-		reachVector.y = 2.0f;
-		destVector_ = animSprite_->position() + reachVector;
-	}
-	else if (keyState.isKeyDown(nc::KeySym::DOWN) || keyState.isKeyDown(nc::KeySym::S))
-	{
-		reachVector.y = -2.0f;
-		destVector_ = animSprite_->position() + reachVector;
-	}
-
-	if (joyVector_.length() > nc::IInputManager::LeftStickDeadZone)
-	{
-		reachVector = joyVector_.normalized() * 2.0;
-		destVector_ = animSprite_->position() + reachVector;
-	}
-
-	if (reachVector.length() > 1.0f)
-	{
-		reachVector.normalize();
-		animSprite_->setPaused(false);
-
-		float angle = 180.0f + (atan2f(reachVector.y, reachVector.x) - atan2f(1.0f, 0.0f)) * 180.0f / nc::fPi; // TODO clamp
-		animSprite_->setRotation(angle);
-
-		reachVector *= nc::theApplication().interval() * SpriteSpeed;
-		animSprite_->move(reachVector);
-	}
-	else
-	{
-		animSprite_->setFrame(0);
-		animSprite_->setPaused(true);
-	}
+	// nc::theApplication().gfxDevice().setClearColor(bgColor);
 }
-
-#ifdef __ANDROID__
-void MyEventHandler::onTouchDown(const nc::TouchEvent &event)
-{
-	destVector_.x = event.pointers[0].x;
-	destVector_.y = event.pointers[0].y;
-}
-
-void MyEventHandler::onTouchMove(const nc::TouchEvent &event)
-{
-	destVector_.x = event.pointers[0].x;
-	destVector_.y = event.pointers[0].y;
-}
-#endif
 
 void MyEventHandler::onKeyReleased(const nc::KeyboardEvent &event)
 {
-	if (event.sym == nc::KeySym::ESCAPE || event.sym == nc::KeySym::Q)
-		nc::theApplication().quit();
-	else if (event.sym == nc::KeySym::SPACE)
-	{
-		const bool isSuspended = nc::theApplication().isSuspended();
-		nc::theApplication().setSuspended(!isSuspended);
-	}
 }
 
 void MyEventHandler::onMouseButtonPressed(const nc::MouseEvent &event)
 {
-	if (event.isLeftButton())
-	{
-		destVector_.x = static_cast<float>(event.x);
-		destVector_.y = static_cast<float>(event.y);
-	}
 }
 
 void MyEventHandler::onMouseMoved(const nc::MouseState &state)
 {
-	if (state.isLeftButtonDown())
-	{
-		destVector_.x = static_cast<float>(state.x);
-		destVector_.y = static_cast<float>(state.y);
-	}
-}
-
-void MyEventHandler::onJoyMappedAxisMoved(const nc::JoyMappedAxisEvent &event)
-{
-	if (event.axisName == nc::AxisName::LX)
-		joyVector_.x = event.value;
-	else if (event.axisName == nc::AxisName::LY)
-		joyVector_.y = -event.value;
-}
-
-void MyEventHandler::onJoyDisconnected(const nc::JoyConnectionEvent &event)
-{
-	joyVector_ = nc::Vector2f::Zero;
 }

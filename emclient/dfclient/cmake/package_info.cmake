@@ -7,7 +7,8 @@ set(PACKAGE_REVERSE_DNS "io.github.capturcus.deadfish")
 
 set(PACKAGE_INCLUDE_DIRS include)
 
+file(GLOB SourceFiles src/*.cpp)
+
 set(PACKAGE_SOURCES
-	include/main.h
-	src/main.cpp
+	${SourceFiles}
 )

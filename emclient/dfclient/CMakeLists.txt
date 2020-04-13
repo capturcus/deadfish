@@ -44,6 +44,7 @@ endif()
 add_executable(${PACKAGE_EXE_NAME} WIN32 ${PACKAGE_SOURCES})
 include(package_generate_sources)
 target_sources(${PACKAGE_EXE_NAME} PRIVATE ${GENERATED_SOURCES})
+set_property(TARGET ${PACKAGE_EXE_NAME} PROPERTY CXX_STANDARD 17)
 
 if(NOT DEFAULT_DATA_DIR_DIST) # Don't set the startup project if it wouldn't find the data directory
 	set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PACKAGE_EXE_NAME})
