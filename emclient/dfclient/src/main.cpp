@@ -12,6 +12,7 @@
 #include "statemanager.hpp"
 #include "menustate.hpp"
 #include "lobbystate.hpp"
+#include "gameplaystate.hpp"
 
 nc::IAppEventHandler *createAppEventHandler()
 {
@@ -40,6 +41,7 @@ void MyEventHandler::onInit()
 	// logoSprite->setPosition(logoSprite->position() + ncine::Vector2f{-logoSprite->width()/2, 0});
 	manager.AddState("menu", std::make_unique<MenuState>(manager));
 	manager.AddState("lobby", std::make_unique<LobbyState>(manager));
+	manager.AddState("gameplay", std::make_unique<GameplayState>(manager));
 	manager.EnterState("menu");
 }
 
@@ -56,6 +58,8 @@ void MyEventHandler::onFrameStart()
 	// ImGui::End();
 
 	// nc::theApplication().gfxDevice().setClearColor(bgColor);
+
+	manager.OnFrameStart();
 }
 
 void MyEventHandler::onKeyReleased(const nc::KeyboardEvent &event)

@@ -3,3 +3,10 @@ nCine-build
 nCine-data
 nCine-external-emscripten
 nCine-libraries-build
+dfclient-native
+dfclient-wasm
+nCine-external
+nCine-libraries-native
+nCine-libraries-wasm
+nCine-native
+nCine-wasm

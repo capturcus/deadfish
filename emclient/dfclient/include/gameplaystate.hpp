@@ -2,7 +2,7 @@
 
 #include "gamestate.hpp"
 
-class LobbyState
+class GameplayState
     : public GameState
 {
     using GameState::GameState;

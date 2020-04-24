@@ -1,4 +1,4 @@
 #!/bin/bash
 
-rm -rf *build
+rm -rf *wasm
 rm -rf nCine-external-emscripten

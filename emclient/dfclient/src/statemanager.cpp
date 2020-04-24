@@ -5,7 +5,12 @@ void StateManager::AddState(std::string name, std::unique_ptr<GameState>&& state
 }
 
 void StateManager::EnterState(std::string name) {
-    // cleanup the previous state
+    if (currentState)
+        currentState->CleanUp();
     currentState = states[name].get();
-    // init the next state
+    currentState->Create();
+}
+
+void StateManager::OnFrameStart() {
+    currentState->Update();
 }
