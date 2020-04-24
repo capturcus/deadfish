@@ -10,8 +10,7 @@
 
 using StateMap = std::map<std::string, std::unique_ptr<GameState>>;
 
-class StateManager {
-public:
+struct StateManager {
     void AddState(std::string name, std::unique_ptr<GameState>&& state);
     void EnterState(std::string name);
     void OnFrameStart();

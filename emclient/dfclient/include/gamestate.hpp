@@ -2,8 +2,7 @@
 
 class StateManager;
 
-class GameState {
-public:
+struct GameState {
     GameState(StateManager& manager_)
         : manager(manager_) {}
     virtual void Create() = 0;

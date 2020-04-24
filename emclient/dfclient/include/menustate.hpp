@@ -2,7 +2,7 @@
 
 #include "gamestate.hpp"
 
-class MenuState
+struct MenuState
     : public GameState
 {
     using GameState::GameState;

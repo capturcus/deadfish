@@ -1,5 +1,4 @@
-#ifndef CLASS_MYEVENTHANDLER
-#define CLASS_MYEVENTHANDLER
+#pragma once
 
 #include <ncine/IAppEventHandler.h>
 #include <ncine/IInputEventHandler.h>
@@ -27,5 +26,3 @@ class MyEventHandler :
 	void onMouseButtonPressed(const nc::MouseEvent &event) override;
 	void onMouseMoved(const nc::MouseState &state) override;
 };
-
-#endif

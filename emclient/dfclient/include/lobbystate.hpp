@@ -1,8 +1,11 @@
 #pragma once
 
-#include "gamestate.hpp"
+#include <memory>
 
-class LobbyState
+#include "gamestate.hpp"
+#include "websocket.hpp"
+
+struct LobbyState
     : public GameState
 {
     using GameState::GameState;
@@ -10,4 +13,6 @@ class LobbyState
     void Create() override;
     void Update() override;
     void CleanUp() override;
+
+    std::unique_ptr<WebSocket> socket = nullptr;
 };

@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 
 if (EMSCRIPTEN)
+	message("siemka emscripten")
 	set (nCine_DIR ../nCine-wasm)
 else()
+	message("siemka native")
 	set (nCine_DIR ../nCine-native)
 endif()
 
@@ -74,6 +76,7 @@ endif()
 if(EMSCRIPTEN)
 	target_compile_options(${PACKAGE_EXE_NAME} PRIVATE "SHELL:--preload-file ${PACKAGE_DATA_DIR}@ --no-heap-copy")
 	target_link_options(${PACKAGE_EXE_NAME} PRIVATE "SHELL:--preload-file ${PACKAGE_DATA_DIR}@ --no-heap-copy")
+	target_link_libraries(${PACKAGE_EXE_NAME} PUBLIC "--js-library /home/marcin/deadfish/emclient/dfclient/js/dfwebsocket.js")
 	configure_file(${CMAKE_SOURCE_DIR}/emscripten_shell.html.in ${CMAKE_BINARY_DIR}/${PACKAGE_EXE_NAME}.html @ONLY)
 	if(EXISTS ${PACKAGE_DATA_DIR}/icons/icon.ico)
 		file(COPY ${PACKAGE_DATA_DIR}/icons/icon.ico DESTINATION ${CMAKE_BINARY_DIR})

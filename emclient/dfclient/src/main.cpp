@@ -13,6 +13,7 @@
 #include "menustate.hpp"
 #include "lobbystate.hpp"
 #include "gameplaystate.hpp"
+#include "gamedata.hpp"
 
 nc::IAppEventHandler *createAppEventHandler()
 {
@@ -29,6 +30,7 @@ void MyEventHandler::onPreInit(nc::AppConfiguration &config)
 // nctl::UniquePtr<nc::Sprite> logoSprite;
 // nc::Colorf bgColor(0.96875f, 0.97265625, 0.953125, 1.0f);
 
+GameData gameData;
 StateManager manager;
 
 void MyEventHandler::onInit()
