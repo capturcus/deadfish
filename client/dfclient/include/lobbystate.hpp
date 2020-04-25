@@ -13,6 +13,4 @@ struct LobbyState
     void Create() override;
     void Update() override;
     void CleanUp() override;
-
-    std::unique_ptr<WebSocket> socket = nullptr;
 };

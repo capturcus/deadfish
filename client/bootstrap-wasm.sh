@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+source /home/marcin/Downloads/emsdk/emsdk_env.sh
 
 emcmake cmake -DCMAKE_BUILD_TYPE=Debug -S nCine-libraries -B nCine-libraries-wasm
 cmake --build nCine-libraries-wasm

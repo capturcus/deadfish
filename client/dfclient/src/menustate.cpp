@@ -32,8 +32,8 @@ void MenuState::Update() {
 	ImGui::SetWindowSize({350, 120});
 	auto res = nc::theApplication().appConfiguration().resolution;
 	ImGui::SetWindowPos({static_cast<float>(res.x)/2+175, 4*static_cast<float>(res.y)/5});
-	static char buf1[64] = {};
-	static char buf2[64] = {};
+	static char buf1[64] = "localhost:63987";
+	static char buf2[64] = "asd";
 	ImGui::InputText("server", buf1, 64);
 	ImGui::InputText("nickname", buf2, 64);
 	if (ImGui::Button("connect", {300, 30})) {

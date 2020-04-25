@@ -1,15 +1,12 @@
-# IntelliJ
-.idea
-
-# Node.js
-node_modules
-
-# Game
-dist
-builds
-
-# OSX
-.DS_Store
-
-# Visual Studio
-.vs
+dfclient-build
+nCine-build
+nCine-data
+nCine-external-emscripten
+nCine-libraries-build
+dfclient-native
+dfclient-wasm
+nCine-external
+nCine-libraries-native
+nCine-libraries-wasm
+nCine-native
+nCine-wasm

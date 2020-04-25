@@ -1,9 +1,0 @@
-{
-    "extends": "./node_modules/phaser-ce/typescript/tslint.json",
-    "rules": {
-        "quotemark": [
-            true,
-            "single"
-        ]
-    }
-}

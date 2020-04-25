@@ -1,7 +1,6 @@
 #include <iostream>
 #include "flatbuffers/flatbuffers.h"
 
-#include "deadfish_generated.h"
 #include "deadfish.hpp"
 #include "game_thread.hpp"
 #include "level_loader.hpp"
@@ -97,7 +96,8 @@ void on_close(websocketpp::connection_hdl hdl)
         }
         player++;
     }
-    gameState.players.erase(player);
+    if (player != gameState.players.end())
+        gameState.players.erase(player);
 
     if (gameState.phase == GamePhase::LOBBY)
     {

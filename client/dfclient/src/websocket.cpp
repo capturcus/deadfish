@@ -1,5 +1,7 @@
 #include "websocket.hpp"
 
+#define __EMSCRIPTEN__ 1
+
 #ifdef __EMSCRIPTEN__
 #include <emscripten/websocket.h>
 
@@ -20,11 +22,20 @@ std::unique_ptr<WebSocket> CreateWebSocket() {
 
 EM_BOOL WebSocketEmscriptenOnMessage(int eventType, const EmscriptenWebSocketMessageEvent *e, void *userData) {
     WebSocketEmscripten* socket = (WebSocketEmscripten*) userData;
-    if (!socket->listener)
+    if (!socket->onMessage) // TODO: see whether this hinders performance and remove it if it does
         return false;
 
     std::string data = std::string(e->data, e->data + e->numBytes);
-    socket->listener(data);
+    socket->onMessage(data);
+    return false;
+}
+
+EM_BOOL WebSocketEmscriptenOnOpen(int eventType, const EmscriptenWebSocketOpenEvent *websocketEvent, void *userData) {
+    WebSocketEmscripten* socket = (WebSocketEmscripten*) userData;
+    if (!socket->onOpen)
+        return false;
+
+    socket->onOpen();
     return false;
 }
 
@@ -41,6 +52,10 @@ int WebSocketEmscripten::Connect(std::string& address) {
     this->_socket = socket;
 
     if (emscripten_websocket_set_onmessage_callback(this->_socket, this, WebSocketEmscriptenOnMessage) !=
+        EMSCRIPTEN_RESULT_SUCCESS)
+        return -1;
+
+    if (emscripten_websocket_set_onopen_callback(this->_socket, this, WebSocketEmscriptenOnOpen) !=
         EMSCRIPTEN_RESULT_SUCCESS)
         return -1;
 

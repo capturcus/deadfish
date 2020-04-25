@@ -9,7 +9,7 @@
 #include <glm/vec2.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-#include "deadfish_generated.h"
+#include "../common/deadfish_generated.h"
 #include "constants.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL

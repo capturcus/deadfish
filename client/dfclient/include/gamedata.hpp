@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include "websocket.hpp"
+
 struct Player {
     std::string name;
     uint16_t species;
@@ -14,6 +16,8 @@ struct GameData {
     std::string myNickname;
     uint16_t myID;
     std::vector<Player> players;
+
+    std::unique_ptr<WebSocket> socket = nullptr;
 };
 
 extern GameData gameData;
