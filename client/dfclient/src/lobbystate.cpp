@@ -3,9 +3,18 @@
 #include "lobbystate.hpp"
 #include "gamedata.hpp"
 #include "../../../common/deadfish_generated.h"
+#include "fbutil.hpp"
 
 void LobbyOnMessage(std::string& data) {
     std::cout << "lobby received data\n";
+    auto initMetadata = FBUtilGetServerEvent(data, InitMetadata);
+    gameData.myID = initMetadata->yourid();
+    std::cout << "my id " << gameData.myID << "\n";
+    for (size_t i = 0; i < initMetadata->players()->size(); i++)
+    {
+        auto player = initMetadata->players()->Get(i);
+        std::cout << "player " << player->name()->c_str() << " " << player->ready() << " " << player->species() << "\n";
+    }
 }
 
 void LobbyOnOpen() {
