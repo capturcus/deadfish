@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gamestate.hpp"
+#include "game_state.hpp"
 
 struct GameplayState
     : public GameState

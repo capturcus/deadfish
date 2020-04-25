@@ -1,11 +1,8 @@
 #pragma once
 
-#include <memory>
+#include "game_state.hpp"
 
-#include "gamestate.hpp"
-#include "websocket.hpp"
-
-struct LobbyState
+struct MenuState
     : public GameState
 {
     using GameState::GameState;

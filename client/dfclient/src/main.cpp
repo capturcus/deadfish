@@ -9,11 +9,11 @@
 #include <ncine/imgui.h>
 
 #include "main.h"
-#include "statemanager.hpp"
-#include "menustate.hpp"
-#include "lobbystate.hpp"
-#include "gameplaystate.hpp"
-#include "gamedata.hpp"
+#include "state_manager.hpp"
+#include "menu_state.hpp"
+#include "lobby_state.hpp"
+#include "gameplay_state.hpp"
+#include "game_data.hpp"
 
 nc::IAppEventHandler *createAppEventHandler()
 {
@@ -31,7 +31,7 @@ void MyEventHandler::onPreInit(nc::AppConfiguration &config)
 // nc::Colorf bgColor(0.96875f, 0.97265625, 0.953125, 1.0f);
 
 GameData gameData;
-StateManager manager;
+StateManager stateManager;
 
 void MyEventHandler::onInit()
 {
@@ -41,10 +41,11 @@ void MyEventHandler::onInit()
 	// auto res = nc::theApplication().appConfiguration().resolution;
 	// logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, logo.get(), res.x, res.y);
 	// logoSprite->setPosition(logoSprite->position() + ncine::Vector2f{-logoSprite->width()/2, 0});
-	manager.AddState("menu", std::make_unique<MenuState>(manager));
-	manager.AddState("lobby", std::make_unique<LobbyState>(manager));
-	manager.AddState("gameplay", std::make_unique<GameplayState>(manager));
-	manager.EnterState("menu");
+	stateManager.OnInit();
+	stateManager.AddState("menu", std::make_unique<MenuState>(stateManager));
+	stateManager.AddState("lobby", std::make_unique<LobbyState>(stateManager));
+	stateManager.AddState("gameplay", std::make_unique<GameplayState>(stateManager));
+	stateManager.EnterState("menu");
 }
 
 void MyEventHandler::onFrameStart()
@@ -61,7 +62,7 @@ void MyEventHandler::onFrameStart()
 
 	// nc::theApplication().gfxDevice().setClearColor(bgColor);
 
-	manager.OnFrameStart();
+	stateManager.OnFrameStart();
 }
 
 void MyEventHandler::onKeyReleased(const nc::KeyboardEvent &event)

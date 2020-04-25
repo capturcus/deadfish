@@ -5,9 +5,9 @@
 #include <ncine/Texture.h>
 #include <ncine/imgui.h>
 
-#include "menustate.hpp"
-#include "statemanager.hpp"
-#include "gamedata.hpp"
+#include "menu_state.hpp"
+#include "state_manager.hpp"
+#include "game_data.hpp"
 
 namespace nc = ncine;
 

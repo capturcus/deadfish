@@ -33,6 +33,7 @@ void addNewPlayer(const std::string &name, websocketpp::connection_hdl hdl)
         return;
     }
 
+    // TODO: check that a player with the same name is not present
     auto p = std::make_unique<Player>();
     p->id = newID();
     p->name = name;
