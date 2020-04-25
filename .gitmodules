@@ -1,7 +1,7 @@
-[submodule "emclient/nCine"]
+[submodule "client/nCine"]
 	path = client/nCine
 	url = https://github.com/nCine/nCine
 	branch = develop
-[submodule "emclient/nCine-libraries"]
+[submodule "client/nCine-libraries"]
 	path = client/nCine-libraries
 	url = https://github.com/nCine/nCine-libraries
