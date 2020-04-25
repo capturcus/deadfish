@@ -123,10 +123,11 @@ int main()
     websocket_server.set_close_handler(&on_close);
 
     websocket_server.init_asio();
-    websocket_server.listen(gameState.config.get<int>("default.port"));
+    int port = gameState.config.get<int>("default.port");
+    websocket_server.listen(port);
     websocket_server.start_accept();
 
-    std::cout << "server started\n";
+    std::cout << "server started on port " << port << "\n";
 
     websocket_server.run();
 

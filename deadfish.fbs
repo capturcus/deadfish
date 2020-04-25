@@ -127,6 +127,7 @@ table SimpleServerEvent {
 table InitPlayer {
   name:string;
   species:uint16;
+  ready:bool;
 }
 
 table InitMetadata {
