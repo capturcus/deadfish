@@ -20,8 +20,8 @@ print("img path:", IMGPATH)
 imgs = []
 folders = []
 for f in os.listdir(IMGPATH):
-    # print(f)
-    if os.path.isdir(ASSETS+f):
+    if os.path.isdir(ASSETS+f) and "." in f:
+        print("including", f)
         folders.append(f)
 
 def mapAnimKeys(key):
@@ -60,4 +60,4 @@ for i in range(len(imgs)):
     offset = ((i % IMGSINROW)*IMGSIZE, int((i//IMGSINROW)*IMGSIZE))
     finalimg.paste(resized, offset)
 
-finalimg.save(DESTINATION+".[{},{}]".format(IMGSIZE, IMGSIZE)+".png", finalimg.format)
+finalimg.save(DESTINATION+".png", finalimg.format)
