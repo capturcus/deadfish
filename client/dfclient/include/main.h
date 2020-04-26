@@ -22,6 +22,7 @@ class MyEventHandler :
 	void onInit() override;
 	void onFrameStart() override;
 
+  void onKeyPressed(const nc::KeyboardEvent &event) override;
 	void onKeyReleased(const nc::KeyboardEvent &event) override;
 	void onMouseButtonPressed(const nc::MouseEvent &event) override;
 	void onMouseMoved(const nc::MouseState &state) override;

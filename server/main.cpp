@@ -17,7 +17,7 @@ void sendInitMetadata()
         for (auto &player : gameState.players)
         {
             auto name = builder.CreateString(player->name.c_str());
-            auto playerOffset = DeadFish::CreateInitPlayer(builder, name, player->species);
+            auto playerOffset = DeadFish::CreateInitPlayer(builder, name, player->species, player->ready);
             playerOffsets.push_back(playerOffset);
         }
         auto players = builder.CreateVector(playerOffsets);
@@ -64,6 +64,7 @@ void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg)
     {
         auto& pl = getPlayerByConnHdl(hdl);
         pl.ready = true;
+        sendInitMetadata();
         for (auto& p : gameState.players) {
             if (!p->ready)
                 return;

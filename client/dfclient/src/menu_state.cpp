@@ -1,4 +1,5 @@
 #include <iostream>
+#include <functional>
 
 #include <ncine/Application.h>
 #include <ncine/Sprite.h>
@@ -26,6 +27,25 @@ void MenuState::Create() {
 	nc::theApplication().gfxDevice().setClearColor(bgColor);
 }
 
+bool MenuState::TryConnect() {
+	gameData.serverAddress = "ws://" + gameData.serverAddress;
+    std::cout << "server " << gameData.serverAddress << ", my nickname " << gameData.myNickname << "\n";
+    gameData.socket = CreateWebSocket();
+	StateManager& forwardManager = this->manager;
+    gameData.socket->onOpen = [this](){
+		std::cout << "lambda go to lobby\n";
+		this->manager.EnterState("lobby");
+	};
+    int ret = gameData.socket->Connect(gameData.serverAddress);
+    if (ret < 0) {
+        std::cout << "socket->Connect failed " << ret << "\n";
+        // TODO: some ui error handling
+        return false;
+    }
+	std::cout << "socket connected\n";
+	return true;
+}
+
 void MenuState::Update() {
     ImGui::Begin("DeadFish", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
 		ImGuiWindowFlags_NoCollapse);
@@ -39,7 +59,7 @@ void MenuState::Update() {
 	if (ImGui::Button("connect", {300, 30})) {
 		gameData.serverAddress = std::string(buf1);
 		gameData.myNickname = std::string(buf2);
-        this->manager.EnterState("lobby");
+		TryConnect();
     }
 	ImGui::End();
 }

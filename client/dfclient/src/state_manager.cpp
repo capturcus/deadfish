@@ -18,3 +18,19 @@ void StateManager::OnInit() {
 void StateManager::OnFrameStart() {
     currentState->Update();
 }
+
+void StateManager::OnKeyPressed(const ncine::KeyboardEvent &event) {
+    currentState->OnKeyPressed(event);
+}
+
+void StateManager::OnKeyReleased(const ncine::KeyboardEvent &event) {
+    currentState->OnKeyReleased(event);
+}
+
+void StateManager::OnMouseButtonPressed(const ncine::MouseEvent &event) {
+    currentState->OnMouseButtonPressed(event);
+}
+
+void StateManager::OnMouseMoved(const ncine::MouseState &state) {
+    currentState->OnMouseMoved(state);
+}

@@ -10,4 +10,6 @@ struct MenuState
     void Create() override;
     void Update() override;
     void CleanUp() override;
+
+    bool TryConnect();
 };

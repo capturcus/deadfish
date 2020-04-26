@@ -4,7 +4,7 @@
 #define FBUtilGetServerEvent(DATA, TYPE) GetServerEvent<DeadFish::TYPE>(DATA, DeadFish::ServerMessageUnion_##TYPE)
 
 template<typename T>
-const T *GetServerEvent(std::string& data, DeadFish::ServerMessageUnion type) {
+const T *GetServerEvent(const std::string& data, DeadFish::ServerMessageUnion type) {
     auto serverMessage = flatbuffers::GetRoot<DeadFish::ServerMessage>(data.data());
     if (serverMessage->event_type() != type)
         return nullptr;

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <functional>
 
 #include <ncine/Application.h>
 
@@ -7,12 +8,15 @@
 #include "../../../common/deadfish_generated.h"
 #include "fb_util.hpp"
 #include "state_manager.hpp"
+#include "util.hpp"
 
-// extern StateManager stateManager;
-
-void LobbyOnMessage(std::string& data) {
+void LobbyState::OnMessage(const std::string& data) {
     std::cout << "lobby received data\n";
     auto initMetadata = FBUtilGetServerEvent(data, InitMetadata);
+    if (!initMetadata) {
+        std::cout << "wrong data received\n";
+        return;
+    }
     gameData.myID = initMetadata->yourid();
     gameData.players.clear();
     for (size_t i = 0; i < initMetadata->players()->size(); i++)
@@ -23,38 +27,19 @@ void LobbyOnMessage(std::string& data) {
         gameData.players.back().ready = playerData->ready();
         gameData.players.back().species = playerData->species();
     }
-
-    // ((LobbyState*)stateManager.states["lobby"].get())->RedrawPlayers();
 }
 
-void LobbyOnOpen() {
-    std::cout << "lobby on open\n";
+void LobbyState::Create() {
+    std::cout << "lobby create\n";
+
+    // if we're here then that means that the socket has already connected, send data
+    gameData.socket->onMessage = std::bind(&LobbyState::OnMessage, this, std::placeholders::_1);
     flatbuffers::FlatBufferBuilder builder;
     auto req = DeadFish::CreateJoinRequest(builder, builder.CreateString(gameData.myNickname));
     auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_JoinRequest, req.Union());
     builder.Finish(message);
 
-    auto data = builder.GetBufferPointer();
-    auto size = builder.GetSize();
-    auto str = std::string(data, data + size);
-
-    gameData.socket->Send(str);
-}
-
-void LobbyState::Create() {
-    std::cout << "lobby create\n";
-    gameData.serverAddress = "ws://" + gameData.serverAddress;
-    std::cout << "server " << gameData.serverAddress << ", my nickname " << gameData.myNickname << "\n";
-    gameData.socket = CreateWebSocket();
-    gameData.socket->onMessage = &LobbyOnMessage;
-    gameData.socket->onOpen = &LobbyOnOpen;
-    int ret = gameData.socket->Connect(gameData.serverAddress);
-    if (ret < 0) {
-        std::cout << "socket->Connect failed " << ret << "\n";
-        // TODO: some ui error handling
-        return;
-    } else
-        std::cout << "socket connected\n";
+    SendData(builder);
 
     auto& rootNode = ncine::theApplication().rootNode();
     const float screenWidth = ncine::theApplication().width();
@@ -104,5 +89,21 @@ void LobbyState::RedrawPlayers() {
             text->setColor(0, 0, 0, 255);
         this->textNodes.push_back(std::move(text));
         playerNum++;
+    }
+}
+
+void LobbyState::SendPlayerReady() {
+    flatbuffers::FlatBufferBuilder builder;
+    auto ready = DeadFish::CreatePlayerReady(builder);
+    auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_PlayerReady, ready.Union());
+    builder.Finish(message);
+
+    SendData(builder);
+}
+
+void LobbyState::OnMouseButtonPressed(const ncine::MouseEvent &event) {
+    if(IntersectsNode(event.x, event.y, *this->readyButton) && !this->ready) {
+        this->ready = true;
+        this->SendPlayerReady();
     }
 }

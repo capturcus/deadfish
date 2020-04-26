@@ -15,6 +15,10 @@ struct StateManager {
     void EnterState(std::string name);
     void OnFrameStart();
     void OnInit();
+    void OnKeyPressed(const ncine::KeyboardEvent &event);
+	void OnKeyReleased(const ncine::KeyboardEvent &event);
+	void OnMouseButtonPressed(const ncine::MouseEvent &event);
+	void OnMouseMoved(const ncine::MouseState &state);
 
     StateMap states;
     GameState* currentState = nullptr;
