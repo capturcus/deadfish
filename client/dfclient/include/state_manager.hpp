@@ -23,4 +23,5 @@ struct StateManager {
     StateMap states;
     GameState* currentState = nullptr;
     std::map<std::string, std::unique_ptr<ncine::Font>> fonts;
+    std::map<std::string, std::unique_ptr<ncine::Texture>> textures;
 };

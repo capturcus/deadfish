@@ -1,3 +1,5 @@
+#include <ncine/FileSystem.h>
+
 #include "state_manager.hpp"
 
 void StateManager::AddState(std::string name, std::unique_ptr<GameState>&& state) {

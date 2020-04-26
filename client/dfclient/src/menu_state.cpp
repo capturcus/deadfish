@@ -19,7 +19,7 @@ nc::Colorf bgColor(0.96875f, 0.97265625, 0.953125, 1.0f);
 void MenuState::Create() {
     nc::SceneNode &rootNode = nc::theApplication().rootNode();
 	// make sprites and stuff
-	logo = nctl::makeUnique<nc::Texture>("/deadfish.png");
+	logo = nctl::makeUnique<nc::Texture>("/textures/deadfish.png");
 	auto res = nc::theApplication().appConfiguration().resolution;
 	logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, logo.get(), res.x, res.y);
 	logoSprite->setPosition(logoSprite->position() + ncine::Vector2f{-logoSprite->width()/2, 0});

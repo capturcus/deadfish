@@ -16,6 +16,7 @@ struct GameData {
     std::string myNickname;
     uint16_t myID;
     std::vector<Player> players;
+    std::string levelData;
 
     std::unique_ptr<WebSocket> socket = nullptr;
 };
