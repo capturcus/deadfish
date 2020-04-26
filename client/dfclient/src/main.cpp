@@ -22,7 +22,7 @@ nc::IAppEventHandler *createAppEventHandler()
 
 void MyEventHandler::onPreInit(nc::AppConfiguration &config)
 {
-	// config.withDebugOverlay = true;
+	config.withDebugOverlay = true;
 	config.dataPath() = "/";
 }
 
