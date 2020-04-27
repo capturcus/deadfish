@@ -7,12 +7,15 @@
 #include <ncine/Sprite.h>
 
 #include "game_state.hpp"
+#include "../../../common/deadfish_generated.h"
 
 const float PIXELS2METERS = 0.01f;
 const float METERS2PIXELS = 100.f;
 
 struct Mob {
     std::unique_ptr<ncine::AnimatedSprite> sprite;
+    bool seen;
+    DeadFish::MobState state = DeadFish::MobState_Walk;
 };
 
 struct GameplayState

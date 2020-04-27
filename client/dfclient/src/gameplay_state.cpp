@@ -39,7 +39,6 @@ ncine::Vector2i spriteCoords(int spriteNum) {
 
 std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species) {
     std::unique_ptr<ncine::AnimatedSprite> ret = std::make_unique<ncine::AnimatedSprite>(parent, manager.textures["fish.png"].get());
-	// walk
     int currentImg = species * IMGS_PER_SPECIES;
 	for (int animNumber = 0; animNumber < FISH_ANIMATIONS::MAX; animNumber++) {
         nctl::UniquePtr<ncine::RectAnimation> animation =
@@ -76,15 +75,58 @@ void GameplayState::LoadLevel() {
             bush->pos()->x() * METERS2PIXELS, -bush->pos()->y() * METERS2PIXELS);
         this->nodes.push_back(std::move(bushSprite));
     }
-
-    // debug
-    auto mob = new Mob();
-    mob->sprite = CreateNewAnimSprite(this->cameraNode.get(), 0);
-    mobs[0] = std::move(*mob);
 }
 
 void GameplayState::OnMessage(const std::string& data) {
+    auto worldState = FBUtilGetServerEvent(data, WorldState);
+    if (!worldState)
+        return;
+    
+    const float screenWidth = ncine::theApplication().width();
+    const float screenHeight = ncine::theApplication().height();
 
+    // reset seen status of mobs
+    for (auto& p : this->mobs)
+        p.second.seen = false;
+
+    for (int i = 0; i < worldState->mobs()->size(); i++) {
+        auto mobData = worldState->mobs()->Get(i);
+        auto mobItr = this->mobs.find(mobData->id());
+        if (mobItr == this->mobs.end()) {
+            // this is the first time we see this mob, create it
+            Mob newMob;
+            newMob.sprite = CreateNewAnimSprite(this->cameraNode.get(), mobData->species());
+            this->mobs[mobData->id()] = std::move(newMob);
+            mobItr = this->mobs.find(mobData->id());
+        }
+        Mob& mob = mobItr->second;
+        mob.sprite->setPosition(mobData->pos()->x() * METERS2PIXELS, -mobData->pos()->y() * METERS2PIXELS);
+        mob.sprite->setRotation(-mobData->angle() * 180 / M_PI);
+        mob.seen = true;
+        if (mobData->state() != mob.state) {
+            mob.state = mobData->state();
+            mob.sprite->setAnimationIndex(mobData->state());
+            mob.sprite->setFrame(0);
+            mob.sprite->setPaused(false);
+        }
+
+        // if it's us then set the camera
+        if (mobItr->first == gameData.myID) {
+            auto &mouseState = ncine::theApplication().inputManager().mouseState();
+            auto myMobPosition = -mob.sprite->position() +
+                ncine::Vector2f(3*screenWidth/4 - mouseState.x/2,
+                                screenHeight/4 + mouseState.y/2);
+            this->cameraNode->setPosition(myMobPosition);
+        }
+    }
+    std::vector<int> deletedIDs;
+    for (auto& mob : this->mobs) {
+        if (!mob.second.seen)
+            deletedIDs.push_back(mob.first);
+    }
+    for (auto id : deletedIDs) {
+        this->mobs.erase(id);
+    }
 }
 
 void GameplayState::Create() {
@@ -97,7 +139,15 @@ void GameplayState::Create() {
 }
 
 void GameplayState::Update() {
-
+    // const ncine::KeyboardState &keyState = ncine::theApplication().inputManager().keyboardState();
+    // if (keyState.isKeyDown(ncine::KeySym::LEFT))
+    //     this->cameraNode->setPosition(this->cameraNode->position() + ncine::Vector2f(10, 0));
+    // if (keyState.isKeyDown(ncine::KeySym::RIGHT))
+    //     this->cameraNode->setPosition(this->cameraNode->position() + ncine::Vector2f(-10, 0));
+    // if (keyState.isKeyDown(ncine::KeySym::UP))
+    //     this->cameraNode->setPosition(this->cameraNode->position() + ncine::Vector2f(0, -10));
+    // if (keyState.isKeyDown(ncine::KeySym::DOWN))
+    //     this->cameraNode->setPosition(this->cameraNode->position() + ncine::Vector2f(0, 10));
 }
 
 void GameplayState::CleanUp() {
@@ -105,5 +155,5 @@ void GameplayState::CleanUp() {
 }
 
 void GameplayState::OnMouseMoved(const ncine::MouseState &state) {
-    this->cameraNode->setPosition(ncine::Vector2f(state.x, state.y));
+    // this->cameraNode->setPosition(ncine::Vector2f(state.x, state.y));
 }

@@ -151,8 +151,8 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
     for (auto &n : gameState.civilians)
     {
         // std::cout << "player " << player.name << " pos " << player.body->GetPosition() << " civilian pos " << n->body->GetPosition() << "\n";
-        if (!playerSeeMob(player, *n.get()))
-            continue;
+        // if (!playerSeeMob(player, *n.get()))
+        //     continue;
 
         auto posVec = DeadFish::Vec2(n->body->GetPosition().x, n->body->GetPosition().y);
         auto mob = DeadFish::CreateMob(builder,

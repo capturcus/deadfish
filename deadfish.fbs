@@ -76,9 +76,9 @@ table ClientMessage {
 // server
 
 enum MobState: byte {
-  Idle,
-  Walking,
-  Attacking
+  Walk,
+  Run,
+  Attack
 }
 
 table Mob {
