@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <memory>
+#include <map>
 
 #include <ncine/Sprite.h>
 
@@ -9,6 +10,10 @@
 
 const float PIXELS2METERS = 0.01f;
 const float METERS2PIXELS = 100.f;
+
+struct Mob {
+    std::unique_ptr<ncine::AnimatedSprite> sprite;
+};
 
 struct GameplayState
     : public GameState
@@ -22,7 +27,9 @@ struct GameplayState
     void OnMessage(const std::string& data);
     void OnMouseMoved(const ncine::MouseState &state) override;
     void LoadLevel();
+    std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species);
 
     std::vector<std::unique_ptr<ncine::DrawableNode>> nodes;
     std::unique_ptr<ncine::SceneNode> cameraNode;
+    std::map<uint16_t, Mob> mobs;
 };
