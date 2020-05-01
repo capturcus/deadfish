@@ -23,7 +23,13 @@ nc::IAppEventHandler *createAppEventHandler()
 void MyEventHandler::onPreInit(nc::AppConfiguration &config)
 {
 	// config.withDebugOverlay = true;
+	config.resolution.x = 1800;
+	config.resolution.y = 1000;
+#if defined(__EMSCRIPTEN__)
 	config.dataPath() = "/";
+#else
+	config.dataPath() = "data/";
+#endif
 }
 
 GameData gameData;

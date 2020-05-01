@@ -18,8 +18,9 @@ nc::Colorf bgColor(0.96875f, 0.97265625, 0.953125, 1.0f);
 void MenuState::Create() {
     nc::SceneNode &rootNode = nc::theApplication().rootNode();
 	auto res = nc::theApplication().appConfiguration().resolution;
-	logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, manager.textures["deadfish.png"].get(), res.x, res.y);
-	logoSprite->setPosition(logoSprite->position() + ncine::Vector2f{-logoSprite->width()/2, 0});
+	std::cout << "res " << res.x << "," << res.y << "\n";
+	logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, manager.textures["deadfish.png"].get(), res.x*0.5f, res.y*0.6f);
+	// logoSprite->setPosition(logoSprite->position() + ncine::Vector2f{-logoSprite->width()/2, 0});
 
 	nc::theApplication().gfxDevice().setClearColor(bgColor);
 }
@@ -48,7 +49,7 @@ void MenuState::Update() {
 		ImGuiWindowFlags_NoCollapse);
 	ImGui::SetWindowSize({350, 120});
 	auto res = nc::theApplication().appConfiguration().resolution;
-	ImGui::SetWindowPos({static_cast<float>(res.x)/2+175, 4*static_cast<float>(res.y)/5});
+	ImGui::SetWindowPos({static_cast<float>(res.x)/2-175, 4*static_cast<float>(res.y)/5});
 	static char buf1[64] = "localhost:63987";
 	static char buf2[64] = "asd";
 	ImGui::InputText("server", buf1, 64);

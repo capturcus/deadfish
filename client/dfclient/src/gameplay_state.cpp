@@ -81,9 +81,6 @@ void GameplayState::OnMessage(const std::string& data) {
     auto worldState = FBUtilGetServerEvent(data, WorldState);
     if (!worldState)
         return;
-    
-    const float screenWidth = ncine::theApplication().width();
-    const float screenHeight = ncine::theApplication().height();
 
     // reset seen status of mobs
     for (auto& p : this->mobs)
@@ -110,13 +107,9 @@ void GameplayState::OnMessage(const std::string& data) {
             mob.sprite->setPaused(false);
         }
 
-        // if it's us then set the camera
+        // if it's us then save sprite
         if (mobItr->first == gameData.myID) {
-            auto &mouseState = ncine::theApplication().inputManager().mouseState();
-            auto myMobPosition = -mob.sprite->position() +
-                ncine::Vector2f(3*screenWidth/4 - mouseState.x/2,
-                                screenHeight/4 + mouseState.y/2);
-            this->cameraNode->setPosition(myMobPosition);
+            this->mySprite = mob.sprite.get();
         }
     }
     std::vector<int> deletedIDs;
@@ -139,15 +132,15 @@ void GameplayState::Create() {
 }
 
 void GameplayState::Update() {
-    // const ncine::KeyboardState &keyState = ncine::theApplication().inputManager().keyboardState();
-    // if (keyState.isKeyDown(ncine::KeySym::LEFT))
-    //     this->cameraNode->setPosition(this->cameraNode->position() + ncine::Vector2f(10, 0));
-    // if (keyState.isKeyDown(ncine::KeySym::RIGHT))
-    //     this->cameraNode->setPosition(this->cameraNode->position() + ncine::Vector2f(-10, 0));
-    // if (keyState.isKeyDown(ncine::KeySym::UP))
-    //     this->cameraNode->setPosition(this->cameraNode->position() + ncine::Vector2f(0, -10));
-    // if (keyState.isKeyDown(ncine::KeySym::DOWN))
-    //     this->cameraNode->setPosition(this->cameraNode->position() + ncine::Vector2f(0, 10));
+    if (!this->mySprite)
+        return;
+    const float screenWidth = ncine::theApplication().width();
+    const float screenHeight = ncine::theApplication().height();
+    auto &mouseState = ncine::theApplication().inputManager().mouseState();
+    auto myMobPosition = -this->mySprite->position() +
+        ncine::Vector2f(3*screenWidth/4 - mouseState.x/2,
+                        screenHeight/4 + mouseState.y/2);
+    this->cameraNode->setPosition(myMobPosition);
 }
 
 void GameplayState::CleanUp() {

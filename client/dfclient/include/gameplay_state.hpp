@@ -35,4 +35,5 @@ struct GameplayState
     std::vector<std::unique_ptr<ncine::DrawableNode>> nodes;
     std::unique_ptr<ncine::SceneNode> cameraNode;
     std::map<uint16_t, Mob> mobs;
+    ncine::Sprite* mySprite = nullptr;
 };

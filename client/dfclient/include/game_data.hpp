@@ -18,7 +18,7 @@ struct GameData {
     std::vector<Player> players;
     std::string levelData;
 
-    std::unique_ptr<WebSocket> socket = nullptr;
+    WebSocket* socket = nullptr;
 };
 
 extern GameData gameData;

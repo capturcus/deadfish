@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <memory>
+#include <vector>
 #include <functional>
 
 struct WebSocket {
@@ -9,6 +10,17 @@ struct WebSocket {
     virtual ~WebSocket() {}
     std::function<void(const std::string&)> onMessage = nullptr;
     std::function<void()> onOpen = nullptr;
+
+    bool toBeOpened;
+    std::vector<std::string> messageQueue;
 };
 
-std::unique_ptr<WebSocket> CreateWebSocket();
+struct WebSocketManager {
+    void Update();
+
+    std::vector<std::unique_ptr<WebSocket>> websockets;
+};
+
+WebSocket* CreateWebSocket();
+
+extern WebSocketManager webSocketManager;

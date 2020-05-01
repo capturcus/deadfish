@@ -1,6 +1,20 @@
 #include "websocket.hpp"
 
-#define __EMSCRIPTEN__ 1
+WebSocketManager webSocketManager;
+
+void WebSocketManager::Update() {
+    for (auto& ws: this->websockets) {
+        if (ws->toBeOpened) {
+            ws->onOpen();
+            ws->toBeOpened = false;
+        }
+        
+        for (auto& msg: ws->messageQueue)
+            ws->onMessage(msg);
+        
+        ws->messageQueue.clear();
+    }
+}
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/websocket.h>
@@ -16,9 +30,7 @@ public:
     EMSCRIPTEN_WEBSOCKET_T _socket;
 };
 
-std::unique_ptr<WebSocket> CreateWebSocket() {
-    return std::unique_ptr<WebSocket>(new WebSocketEmscripten());
-}
+typedef WebSocketEmscripten WebSocketType;
 
 EM_BOOL WebSocketEmscriptenOnMessage(int eventType, const EmscriptenWebSocketMessageEvent *e, void *userData) {
     WebSocketEmscripten* socket = (WebSocketEmscripten*) userData;
@@ -66,4 +78,85 @@ bool WebSocketEmscripten::Send(std::string& data) {
     return emscripten_websocket_send_binary(this->_socket, data.data(), data.size()) == EMSCRIPTEN_RESULT_SUCCESS;
 }
 
-#endif // __EMSCRIPTEN__
+#else // __EMSCRIPTEN__
+
+#include <websocketpp/config/asio_no_tls_client.hpp>
+#include <websocketpp/client.hpp>
+
+typedef websocketpp::client<websocketpp::config::asio_client> WebSocketPPClient;
+
+class WebSocketPP
+    : public WebSocket
+{
+public:
+    int Connect(std::string& address) override;
+    bool Send(std::string& data) override;
+    virtual ~WebSocketPP() {}
+
+    WebSocketPPClient c;
+    websocketpp::connection_hdl myHdl;
+};
+
+typedef WebSocketPP WebSocketType;
+
+std::map<void*, WebSocketPP*> clients;
+
+void WebSocketPPOnMessage(websocketpp::connection_hdl hdl, WebSocketPPClient::message_ptr msg) {
+    WebSocketPP* wspp = clients[hdl.lock().get()];
+    const std::string& data = msg->get_payload();
+    wspp->messageQueue.push_back(data);
+}
+
+void WebSocketPPOnOpen(websocketpp::connection_hdl hdl) {
+    WebSocketPP* wspp = clients[hdl.lock().get()];
+    wspp->toBeOpened = true;
+}
+
+int WebSocketPP::Connect(std::string& address) {
+    // Set logging to be pretty verbose (everything except message payloads)
+    c.set_access_channels(websocketpp::log::alevel::all);
+    c.clear_access_channels(websocketpp::log::alevel::frame_payload);
+    c.set_error_channels(websocketpp::log::elevel::all);
+
+    // Initialize ASIO
+    c.init_asio();
+
+    // Register our message handler
+    c.set_message_handler(&WebSocketPPOnMessage);
+    c.set_open_handler(&WebSocketPPOnOpen);
+
+    websocketpp::lib::error_code ec;
+    WebSocketPPClient::connection_ptr con = c.get_connection(address, ec);
+    if (ec) {
+        std::cout << "could not create connection because: " << ec.message() << std::endl;
+        return -1;
+    }
+
+    // Note that connect here only requests a connection. No network messages are
+    // exchanged until the event loop starts running in the next line.
+    c.connect(con);
+    this->myHdl = con;
+
+    clients[this->myHdl.lock().get()] = this;
+
+    new std::thread([](WebSocketPPClient *c_ptr){
+        c_ptr->run();
+    }, &c);
+
+    return 0;
+}
+
+bool WebSocketPP::Send(std::string& data) {
+    websocketpp::lib::error_code ec;
+    this->c.send(this->myHdl, data, websocketpp::frame::opcode::binary, ec);
+    if (ec)
+        std::cout << "Echo failed because: " << ec.message() << std::endl;
+}
+
+#endif
+
+WebSocket* CreateWebSocket() {
+    auto ws = std::make_unique<WebSocketType>();
+    webSocketManager.websockets.push_back(std::move(ws));
+    return webSocketManager.websockets.back().get();
+}
