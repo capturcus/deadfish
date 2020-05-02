@@ -28,7 +28,9 @@ struct GameplayState
     void CleanUp() override;
 
     void OnMessage(const std::string& data);
-    void OnMouseMoved(const ncine::MouseState &state) override;
+    void OnMouseButtonPressed(const ncine::MouseEvent &event) override;
+    void OnKeyPressed(const ncine::KeyboardEvent &event) override;
+    void OnKeyReleased(const ncine::KeyboardEvent &event) override;
     void LoadLevel();
     std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species);
 

@@ -11,6 +11,7 @@
 #include "game_data.hpp"
 #include "fb_util.hpp"
 #include "state_manager.hpp"
+#include "util.hpp"
 
 const float ANIMATION_FPS = 20.f;
 const int FISH_FRAME_WIDTH = 120;
@@ -147,6 +148,33 @@ void GameplayState::CleanUp() {
 
 }
 
-void GameplayState::OnMouseMoved(const ncine::MouseState &state) {
-    // this->cameraNode->setPosition(ncine::Vector2f(state.x, state.y));
+void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {
+    const float screenWidth = ncine::theApplication().width();
+    const float screenHeight = ncine::theApplication().height();
+    const float serverX = (this->mySprite->position().x + (event.x - screenWidth / 2) * 1.5f) * PIXELS2METERS;
+    const float serverY = -(this->mySprite->position().y + (event.y - screenHeight / 2) * 1.5f) * PIXELS2METERS;
+    flatbuffers::FlatBufferBuilder builder;
+    auto pos = DeadFish::Vec2(serverX, serverY);
+    auto cmdMove = DeadFish::CreateCommandMove(builder, &pos);
+    auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_CommandMove, cmdMove.Union());
+    builder.Finish(message);
+    SendData(builder);
+}
+
+void SendCommandRun(bool run) {
+    flatbuffers::FlatBufferBuilder builder;
+    auto cmdRun = DeadFish::CreateCommandRun(builder, run);
+    auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_CommandRun, cmdRun.Union());
+    builder.Finish(message);
+    SendData(builder);
+}
+
+void GameplayState::OnKeyPressed(const ncine::KeyboardEvent &event) {
+    if (event.sym == ncine::KeySym::Q)
+        SendCommandRun(true);
+}
+
+void GameplayState::OnKeyReleased(const ncine::KeyboardEvent &event) {
+    if (event.sym == ncine::KeySym::Q)
+        SendCommandRun(false);
 }

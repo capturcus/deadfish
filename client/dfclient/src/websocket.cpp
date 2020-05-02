@@ -114,8 +114,7 @@ void WebSocketPPOnOpen(websocketpp::connection_hdl hdl) {
 
 int WebSocketPP::Connect(std::string& address) {
     // Set logging to be pretty verbose (everything except message payloads)
-    c.set_access_channels(websocketpp::log::alevel::all);
-    c.clear_access_channels(websocketpp::log::alevel::frame_payload);
+    c.set_access_channels(websocketpp::log::alevel::none);
     c.set_error_channels(websocketpp::log::elevel::all);
 
     // Initialize ASIO
