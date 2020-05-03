@@ -81,12 +81,19 @@ enum MobState: byte {
   Attack
 }
 
+enum PlayerRelation: byte {
+  None,
+  Close,
+  Targeted
+}
+
 table Mob {
   id:uint16;
   pos:Vec2;
   angle:float;
   state:MobState;
   species:uint16;
+  relation:PlayerRelation;
 }
 
 table Indicator {

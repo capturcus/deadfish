@@ -150,17 +150,22 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
     std::vector<flatbuffers::Offset<DeadFish::Indicator>> indicators;
     for (auto &n : gameState.civilians)
     {
-        // std::cout << "player " << player.name << " pos " << player.body->GetPosition() << " civilian pos " << n->body->GetPosition() << "\n";
-        // if (!playerSeeMob(player, *n.get()))
-        //     continue;
-
+        if (!playerSeeMob(player, *n.get()))
+            continue;
+        auto distance = b2Distance(n->body->GetPosition(), player.body->GetPosition());
+        DeadFish::PlayerRelation relation = DeadFish::PlayerRelation_None;
+        if (distance < KILL_DISTANCE)
+            relation = DeadFish::PlayerRelation_Close;
+        if (player.killTarget == n.get())
+            relation = DeadFish::PlayerRelation_Targeted;
         auto posVec = DeadFish::Vec2(n->body->GetPosition().x, n->body->GetPosition().y);
         auto mob = DeadFish::CreateMob(builder,
                                        n->id,
                                        &posVec,
                                        n->body->GetAngle(),
                                        (DeadFish::MobState)n->state,
-                                       n->species);
+                                       n->species,
+                                       relation);
         mobs.push_back(mob);
     }
     for (auto &p : gameState.players)

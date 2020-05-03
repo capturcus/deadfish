@@ -10,7 +10,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include "../common/deadfish_generated.h"
-#include "constants.hpp"
+#include "../common/constants.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #define UNUSED __attribute__((unused)) 

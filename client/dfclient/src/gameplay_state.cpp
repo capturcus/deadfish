@@ -1,11 +1,14 @@
 #include <iostream>
 #include <functional>
+#include <complex>
 
 #include <ncine/Application.h>
 #include <ncine/Colorf.h>
 #include <ncine/Sprite.h>
 #include <ncine/Texture.h>
 #include <ncine/AnimatedSprite.h>
+
+#include "../../../common/constants.hpp"
 
 #include "gameplay_state.hpp"
 #include "game_data.hpp"
@@ -57,6 +60,7 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine:
 	ret->setAnimationIndex(FISH_ANIMATIONS::WALK);
 	ret->setFrame(0);
     ret->setPaused(false);
+    ret->setLayer(MOBS_LAYER);
     return std::move(ret);
 }
 
@@ -112,6 +116,16 @@ void GameplayState::OnMessage(const std::string& data) {
         if (mobItr->first == gameData.myID) {
             this->mySprite = mob.sprite.get();
         }
+
+        if (mobData->relation() == DeadFish::PlayerRelation_None) {
+            mob.relationMarker.reset(nullptr);
+        } else if (mobData->relation() == DeadFish::PlayerRelation_Close) {
+            mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), manager.textures["bluecircle.png"].get());
+            mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
+        } else if (mobData->relation() == DeadFish::PlayerRelation_Targeted) {
+            mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), manager.textures["redcircle.png"].get());
+            mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
+        }
     }
     std::vector<int> deletedIDs;
     for (auto& mob : this->mobs) {
@@ -130,6 +144,8 @@ void GameplayState::Create() {
     this->cameraNode = std::make_unique<ncine::SceneNode>(&rootNode);
     this->LoadLevel();
     gameData.socket->onMessage = std::bind(&GameplayState::OnMessage, this, std::placeholders::_1);
+
+    this->debugSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), manager.textures["redcircle.png"].get());
 }
 
 void GameplayState::Update() {
@@ -142,6 +158,32 @@ void GameplayState::Update() {
         ncine::Vector2f(3*screenWidth/4 - mouseState.x/2,
                         screenHeight/4 + mouseState.y/2);
     this->cameraNode->setPosition(myMobPosition);
+
+    ncine::Vector2f mouseCoords;
+    mouseCoords.x = this->mySprite->position().x + (mouseState.x - screenWidth / 2) * 1.5f;
+    mouseCoords.y = this->mySprite->position().y + -(mouseState.y - screenHeight / 2) * 1.5f;
+    float radiusSquared = this->mySprite->size().x/2;
+    radiusSquared = radiusSquared*radiusSquared;
+
+    // hovering
+    int smallestNorm = INT32_MAX;
+    Mob* closestMob = nullptr;
+    for (auto& mob : this->mobs) {
+        if (mob.second.sprite.get() == this->mySprite)
+            continue;
+
+        mob.second.hoverMarker.reset(nullptr);
+
+        int norm = deadfish::norm(mob.second.sprite->position(), mouseCoords);
+        if (norm < smallestNorm) {
+            smallestNorm = norm;
+            closestMob = &mob.second;
+        }            
+    }
+    if (closestMob && smallestNorm < radiusSquared) {
+        closestMob->hoverMarker = std::make_unique<ncine::Sprite>(closestMob->sprite.get(), manager.textures["graycircle.png"].get());
+        closestMob->hoverMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
+    }
 }
 
 void GameplayState::CleanUp() {
@@ -149,16 +191,33 @@ void GameplayState::CleanUp() {
 }
 
 void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {
-    const float screenWidth = ncine::theApplication().width();
-    const float screenHeight = ncine::theApplication().height();
-    const float serverX = (this->mySprite->position().x + (event.x - screenWidth / 2) * 1.5f) * PIXELS2METERS;
-    const float serverY = -(this->mySprite->position().y + (event.y - screenHeight / 2) * 1.5f) * PIXELS2METERS;
-    flatbuffers::FlatBufferBuilder builder;
-    auto pos = DeadFish::Vec2(serverX, serverY);
-    auto cmdMove = DeadFish::CreateCommandMove(builder, &pos);
-    auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_CommandMove, cmdMove.Union());
-    builder.Finish(message);
-    SendData(builder);
+    if (event.isLeftButton()) {
+        // move
+        const float screenWidth = ncine::theApplication().width();
+        const float screenHeight = ncine::theApplication().height();
+        const float serverX = (this->mySprite->position().x + (event.x - screenWidth / 2) * 1.5f) * PIXELS2METERS;
+        const float serverY = -(this->mySprite->position().y + (event.y - screenHeight / 2) * 1.5f) * PIXELS2METERS;
+        flatbuffers::FlatBufferBuilder builder;
+        auto pos = DeadFish::Vec2(serverX, serverY);
+        auto cmdMove = DeadFish::CreateCommandMove(builder, &pos);
+        auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_CommandMove, cmdMove.Union());
+        builder.Finish(message);
+        SendData(builder);
+    }
+    if (event.isRightButton()) {
+        // kill
+        for (auto& mob : this->mobs) {
+            if (mob.second.hoverMarker.get()) {
+                // if it is hovered kill it
+                flatbuffers::FlatBufferBuilder builder;
+                auto cmdKill = DeadFish::CreateCommandKill(builder, mob.first);
+                auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_CommandKill, cmdKill.Union());
+                builder.Finish(message);
+                SendData(builder);
+                break;
+            }
+        }
+    }
 }
 
 void SendCommandRun(bool run) {

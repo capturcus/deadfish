@@ -11,11 +11,14 @@
 
 const float PIXELS2METERS = 0.01f;
 const float METERS2PIXELS = 100.f;
+const int MOBS_LAYER = 16384;
 
 struct Mob {
     std::unique_ptr<ncine::AnimatedSprite> sprite;
     bool seen;
     DeadFish::MobState state = DeadFish::MobState_Walk;
+    std::unique_ptr<ncine::Sprite> hoverMarker;
+    std::unique_ptr<ncine::Sprite> relationMarker;
 };
 
 struct GameplayState
@@ -38,4 +41,7 @@ struct GameplayState
     std::unique_ptr<ncine::SceneNode> cameraNode;
     std::map<uint16_t, Mob> mobs;
     ncine::Sprite* mySprite = nullptr;
+    uint32_t lastNodeID = 0;
+
+    std::unique_ptr<ncine::Sprite> debugSprite;
 };
