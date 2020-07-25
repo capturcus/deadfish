@@ -10,7 +10,7 @@ bool operator==(websocketpp::connection_hdl &a, websocketpp::connection_hdl &b)
     return a.lock().get() == b.lock().get();
 }
 
-uint16_t newID()
+uint16_t newMobID()
 {
     while (true)
     {
@@ -18,13 +18,13 @@ uint16_t newID()
 
         for (auto &p : gameState.players)
         {
-            if (p->id == ret)
+            if (p->mobID == ret)
                 continue;
         }
 
         for (auto &n : gameState.civilians)
         {
-            if (n->id == ret)
+            if (n->mobID == ret)
                 continue;
         }
 
@@ -119,7 +119,8 @@ bool playerSeeMob(Player &p, Mob &m)
     return fovCallback.closest && fovCallback.closest->GetBody() == m.body;
 }
 
-bool mobSeePoint(Mob &m, b2Vec2 &point) {
+bool mobSeePoint(Mob &m, b2Vec2 &point)
+{
     FOVCallback fovCallback;
     gameState.b2world->RayCast(&fovCallback, m.body->GetPosition(), point);
     return fovCallback.minfraction == 1.f;
@@ -144,28 +145,34 @@ makePlayerIndicator(flatbuffers::FlatBufferBuilder &builder,
     return DeadFish::CreateIndicator(builder, 0, force, false);
 }
 
+flatbuffers::Offset<DeadFish::Mob> createFBMob(flatbuffers::FlatBufferBuilder &builder,
+    Player& player, const Mob* m)
+{
+    auto distance = b2Distance(m->body->GetPosition(), player.body->GetPosition());
+    DeadFish::PlayerRelation relation = DeadFish::PlayerRelation_None;
+    if (distance < KILL_DISTANCE && player.mobID != m->mobID)
+        relation = DeadFish::PlayerRelation_Close;
+    if (player.killTarget == m)
+        relation = DeadFish::PlayerRelation_Targeted;
+    auto posVec = DeadFish::Vec2(m->body->GetPosition().x, m->body->GetPosition().y);
+    return DeadFish::CreateMob(builder,
+                                    m->mobID,
+                                    &posVec,
+                                    m->body->GetAngle(),
+                                    (DeadFish::MobState)m->state,
+                                    m->species,
+                                    relation);
+}
+
 flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBufferBuilder &builder)
 {
     std::vector<flatbuffers::Offset<DeadFish::Mob>> mobs;
     std::vector<flatbuffers::Offset<DeadFish::Indicator>> indicators;
-    for (auto &n : gameState.civilians)
+    for (auto &c : gameState.civilians)
     {
-        if (!playerSeeMob(player, *n.get()))
+        if (!playerSeeMob(player, *c.get()))
             continue;
-        auto distance = b2Distance(n->body->GetPosition(), player.body->GetPosition());
-        DeadFish::PlayerRelation relation = DeadFish::PlayerRelation_None;
-        if (distance < KILL_DISTANCE)
-            relation = DeadFish::PlayerRelation_Close;
-        if (player.killTarget == n.get())
-            relation = DeadFish::PlayerRelation_Targeted;
-        auto posVec = DeadFish::Vec2(n->body->GetPosition().x, n->body->GetPosition().y);
-        auto mob = DeadFish::CreateMob(builder,
-                                       n->id,
-                                       &posVec,
-                                       n->body->GetAngle(),
-                                       (DeadFish::MobState)n->state,
-                                       n->species,
-                                       relation);
+        auto mob = createFBMob(builder, player, c.get());
         mobs.push_back(mob);
     }
     for (auto &p : gameState.players)
@@ -175,7 +182,7 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
             // is dead, don't send
             continue;
         }
-        bool differentPlayer = p->id != player.id;
+        bool differentPlayer = p->playerID != player.playerID;
         bool canSeeOther;
         if (differentPlayer)
         {
@@ -185,13 +192,7 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
         }
         if (differentPlayer && !canSeeOther)
             continue;
-        auto posVec = DeadFish::Vec2(p->body->GetPosition().x, p->body->GetPosition().y);
-        auto mob = DeadFish::CreateMob(builder,
-                                       p->id,
-                                       &posVec,
-                                       p->body->GetAngle(),
-                                       (DeadFish::MobState)p->state,
-                                       p->species);
+        auto mob = createFBMob(builder, player, p.get());
         mobs.push_back(mob);
     }
     auto mobsOffset = builder.CreateVector(mobs);
@@ -276,7 +277,7 @@ void spawnCivilian()
         }
     }
 
-    c->id = newID();
+    c->mobID = newMobID();
     c->species = lowestSpecies;
     c->previousNavpoint = spawnName;
     c->currentNavpoint = spawnName;
@@ -324,12 +325,12 @@ void spawnPlayer(Player &player)
 Mob &findMobById(uint16_t id)
 {
     auto it = std::find_if(gameState.civilians.begin(), gameState.civilians.end(),
-                           [id](const auto &c) { return c->id == id; });
+                           [id](const auto &c) { return c->mobID == id; });
     if (it != gameState.civilians.end())
         return *(*it);
 
     auto it2 = std::find_if(gameState.players.begin(), gameState.players.end(),
-                            [id](const auto &p) { return p->id == id; });
+                            [id](const auto &p) { return p->mobID == id; });
     if (it2 != gameState.players.end())
         return *(*it2);
     std::cout << "could not find mob by id " << id << "\n";

@@ -23,7 +23,8 @@ void LobbyState::OnMessage(const std::string& data) {
         std::cout << "wrong data received\n";
         return;
     }
-    gameData.myID = initMetadata->yourid();
+    gameData.myMobID = initMetadata->yourMobID();
+    std::cout << "my mob id " << gameData.myMobID << "\n";
     gameData.players.clear();
     for (size_t i = 0; i < initMetadata->players()->size(); i++)
     {
@@ -32,6 +33,7 @@ void LobbyState::OnMessage(const std::string& data) {
         gameData.players.back().name = playerData->name()->c_str();
         gameData.players.back().ready = playerData->ready();
         gameData.players.back().species = playerData->species();
+        gameData.players.back().playerID = playerData->playerID();
     }
 }
 

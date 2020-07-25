@@ -208,7 +208,7 @@ void Player::handleCollision(Collideable &other)
     {
         auto &mob = dynamic_cast<Mob &>(other);
 
-        if (this->killTarget && this->killTarget->id == mob.id)
+        if (this->killTarget && this->killTarget->mobID == mob.mobID)
         {
             this->setAttacking();
             // the player wants to kill the mob and collided with him, execute the kill
@@ -242,10 +242,11 @@ void Civilian::handleKill(Player& killer) {
     this->toBeDeleted = true;
     killer.points += CIVILIAN_PENALTY;
 
-    // send the killednpc message
+    // send the deathreport killed npc message
     flatbuffers::FlatBufferBuilder builder;
-    auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_KilledCivilian);
-    sendServerMessage(killer, builder, DeadFish::ServerMessageUnion_SimpleServerEvent, ev.Union());
+    auto ev = DeadFish::CreateDeathReport(builder, killer.playerID, -1);
+    sendServerMessage(killer, builder, DeadFish::ServerMessageUnion_DeathReport, ev.Union());
+    std::cout << "sent a death report\n";
 
     sendHighscores();
 }
@@ -257,7 +258,7 @@ void Player::handleKill(Player& killer) {
     " " << std::chrono::system_clock::to_time_t(killer.lastAttack) << "\n";
     // did i kill him first?
     if (this->killTarget &&
-        this->killTarget->id == killer.id &&
+        this->killTarget->mobID == killer.mobID &&
         this->lastAttack < killer.lastAttack)
     {
         // i did kill him first
@@ -271,9 +272,7 @@ void Player::handleKill(Player& killer) {
 
     // send the deathreport message
     flatbuffers::FlatBufferBuilder builder;
-    auto killerOffset = builder.CreateString(killer.name);
-    auto killedOffset = builder.CreateString(this->name);
-    auto ev = DeadFish::CreateDeathReport(builder, killerOffset, killedOffset);
+    auto ev = DeadFish::CreateDeathReport(builder, killer.playerID, this->playerID);
     auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_DeathReport, ev.Union());
     sendToAll(data);
 

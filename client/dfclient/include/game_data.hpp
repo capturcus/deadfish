@@ -8,13 +8,14 @@
 struct Player {
     std::string name;
     uint16_t species;
+    uint16_t playerID;
     bool ready;
 };
 
 struct GameData {
     std::string serverAddress;
     std::string myNickname;
-    uint16_t myID;
+    uint16_t myMobID;
     std::vector<Player> players;
     std::string levelData;
 

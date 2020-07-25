@@ -46,7 +46,7 @@ table CommandMove {
 }
 
 table CommandKill {
-  id:uint16;
+  mobID:uint16;
 }
 
 table CommandRun {
@@ -88,7 +88,7 @@ enum PlayerRelation: byte {
 }
 
 table Mob {
-  id:uint16;
+  mobID:uint16;
   pos:Vec2;
   angle:float;
   state:MobState;
@@ -117,13 +117,12 @@ table HighscoreUpdate {
 }
 
 table DeathReport {
-  killer:string;
-  killed:string;
+  killer:uint16;
+  killed:uint16;
 }
 
 enum SimpleServerEventType: byte {
   GameEnded,
-  KilledCivilian,
   TooFarToKill
 }
 
@@ -132,6 +131,7 @@ table SimpleServerEvent {
 }
 
 table InitPlayer {
+  playerID:uint16;
   name:string;
   species:uint16;
   ready:bool;
@@ -139,7 +139,7 @@ table InitPlayer {
 
 table InitMetadata {
   players:[InitPlayer];
-  yourid:uint16;
+  yourMobID:uint16;
 }
 
 union ServerMessageUnion {

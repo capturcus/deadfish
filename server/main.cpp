@@ -14,14 +14,15 @@ void sendInitMetadata()
     {
         flatbuffers::FlatBufferBuilder builder(1);
         std::vector<flatbuffers::Offset<DeadFish::InitPlayer>> playerOffsets;
-        for (auto &player : gameState.players)
+        for (size_t i = 0; i < gameState.players.size(); i++)
         {
+            auto& player = gameState.players[i];
             auto name = builder.CreateString(player->name.c_str());
-            auto playerOffset = DeadFish::CreateInitPlayer(builder, name, player->species, player->ready);
+            auto playerOffset = DeadFish::CreateInitPlayer(builder, i, name, player->species, player->ready);
             playerOffsets.push_back(playerOffset);
         }
         auto players = builder.CreateVector(playerOffsets);
-        auto metadata = DeadFish::CreateInitMetadata(builder, players, targetPlayer->id);
+        auto metadata = DeadFish::CreateInitMetadata(builder, players, targetPlayer->mobID);
         sendServerMessage(*targetPlayer.get(), builder, DeadFish::ServerMessageUnion_InitMetadata, metadata.Union());
     }
 }
@@ -35,9 +36,10 @@ void addNewPlayer(const std::string &name, websocketpp::connection_hdl hdl)
 
     // TODO: check that a player with the same name is not present
     auto p = std::make_unique<Player>();
-    p->id = newID();
+    p->mobID = newMobID();
     p->name = name;
     p->conn_hdl = hdl;
+    p->playerID = gameState.players.size();
 
     gameState.players.push_back(std::move(p));
 

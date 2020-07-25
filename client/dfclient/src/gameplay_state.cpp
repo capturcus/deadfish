@@ -82,7 +82,17 @@ void GameplayState::LoadLevel() {
     }
 }
 
+void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport) {
+    std::cout << "killer " << deathReport->killer() << ", killed " << deathReport->killed() << "\n";
+}
+
 void GameplayState::OnMessage(const std::string& data) {
+    auto deathReport = FBUtilGetServerEvent(data, DeathReport);
+    if (deathReport) {
+        this->ProcessDeathReport(deathReport);
+        return;
+    }
+
     auto worldState = FBUtilGetServerEvent(data, WorldState);
     if (!worldState)
         return;
@@ -93,13 +103,13 @@ void GameplayState::OnMessage(const std::string& data) {
 
     for (int i = 0; i < worldState->mobs()->size(); i++) {
         auto mobData = worldState->mobs()->Get(i);
-        auto mobItr = this->mobs.find(mobData->id());
+        auto mobItr = this->mobs.find(mobData->mobID());
         if (mobItr == this->mobs.end()) {
             // this is the first time we see this mob, create it
             Mob newMob;
             newMob.sprite = CreateNewAnimSprite(this->cameraNode.get(), mobData->species());
-            this->mobs[mobData->id()] = std::move(newMob);
-            mobItr = this->mobs.find(mobData->id());
+            this->mobs[mobData->mobID()] = std::move(newMob);
+            mobItr = this->mobs.find(mobData->mobID());
         }
         Mob& mob = mobItr->second;
         mob.sprite->setPosition(mobData->pos()->x() * METERS2PIXELS, -mobData->pos()->y() * METERS2PIXELS);
@@ -113,7 +123,7 @@ void GameplayState::OnMessage(const std::string& data) {
         }
 
         // if it's us then save sprite
-        if (mobItr->first == gameData.myID) {
+        if (mobItr->first == gameData.myMobID) {
             this->mySprite = mob.sprite.get();
         }
 

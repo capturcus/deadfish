@@ -58,7 +58,7 @@ struct Collideable {
 };
 
 struct Mob : public Collideable {
-    uint16_t id = 0;
+    uint16_t mobID = 0;
     uint16_t species = 0;
     b2Body* body = nullptr;
     MobState state = MobState::WALKING;
@@ -82,6 +82,7 @@ struct Player : public Mob {
     std::chrono::system_clock::time_point lastAttack;
     int points = 0;
     uint16_t deathTimeout = 0;
+    uint16_t playerID = 0;
     
     void handleCollision(Collideable& other) override;
     void handleKill(Player& killer) override;

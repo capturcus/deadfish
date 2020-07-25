@@ -35,6 +35,7 @@ struct GameplayState
     void OnKeyPressed(const ncine::KeyboardEvent &event) override;
     void OnKeyReleased(const ncine::KeyboardEvent &event) override;
     void LoadLevel();
+    void ProcessDeathReport(const DeadFish::DeathReport* deathReport);
     std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species);
 
     std::vector<std::unique_ptr<ncine::DrawableNode>> nodes;
