@@ -24,6 +24,7 @@ void LobbyState::OnMessage(const std::string& data) {
         return;
     }
     gameData.myMobID = initMetadata->yourMobID();
+    gameData.myPlayerID = initMetadata->yourPlayerID();
     std::cout << "my mob id " << gameData.myMobID << "\n";
     gameData.players.clear();
     for (size_t i = 0; i < initMetadata->players()->size(); i++)

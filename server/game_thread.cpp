@@ -404,7 +404,7 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
     case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandKill:
     {
         const auto event = clientMessage->event_as_CommandKill();
-        executeCommandKill(p, event->id());
+        executeCommandKill(p, event->mobID());
     }
     break;
 

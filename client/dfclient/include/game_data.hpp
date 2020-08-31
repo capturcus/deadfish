@@ -16,6 +16,7 @@ struct GameData {
     std::string serverAddress;
     std::string myNickname;
     uint16_t myMobID;
+    uint16_t myPlayerID;
     std::vector<Player> players;
     std::string levelData;
 

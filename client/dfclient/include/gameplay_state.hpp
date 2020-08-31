@@ -6,6 +6,8 @@
 
 #include <ncine/Sprite.h>
 
+#include "tweeny.h"
+
 #include "game_state.hpp"
 #include "../../../common/deadfish_generated.h"
 
@@ -43,6 +45,5 @@ struct GameplayState
     std::map<uint16_t, Mob> mobs;
     ncine::Sprite* mySprite = nullptr;
     uint32_t lastNodeID = 0;
-
-    std::unique_ptr<ncine::Sprite> debugSprite;
+    std::vector<tweeny::tween<int>> tweens;
 };

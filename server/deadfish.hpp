@@ -83,7 +83,7 @@ struct Player : public Mob {
     int points = 0;
     uint16_t deathTimeout = 0;
     uint16_t playerID = 0;
-    
+
     void handleCollision(Collideable& other) override;
     void handleKill(Player& killer) override;
     void update() override;

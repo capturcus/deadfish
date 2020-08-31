@@ -140,6 +140,7 @@ table InitPlayer {
 table InitMetadata {
   players:[InitPlayer];
   yourMobID:uint16;
+  yourPlayerID:uint16;
 }
 
 union ServerMessageUnion {
