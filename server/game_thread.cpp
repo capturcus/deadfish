@@ -365,7 +365,7 @@ void sendHighscores()
     std::vector<flatbuffers::Offset<DeadFish::HighscoreEntry>> entries;
     for (auto &p : gameState.players)
     {
-        auto entry = DeadFish::CreateHighscoreEntry(builder, builder.CreateString(p->name), p->points);
+        auto entry = DeadFish::CreateHighscoreEntry(builder, p->playerID, p->points);
         entries.push_back(entry);
     }
     auto v = builder.CreateVector(entries);

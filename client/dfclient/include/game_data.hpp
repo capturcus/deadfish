@@ -9,6 +9,7 @@ struct Player {
     std::string name;
     uint16_t species;
     uint16_t playerID;
+    int16_t score;
     bool ready;
 };
 

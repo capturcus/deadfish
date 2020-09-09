@@ -4,6 +4,7 @@
 #include <memory>
 #include <map>
 
+#include <ncine/TextNode.h>
 #include <ncine/Sprite.h>
 
 #include "tweeny.h"
@@ -38,7 +39,10 @@ struct GameplayState
     void OnKeyReleased(const ncine::KeyboardEvent &event) override;
     void LoadLevel();
     void ProcessDeathReport(const DeadFish::DeathReport* deathReport);
+    void ProcessHighscoreUpdate(const DeadFish::HighscoreUpdate* highscoreUpdate);
+    void CreateTextTween(ncine::TextNode* textPtr);
     std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species);
+    void ToggleHighscores();
 
     std::vector<std::unique_ptr<ncine::DrawableNode>> nodes;
     std::unique_ptr<ncine::SceneNode> cameraNode;
@@ -46,4 +50,5 @@ struct GameplayState
     ncine::Sprite* mySprite = nullptr;
     uint32_t lastNodeID = 0;
     std::vector<tweeny::tween<int>> tweens;
+    bool showHighscores = false;
 };

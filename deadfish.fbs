@@ -108,7 +108,7 @@ table WorldState {
 }
 
 table HighscoreEntry {
-  playerName:string;
+  playerID:uint16;
   playerPoints:int16;
 }
 

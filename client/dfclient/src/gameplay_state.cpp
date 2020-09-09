@@ -1,18 +1,19 @@
-#include <iostream>
-#include <functional>
 #include <complex>
+#include <functional>
+#include <iostream>
 
+#include <ncine/AnimatedSprite.h>
 #include <ncine/Application.h>
 #include <ncine/Colorf.h>
+#include <ncine/imgui.h>
 #include <ncine/Sprite.h>
 #include <ncine/Texture.h>
-#include <ncine/AnimatedSprite.h>
 
 #include "../../../common/constants.hpp"
 
-#include "gameplay_state.hpp"
-#include "game_data.hpp"
 #include "fb_util.hpp"
+#include "game_data.hpp"
+#include "gameplay_state.hpp"
 #include "state_manager.hpp"
 #include "util.hpp"
 
@@ -82,33 +83,50 @@ void GameplayState::LoadLevel() {
 	}
 }
 
+void GameplayState::CreateTextTween(ncine::TextNode* textPtr) {
+	auto tween = tweeny::from(255)
+		.to(255).during(60)
+		.to(0).during(60).onStep(
+		[textPtr] (tweeny::tween<int>& t, int v) -> bool {
+			auto textColor = textPtr->color();
+			textPtr->setColor(textColor.r(), textColor.g(), textColor.b(), v);
+			return false;
+		}
+	);
+	this->tweens.push_back(std::move(tween));
+}
+
+// this whole thing should probably be refactored
 void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport) {
 	auto& rootNode = ncine::theApplication().rootNode();
 	auto text = std::make_unique<ncine::TextNode>(&rootNode, this->manager.fonts["comic"].get());
 	const float screenWidth = ncine::theApplication().width();
 	const float screenHeight = ncine::theApplication().height();
 	if (deathReport->killer() == gameData.myPlayerID) {
-		// i killed someone, yay
-		text->setString(("you killed " + gameData.players[deathReport->killed()].name + "!").c_str());
-		text->setColor(0, 255, 0, 255);
+		// i killed someone
+		std::string killedName;
+		if (deathReport->killed() == (uint16_t)-1) {
+			// it was an npc
+			killedName = "a civilian";
+			text->setColor(0, 0, 0, 255);
+		} else {
+			// it was a player
+			text->setColor(0, 255, 0, 255);
+			killedName = gameData.players[deathReport->killed()].name + "!";
+		}
+		text->setString(("you killed " + killedName).c_str());
 		text->setPosition(screenWidth * 0.5f, screenHeight * 0.75f);
 		text->setScale(3.0f);
-		auto textPtr = text.get();
-		auto tween = tweeny::from(255)
-			.to(255).during(60)
-			.to(0).during(60).onStep(
-			[textPtr] (tweeny::tween<int>& t, int v) -> bool {
-				textPtr->setColor(0, 255, 0, v);
-				return false;
-			}
-		);
-		this->tweens.push_back(std::move(tween));
+		this->CreateTextTween(text.get());
+		
 	} else if (deathReport->killed() == gameData.myPlayerID) {
 		// i died :c
 		text->setString(("you have been killed by " + gameData.players[deathReport->killer()].name).c_str());
 		text->setColor(255, 0, 0, 255);
 		text->setPosition(screenWidth * 0.5f, screenHeight * 0.5f);
 		text->setScale(2.0f);
+		auto textPtr = text.get();
+		this->CreateTextTween(text.get());
 	} else {
 		auto killer = gameData.players[deathReport->killer()].name;
 		auto killed = gameData.players[deathReport->killed()].name;
@@ -116,11 +134,29 @@ void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport)
 		text->setScale(0.5f);
 		text->setPosition(screenWidth * 0.8f, screenHeight * 0.8f);
 		text->setColor(0, 0, 0, 255);
+		this->CreateTextTween(text.get());
 	}
 	this->nodes.push_back(std::move(text));
 }
 
+void GameplayState::ProcessHighscoreUpdate(const DeadFish::HighscoreUpdate* highscoreUpdate) {
+	for (int i = 0; i < highscoreUpdate->players()->size(); i++) {
+		auto highscoreEntry = highscoreUpdate->players()->Get(i);
+		// this is ugly, i know
+		for (auto& p : gameData.players) {
+			if (p.playerID == highscoreEntry->playerID())
+				p.score = highscoreEntry->playerPoints();
+		}
+	}
+}
+
 void GameplayState::OnMessage(const std::string& data) {
+	auto highscoreUpdate = FBUtilGetServerEvent(data, HighscoreUpdate);
+	if (highscoreUpdate) {
+		this->ProcessHighscoreUpdate(highscoreUpdate);
+		return;
+	}
+
 	auto deathReport = FBUtilGetServerEvent(data, DeathReport);
 	if (deathReport) {
 		this->ProcessDeathReport(deathReport);
@@ -193,28 +229,48 @@ void GameplayState::Create() {
 }
 
 void GameplayState::Update() {
+	// handle tweens
 	for (int i = this->tweens.size() - 1; i >= 0; i--) {
 		this->tweens[i].step(1);
 		if (this->tweens[i].progress() == 1.f)
 			this->tweens.erase(this->tweens.begin() + i);
 	}
-	if (this->mySprite == nullptr)
-		return;
+
+	// show highscores if necessary
 	const float screenWidth = ncine::theApplication().width();
 	const float screenHeight = ncine::theApplication().height();
+	if (this->showHighscores) {
+		ImGui::Begin("Highscores", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoCollapse);
+		ImGui::Columns(2);
+		for (auto& p : gameData.players) {
+			ImGui::Text("%s", p.name.c_str());
+			ImGui::NextColumn();
+			ImGui::Text("%s", std::to_string(p.score).c_str());
+			ImGui::NextColumn();
+		}
+		ImGui::SetWindowPos({screenWidth/2 - 200.f, screenHeight/2 - 200.f});
+		ImGui::SetWindowSize({400.f, 400.f});
+		ImGui::End();
+	}
+
+	if (this->mySprite == nullptr)
+		return;
+
+	// manage the screen position in relation to my sprite
 	auto &mouseState = ncine::theApplication().inputManager().mouseState();
 	auto myMobPosition = -this->mySprite->position() +
 		ncine::Vector2f(3*screenWidth/4 - mouseState.x/2,
 						screenHeight/4 + mouseState.y/2);
 	this->cameraNode->setPosition(myMobPosition);
 
+	// hovering
 	ncine::Vector2f mouseCoords;
 	mouseCoords.x = this->mySprite->position().x + (mouseState.x - screenWidth / 2) * 1.5f;
 	mouseCoords.y = this->mySprite->position().y + -(mouseState.y - screenHeight / 2) * 1.5f;
 	float radiusSquared = this->mySprite->size().x/2;
 	radiusSquared = radiusSquared*radiusSquared;
 
-	// hovering
 	int smallestNorm = INT32_MAX;
 	Mob* closestMob = nullptr;
 	for (auto& mob : this->mobs) {
@@ -282,9 +338,15 @@ void SendCommandRun(bool run) {
 void GameplayState::OnKeyPressed(const ncine::KeyboardEvent &event) {
 	if (event.sym == ncine::KeySym::Q)
 		SendCommandRun(true);
+	
+	if (event.sym == ncine::KeySym::TAB)
+		this->showHighscores = true;
 }
 
 void GameplayState::OnKeyReleased(const ncine::KeyboardEvent &event) {
 	if (event.sym == ncine::KeySym::Q)
 		SendCommandRun(false);
+
+	if (event.sym == ncine::KeySym::TAB)
+		this->showHighscores = false;
 }
