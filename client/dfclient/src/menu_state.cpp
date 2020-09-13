@@ -2,9 +2,10 @@
 #include <functional>
 
 #include <ncine/Application.h>
+#include <ncine/imgui.h>
+#include <ncine/MeshSprite.h>
 #include <ncine/Sprite.h>
 #include <ncine/Texture.h>
-#include <ncine/imgui.h>
 
 #include "menu_state.hpp"
 #include "state_manager.hpp"
@@ -14,6 +15,26 @@ namespace nc = ncine;
 
 nctl::UniquePtr<nc::Sprite> logoSprite;
 nc::Colorf bgColor(0.96875f, 0.97265625, 0.953125, 1.0f);
+std::unique_ptr<nc::MeshSprite> testMesh;
+
+inline nc::Vector2f rotateVector(const nc::Vector2f& v, float angle) {
+	return nc::Vector2f(v.x*cos(angle) + v.y*(-sin(angle)), v.x*sin(angle) + v.y*cos(angle));
+}
+
+std::vector<nc::Vector2f> createRingTexels(float outerRadius, float innerRadius)
+{
+	std::vector<nc::Vector2f> ret;
+	// start from left
+	nc::Vector2f inner = {-innerRadius, 0};
+	nc::Vector2f outer = {-outerRadius, 0};
+	for (int i = 0; i < 17; i++) {
+		ret.push_back(outer);
+		ret.push_back(inner);
+		outer = rotateVector(outer, M_PI / 8);
+		inner = rotateVector(inner, M_PI / 8);
+	}
+	return ret;
+}
 
 void MenuState::Create() {
     nc::SceneNode &rootNode = nc::theApplication().rootNode();
@@ -23,6 +44,14 @@ void MenuState::Create() {
 	// logoSprite->setPosition(logoSprite->position() + ncine::Vector2f{-logoSprite->width()/2, 0});
 
 	nc::theApplication().gfxDevice().setClearColor(bgColor);
+
+	testMesh = std::make_unique<nc::MeshSprite>(&rootNode, manager.textures["square.png"].get(), 500, 500);
+	auto texels = createRingTexels(150, 100);
+	std::cout << "printing ring texels " << texels.size() << "\n";
+	for (auto& t: texels) {
+		std::cout << t.x << "," << t.y << "\n";
+	}
+	testMesh->createVerticesFromTexels(texels.size(), texels.data());
 }
 
 bool MenuState::TryConnect() {
