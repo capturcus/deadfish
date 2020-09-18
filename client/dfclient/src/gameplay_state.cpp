@@ -236,6 +236,9 @@ void GameplayState::OnMessage(const std::string& data) {
 	// this->indicators.resize(1);
 	// this->indicators[1] = CreateIndicator(180, 0.5, 0);
 
+	if (this->mySprite == nullptr)
+		return;
+
 	this->indicators.resize(0);
 	this->indicators.resize(gameData.players.size());
 	for (int i = 0; i < worldState->indicators()->size(); i++) {
