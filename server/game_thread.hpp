@@ -7,12 +7,12 @@ void spawnPlayer(Player& p);
 void spawnCivilian();
 Player& getPlayerByConnHdl(websocketpp::connection_hdl &hdl);
 void sendServerMessage(Player& player,
-    flatbuffers::FlatBufferBuilder &builder,
-    DeadFish::ServerMessageUnion type,
-    flatbuffers::Offset<void> offset);
+	flatbuffers::FlatBufferBuilder &builder,
+	DeadFish::ServerMessageUnion type,
+	flatbuffers::Offset<void> offset);
 std::string makeServerMessage(flatbuffers::FlatBufferBuilder &builder,
-    DeadFish::ServerMessageUnion type,
-    flatbuffers::Offset<void> offset);
+	DeadFish::ServerMessageUnion type,
+	flatbuffers::Offset<void> offset);
 bool mobSeePoint(Mob &m, b2Vec2 &point);
 void sendToAll(std::string &data);
 void sendHighscores();

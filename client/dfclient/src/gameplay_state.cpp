@@ -150,6 +150,17 @@ void GameplayState::ProcessHighscoreUpdate(const DeadFish::HighscoreUpdate* high
 	}
 }
 
+/**
+ * @param angle angle to target in radians
+ * @param force force of the indicator from 0.0 to 1.0
+ * */
+std::unique_ptr<nc::MeshSprite> GameplayState::CreateIndicator(float angle, float force, int indicatorNum) {
+	auto arc = createArc(*this->mySprite, this->manager.textures["pixel.png"].get(),
+		0, 0, 100 + indicatorNum * 20, 100 + (indicatorNum+1) * 20, force * 360.f);
+	arc->setRotation(-this->mySprite->rotation() - angle * TO_DEGREES - force * 180.f + 180.f);
+	return std::move(arc);
+}
+
 void GameplayState::OnMessage(const std::string& data) {
 	auto highscoreUpdate = FBUtilGetServerEvent(data, HighscoreUpdate);
 	if (highscoreUpdate) {
@@ -216,6 +227,24 @@ void GameplayState::OnMessage(const std::string& data) {
 		this->mobs.erase(id);
 		if (id == gameData.myMobID)
 			this->mySprite = nullptr;
+	}
+
+	// draw indicators
+
+	// std::cout << "creating indicator\n";
+	// this->indicators.resize(0);
+	// this->indicators.resize(1);
+	// this->indicators[1] = CreateIndicator(180, 0.5, 0);
+
+	this->indicators.resize(0);
+	this->indicators.resize(gameData.players.size());
+	for (int i = 0; i < worldState->indicators()->size(); i++) {
+		auto ind = worldState->indicators()->Get(i);
+		std::cout << "ind " << i << " " << ind->angle() << " " << ind->force() << " " << ind->visible() << "\n";
+		if (ind->force() * 360.f < 1.f)
+			continue;
+		auto indArc = CreateIndicator(ind->angle(), ind->force(), i);
+		this->indicators[i] = std::move(indArc);
 	}
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <cmath>
 
 const int FRAME_TIME = 50; // 20 fps
 const int CIVILIAN_TIME = 40;
@@ -21,3 +22,6 @@ const int DEATH_TIMEOUT = 20 * 2;
 const float TOO_SLOW = 0.4f;
 const int CIV_SLOW_FRAMES = 40;
 const int CIV_RESET_FRAMES = 80;
+
+const float TO_DEGREES = (180.f / M_PI);
+const float TO_RADIANS = (M_PI / 180.f);
