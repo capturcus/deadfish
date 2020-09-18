@@ -32,11 +32,11 @@ std::vector<nc::Vector2f> createArcTexels(float outerRadius, float innerRadius, 
 	return ret;
 }
 
-std::unique_ptr<nc::MeshSprite> createArc(nc::SceneNode& rootNode, nc::Texture* texture,
+nc::MeshSprite* createArc(nc::SceneNode& rootNode, nc::Texture* texture,
 	float x, float y, float outerRadius, float innerRadius, int degrees) {
-	auto ret = std::make_unique<nc::MeshSprite>(&rootNode, texture, x, y);
+	auto ret = new nc::MeshSprite(&rootNode, texture, x, y);
 	auto texels = createArcTexels(outerRadius, innerRadius, degrees);
 	ret->createVerticesFromTexels(texels.size(), texels.data());
 	ret->setAnchorPoint(-100, -100); // for the love of god i have no idea why this should be like that
-	return std::move(ret);
+	return ret;
 }

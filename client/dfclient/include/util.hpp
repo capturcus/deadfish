@@ -14,7 +14,7 @@ namespace nc = ncine;
 
 bool IntersectsNode(float x, float y, nc::DrawableNode& node);
 void SendData(flatbuffers::FlatBufferBuilder& builder);
-std::unique_ptr<nc::MeshSprite> createArc(nc::SceneNode& rootNode, nc::Texture* texture,
+nc::MeshSprite* createArc(nc::SceneNode& rootNode, nc::Texture* texture,
 	float x, float y, float outerRadius, float innerRadius, int degrees);
 
 namespace deadfish {

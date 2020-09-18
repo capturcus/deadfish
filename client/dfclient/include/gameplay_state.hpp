@@ -46,7 +46,7 @@ struct GameplayState
 	void CreateTextTween(ncine::TextNode* textPtr);
 	std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species);
 	void ToggleHighscores();
-	std::unique_ptr<nc::MeshSprite> CreateIndicator(float angle, float force, int indicatorNum);
+	nc::MeshSprite* CreateIndicator(float angle, float force, int indicatorNum);
 
 	std::vector<std::unique_ptr<ncine::DrawableNode>> nodes;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
@@ -55,5 +55,5 @@ struct GameplayState
 	uint32_t lastNodeID = 0;
 	std::vector<tweeny::tween<int>> tweens;
 	bool showHighscores = false;
-	std::vector<std::unique_ptr<ncine::DrawableNode>> indicators;
+	std::vector<nc::DrawableNode*> indicators;
 };
