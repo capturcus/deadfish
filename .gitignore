@@ -2,3 +2,6 @@
 .vs/
 assets/
 .vscode/
+client/data
+client/imgui.ini
+

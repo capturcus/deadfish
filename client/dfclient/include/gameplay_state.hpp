@@ -46,7 +46,7 @@ struct GameplayState
 	void CreateTextTween(ncine::TextNode* textPtr);
 	std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species);
 	void ToggleHighscores();
-	nc::MeshSprite* CreateIndicator(float angle, float force, int indicatorNum);
+	nc::MeshSprite* CreateIndicator(float angle, float force, int indicatorNum, bool visible);
 
 	std::vector<std::unique_ptr<ncine::DrawableNode>> nodes;
 	std::unique_ptr<ncine::SceneNode> cameraNode;

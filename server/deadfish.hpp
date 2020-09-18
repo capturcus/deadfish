@@ -14,8 +14,6 @@
 
 #define UNUSED __attribute__((unused)) 
 
-// const float METERS2PIXELS = 100.f;
-// const float PIXELS2METERS = 0.01f;
 const std::string INI_PATH = "./deadfish.ini";
 
 typedef websocketpp::server<websocketpp::config::asio> server;

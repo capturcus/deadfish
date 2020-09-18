@@ -134,7 +134,6 @@ void Civilian::collisionResolution() {
 	}
 	std::sort(navpoints.begin(), navpoints.end());
 	for (auto& p : navpoints) {
-		// std::cout << std::get<0>(p) << " " << std::get<1>(p) << " " << std::get<2>(p) << "\n";
 		auto spawnName = std::get<1>(p);
 		auto& navpoint = gameState.level->navpoints[spawnName];
 		auto spawnPos = g2b(navpoint->position);
@@ -227,7 +226,6 @@ void Player::setAttacking() {
 	this->killTarget = nullptr;
 	this->state = MobState::ATTACKING;
 	this->attackTimeout = 40;
-	// this->lastAttack = std::chrono::system_clock::from_time_t(0);
 }
 
 Mob::~Mob()

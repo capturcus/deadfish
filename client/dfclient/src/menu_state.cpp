@@ -19,34 +19,33 @@ nctl::UniquePtr<nc::Sprite> logoSprite;
 nc::Colorf bgColor(0.96875f, 0.97265625, 0.953125, 1.0f);
 
 void MenuState::Create() {
-    nc::SceneNode &rootNode = nc::theApplication().rootNode();
+	nc::SceneNode &rootNode = nc::theApplication().rootNode();
 	auto res = nc::theApplication().appConfiguration().resolution;
-	std::cout << "res " << res.x << "," << res.y << "\n";
 	logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, manager.textures["deadfish.png"].get(), res.x*0.5f, res.y*0.6f);
 	nc::theApplication().gfxDevice().setClearColor(bgColor);
 }
 
 bool MenuState::TryConnect() {
 	gameData.serverAddress = "ws://" + gameData.serverAddress;
-    std::cout << "server " << gameData.serverAddress << ", my nickname " << gameData.myNickname << "\n";
-    gameData.socket = CreateWebSocket();
+	std::cout << "server " << gameData.serverAddress << ", my nickname " << gameData.myNickname << "\n";
+	gameData.socket = CreateWebSocket();
 	StateManager& forwardManager = this->manager;
-    gameData.socket->onOpen = [this](){
+	gameData.socket->onOpen = [this](){
 		std::cout << "lambda go to lobby\n";
 		this->manager.EnterState("lobby");
 	};
-    int ret = gameData.socket->Connect(gameData.serverAddress);
-    if (ret < 0) {
-        std::cout << "socket->Connect failed " << ret << "\n";
-        // TODO: some ui error handling
-        return false;
-    }
+	int ret = gameData.socket->Connect(gameData.serverAddress);
+	if (ret < 0) {
+		std::cout << "socket->Connect failed " << ret << "\n";
+		// TODO: some ui error handling
+		return false;
+	}
 	std::cout << "socket connected\n";
 	return true;
 }
 
 void MenuState::Update() {
-    ImGui::Begin("DeadFish", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+	ImGui::Begin("DeadFish", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
 		ImGuiWindowFlags_NoCollapse);
 	ImGui::SetWindowSize({350, 120});
 	auto res = nc::theApplication().appConfiguration().resolution;
@@ -59,10 +58,10 @@ void MenuState::Update() {
 		gameData.serverAddress = std::string(buf1);
 		gameData.myNickname = std::string(buf2);
 		TryConnect();
-    }
+	}
 	ImGui::End();
 }
 
 void MenuState::CleanUp() {
-    logoSprite.reset(nullptr);
+	logoSprite.reset(nullptr);
 }

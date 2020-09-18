@@ -1,4 +1,5 @@
 #pragma once
+
 void gameThread();
 uint16_t newMobID();
 void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg);

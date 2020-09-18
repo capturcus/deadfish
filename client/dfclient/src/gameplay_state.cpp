@@ -150,14 +150,23 @@ void GameplayState::ProcessHighscoreUpdate(const DeadFish::HighscoreUpdate* high
 	}
 }
 
+const float INDICATOR_WIDTH = 12.f;
+const float INDICATOR_OPACITY = 0.3f;
+const float INDICATOR_OFFSET = 80.f;
+
 /**
  * @param angle angle to target in radians
  * @param force force of the indicator from 0.0 to 1.0
  * */
-nc::MeshSprite* GameplayState::CreateIndicator(float angle, float force, int indicatorNum) {
-	auto arc = createArc(*this->mySprite, this->manager.textures["pixel.png"].get(),
-		0, 0, 100 + indicatorNum * 20, 100 + (indicatorNum+1) * 20, force * 360.f);
+nc::MeshSprite* GameplayState::CreateIndicator(float angle, float force, int indicatorNum, bool visible) {
+	auto arc = createArc(*this->mySprite, this->manager.textures["pixel.png"].get(), 0, 0,
+		INDICATOR_OFFSET + indicatorNum * INDICATOR_WIDTH,
+		INDICATOR_OFFSET + (indicatorNum+1) * INDICATOR_WIDTH, force * 360.f);
 	arc->setRotation(-this->mySprite->rotation() - angle * TO_DEGREES - force * 180.f + 180.f);
+	if (visible)
+		arc->setColor(255, 255, 255, INDICATOR_OPACITY * 255);
+	else
+		arc->setColor(0, 0, 0, INDICATOR_OPACITY * 255);
 	return arc;
 }
 
@@ -229,15 +238,10 @@ void GameplayState::OnMessage(const std::string& data) {
 			this->mySprite = nullptr;
 	}
 
-	// draw indicators
-
-	// std::cout << "creating indicator\n";
-	// this->indicators.resize(0);
-	// this->indicators.resize(1);
-	// this->indicators[1] = CreateIndicator(180, 0.5, 0);
-
 	if (this->mySprite == nullptr)
 		return;
+
+	// draw indicators
 
 	for (auto ind : this->indicators) {
 		this->mySprite->removeChildNode(ind);
@@ -248,10 +252,9 @@ void GameplayState::OnMessage(const std::string& data) {
 
 	for (int i = 0; i < worldState->indicators()->size(); i++) {
 		auto ind = worldState->indicators()->Get(i);
-		std::cout << "ind " << i << " " << ind->angle() << " " << ind->force() << " " << ind->visible() << "\n";
 		if (ind->force() * 360.f < 1.f)
 			continue;
-		auto indArc = CreateIndicator(ind->angle(), ind->force(), i);
+		auto indArc = CreateIndicator(ind->angle(), ind->force(), i, ind->visible());
 		this->indicators[i] = indArc;
 	}
 }
