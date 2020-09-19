@@ -2,6 +2,7 @@
 #include <limits>
 
 #define GLM_ENABLE_EXPERIMENTAL
+#include <random>
 #include <glm/gtx/vector_angle.hpp>
 
 #include "../common/geometry.hpp"
@@ -19,7 +20,7 @@ uint16_t newMobID()
 {
 	while (true)
 	{
-		uint16_t ret = rand() % UINT16_MAX;
+		uint16_t ret = random() % UINT16_MAX;
 
 		for (auto &p : gameState.players)
 		{
@@ -146,7 +147,7 @@ makePlayerIndicator(flatbuffers::FlatBufferBuilder &builder,
 					Player &otherPlayer)
 {
 	glm::vec2 toTarget = b2g(otherPlayer.body->GetPosition()) - b2g(rootPlayer.body->GetPosition());
-	float force = 1. - revLerp(6, 12, glm::length(toTarget));
+	float force = 1.f - revLerp(6, 12, glm::length(toTarget));
 	float angle = 0;
 	if (force != 0)
 		angle = angleFromVector(toTarget);
@@ -179,7 +180,7 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 	std::vector<flatbuffers::Offset<DeadFish::Indicator>> indicators;
 	for (auto &c : gameState.civilians)
 	{
-		if (!playerSeeMob(player, *c.get()))
+		if (!playerSeeMob(player, *c))
 			continue;
 		auto mob = createFBMob(builder, player, c.get());
 		mobs.push_back(mob);
@@ -195,8 +196,8 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 		bool canSeeOther;
 		if (differentPlayer)
 		{
-			canSeeOther = playerSeeMob(player, *p.get());
-			auto indicator = makePlayerIndicator(builder, player, *p.get());
+			canSeeOther = playerSeeMob(player, *p);
+			auto indicator = makePlayerIndicator(builder, player, *p);
 			indicators.push_back(indicator);
 		}
 		if (differentPlayer && !canSeeOther)
@@ -214,7 +215,7 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 
 class TestContactListener : public b2ContactListener
 {
-	void BeginContact(b2Contact *contact)
+	void BeginContact(b2Contact *contact) override
 	{
 		auto collideableA = (Collideable *)contact->GetFixtureA()->GetBody()->GetUserData();
 		auto collideableB = (Collideable *)contact->GetFixtureB()->GetBody()->GetUserData();
@@ -269,7 +270,7 @@ void spawnCivilian()
 			spawns.push_back(p.first);
 		}
 	}
-	auto &spawnName = spawns[rand() % spawns.size()];
+	auto &spawnName = spawns[random() % spawns.size()];
 	auto spawn = gameState.level->navpoints[spawnName].get();
 	auto c = std::make_unique<Civilian>();
 
@@ -383,7 +384,7 @@ void sendHighscores()
 	sendToAll(data);
 }
 
-void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
+void gameOnMessage(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
 {
 	const auto payload = msg->get_payload();
 	const auto clientMessage = flatbuffers::GetRoot<DeadFish::ClientMessage>(payload.c_str());
@@ -446,21 +447,21 @@ void gameThread()
 		sendToAll(data);
 
 		// shuffle the players to give them random species
-		std::random_shuffle(gameState.players.begin(), gameState.players.end());
+		std::shuffle(gameState.players.begin(), gameState.players.end(), std::mt19937(std::random_device()()));
 
 		uint8_t lastSpecies = 0;
 		for (auto &player : gameState.players)
 		{
 			player->species = lastSpecies;
 			lastSpecies++;
-			spawnPlayer(*player.get());
+			spawnPlayer(*player);
 		}
 	}
 
 	int civilianTimer = 0;
 	uint64_t roundTimer = ROUND_LENGTH;
 
-	while (1)
+	while (true)
 	{
 		auto maybe_guard = gameState.lock();
 		auto frameStart = std::chrono::system_clock::now();
@@ -511,8 +512,8 @@ void gameThread()
 		for (auto &p : gameState.players)
 		{
 			builder.Clear();
-			auto offset = makeWorldState(*p.get(), builder);
-			sendServerMessage(*p.get(), builder, DeadFish::ServerMessageUnion_WorldState, offset);
+			auto offset = makeWorldState(*p, builder);
+			sendServerMessage(*p, builder, DeadFish::ServerMessageUnion_WorldState, offset);
 		}
 
 		// Drop the lock

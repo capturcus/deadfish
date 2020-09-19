@@ -1,9 +1,9 @@
 #include <iostream>
+#include <utility>
 #include "flatbuffers/flatbuffers.h"
 
 #include "deadfish.hpp"
 #include "game_thread.hpp"
-#include "level_loader.hpp"
 
 GameState gameState;
 server websocket_server;
@@ -23,7 +23,7 @@ void sendInitMetadata()
 		}
 		auto players = builder.CreateVector(playerOffsets);
 		auto metadata = DeadFish::CreateInitMetadata(builder, players, targetPlayer->mobID, targetPlayer->playerID);
-		sendServerMessage(*targetPlayer.get(), builder, DeadFish::ServerMessageUnion_InitMetadata, metadata.Union());
+		sendServerMessage(*targetPlayer, builder, DeadFish::ServerMessageUnion_InitMetadata, metadata.Union());
 	}
 }
 
@@ -38,7 +38,7 @@ void addNewPlayer(const std::string &name, websocketpp::connection_hdl hdl)
 	auto p = std::make_unique<Player>();
 	p->mobID = newMobID();
 	p->name = name;
-	p->conn_hdl = hdl;
+	p->conn_hdl = std::move(hdl);
 	p->playerID = gameState.players.size();
 
 	gameState.players.push_back(std::move(p));
@@ -46,7 +46,7 @@ void addNewPlayer(const std::string &name, websocketpp::connection_hdl hdl)
 	sendInitMetadata();
 }
 
-void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg)
+void on_message(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
 {
 	std::cout << "message from " << (uint64_t)hdl.lock().get() << "\n";
 
@@ -107,7 +107,7 @@ void on_close(websocketpp::connection_hdl hdl)
 	{
 		sendInitMetadata();
 	}
-	if (gameState.phase == GamePhase::GAME && gameState.players.size() == 0)
+	if (gameState.phase == GamePhase::GAME && gameState.players.empty())
 	{
 		std::cout << "no players left, exiting\n";
 		exit(0);
@@ -118,7 +118,7 @@ int main()
 {
 	boost::property_tree::ini_parser::read_ini(INI_PATH, gameState.config);
 
-	srand(time(0));
+	srand(time(nullptr));
 
 	websocket_server.get_alog().clear_channels(websocketpp::log::alevel::all);
 
