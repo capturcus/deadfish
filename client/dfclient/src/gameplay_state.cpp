@@ -198,15 +198,17 @@ void GameplayState::OnMessage(const std::string& data) {
 	for (int i = 0; i < worldState->mobs()->size(); i++) {
 		auto mobData = worldState->mobs()->Get(i);
 		auto mobItr = this->mobs.find(mobData->mobID());
+		bool firstUpdate = false;
 		if (mobItr == this->mobs.end()) {
 			// this is the first time we see this mob, create it
 			Mob newMob;
 			newMob.sprite = CreateNewAnimSprite(this->cameraNode.get(), mobData->species());
 			this->mobs[mobData->mobID()] = std::move(newMob);
 			mobItr = this->mobs.find(mobData->mobID());
+			firstUpdate = true;
 		}
 		Mob& mob = mobItr->second;
-		mob.setupLocRot(*mobData);
+		mob.setupLocRot(*mobData, firstUpdate);
 		mob.seen = true;
 		if (mobData->state() != mob.state) {
 			mob.state = mobData->state();
@@ -262,13 +264,18 @@ void GameplayState::OnMessage(const std::string& data) {
 	}
 }
 
-void Mob::setupLocRot(const DeadFish::Mob& msg) {
+void Mob::setupLocRot(const DeadFish::Mob& msg, bool firstUpdate) {
 	prevPosition = currPosition;
 	prevRotation = currRotation;
 
 	currPosition.x = msg.pos()->x() * METERS2PIXELS;
 	currPosition.y = -msg.pos()->y() * METERS2PIXELS;
 	currRotation = -msg.angle() * 180.f / M_PI;
+
+	if (firstUpdate) {
+		prevPosition = currPosition;
+		prevRotation = currRotation;
+	}
 }
 
 void Mob::updateLocRot(float subDelta) {
