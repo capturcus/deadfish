@@ -53,6 +53,10 @@ table CommandRun {
   run:bool;
 }
 
+table SendChat {
+  message:string;
+}
+
 table JoinRequest {
   name:string;
 }
@@ -65,6 +69,7 @@ union ClientMessageUnion {
   CommandMove,
   CommandKill,
   CommandRun,
+  SendChat,
   JoinRequest,
   PlayerReady
 }
@@ -107,6 +112,11 @@ table WorldState {
   indicators:[Indicator];
 }
 
+table ChatEntry {
+  playerID:uint16;
+  message:string;
+}
+
 table HighscoreEntry {
   playerID:uint16;
   playerPoints:int16;
@@ -114,6 +124,10 @@ table HighscoreEntry {
 
 table HighscoreUpdate {
   players:[HighscoreEntry];
+}
+
+table ChatUpdate {
+  entry:ChatEntry;
 }
 
 table DeathReport {
@@ -146,6 +160,7 @@ table InitMetadata {
 union ServerMessageUnion {
   DeathReport,
   HighscoreUpdate,
+  ChatUpdate,
   SimpleServerEvent,
   InitMetadata,
   WorldState,

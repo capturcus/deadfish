@@ -30,6 +30,7 @@ void MyEventHandler::onPreInit(nc::AppConfiguration &config)
 #else
 	config.dataPath() = "data/";
 #endif
+	config.withAudio = false;
 }
 
 GameData gameData;

@@ -83,6 +83,10 @@ void GameplayState::LoadLevel() {
 	}
 }
 
+void GameplayState::DrawChat() {
+
+}
+
 void GameplayState::CreateTextTween(ncine::TextNode* textPtr) {
 	auto tween = tweeny::from(255)
 		.to(255).during(60)
@@ -139,6 +143,29 @@ void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport)
 	this->nodes.push_back(std::move(text));
 }
 
+void GameplayState::RefreshChatDisplay() {
+    auto& rootNode = ncine::theApplication().rootNode();
+    auto text = std::make_unique<ncine::TextNode>(&rootNode, this->manager.fonts["comic"].get());
+    const float screenWidth = ncine::theApplication().width();
+    const float screenHeight = ncine::theApplication().height();
+
+    if (this->showChat) {
+        auto messages = gameData.chatData;
+        std::string fullChat = "";
+        for (const auto &message: messages) {
+            fullChat += gameData.players[message.playerID].name + ": " + message.message + "\n";
+        }
+        text->setString(fullChat.c_str());
+    } else {
+        text->setString("CHAT DISABLED YOU SICK FUCK");
+    }
+    text->setScale(1.f);
+    text->setPosition(screenWidth * 0.2f, screenHeight * 0.8f);
+    text->setColor(50, 0, 0, 255);
+    this->CreateTextTween(text.get());
+    this->nodes.push_back(std::move(text));
+}
+
 void GameplayState::ProcessHighscoreUpdate(const DeadFish::HighscoreUpdate* highscoreUpdate) {
 	for (int i = 0; i < highscoreUpdate->players()->size(); i++) {
 		auto highscoreEntry = highscoreUpdate->players()->Get(i);
@@ -148,6 +175,16 @@ void GameplayState::ProcessHighscoreUpdate(const DeadFish::HighscoreUpdate* high
 				p.score = highscoreEntry->playerPoints();
 		}
 	}
+}
+
+void GameplayState::ProcessChatUpdate(const DeadFish::ChatUpdate *chatUpdate) {
+    auto entry = chatUpdate->entry();
+    ChatEntry chatEntry = {
+        entry->playerID(),
+        entry->message()->str()
+    };
+    gameData.chatData.push_back(chatEntry);
+    GameplayState::RefreshChatDisplay();
 }
 
 const float INDICATOR_WIDTH = 12.f;
@@ -175,6 +212,12 @@ void GameplayState::OnMessage(const std::string& data) {
 	if (highscoreUpdate) {
 		this->ProcessHighscoreUpdate(highscoreUpdate);
 		return;
+	}
+
+	auto chatUpdate = FBUtilGetServerEvent(data, ChatUpdate);
+	if (chatUpdate) {
+	    this->ProcessChatUpdate(chatUpdate);
+	    return;
 	}
 
 	auto deathReport = FBUtilGetServerEvent(data, DeathReport);
@@ -294,6 +337,20 @@ void GameplayState::Update() {
 		ImGui::End();
 	}
 
+	if (this->chatInput) {
+        ImGui::Begin("ChatInput", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+                                           ImGuiWindowFlags_NoCollapse);
+        ImGui::SetWindowSize({350, 120});
+        auto res = nc::theApplication().appConfiguration().resolution;
+        ImGui::SetWindowPos({static_cast<float>(res.x)/2-175, 4*static_cast<float>(res.y)/5});
+        static char buf1[64] = "DUPSKO";
+        ImGui::InputText("message", buf1, 64);
+        if (ImGui::Button("send", {300, 30})) {
+            SendSendChat(std::string(buf1));
+        }
+        ImGui::End();
+	}
+
 	if (this->mySprite == nullptr)
 		return;
 
@@ -375,12 +432,27 @@ void SendCommandRun(bool run) {
 	SendData(builder);
 }
 
+void GameplayState::SendSendChat(const std::string &msg) {
+    flatbuffers::FlatBufferBuilder builder;
+    auto sendChat = DeadFish::CreateSendChatDirect(builder, msg.c_str());
+    auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_SendChat, sendChat.Union());
+    builder.Finish(message);
+    SendData(builder);
+}
+
 void GameplayState::OnKeyPressed(const ncine::KeyboardEvent &event) {
 	if (event.sym == ncine::KeySym::Q)
 		SendCommandRun(true);
 	
 	if (event.sym == ncine::KeySym::TAB)
 		this->showHighscores = true;
+
+	if (event.sym == ncine::KeySym::Z)
+	    this->showChat = !this->showChat;
+        GameplayState::RefreshChatDisplay();
+
+	if (event.sym == ncine::KeySym::RETURN)
+	    this->chatInput = !this->chatInput;
 }
 
 void GameplayState::OnKeyReleased(const ncine::KeyboardEvent &event) {

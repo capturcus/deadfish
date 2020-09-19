@@ -13,6 +13,11 @@ struct Player {
     bool ready;
 };
 
+struct ChatEntry {
+    uint16_t playerID;
+    std::string message;
+};
+
 struct GameData {
     std::string serverAddress;
     std::string myNickname;
@@ -20,6 +25,7 @@ struct GameData {
     uint16_t myPlayerID;
     std::vector<Player> players;
     std::string levelData;
+    std::vector<ChatEntry> chatData;
 
     WebSocket* socket = nullptr;
 };

@@ -43,6 +43,7 @@ struct GameplayState
 	void LoadLevel();
 	void ProcessDeathReport(const DeadFish::DeathReport* deathReport);
 	void ProcessHighscoreUpdate(const DeadFish::HighscoreUpdate* highscoreUpdate);
+    void ProcessChatUpdate(const DeadFish::ChatUpdate *chatUpdate);
 	void CreateTextTween(ncine::TextNode* textPtr);
 	std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species);
 	void ToggleHighscores();
@@ -55,5 +56,13 @@ struct GameplayState
 	uint32_t lastNodeID = 0;
 	std::vector<tweeny::tween<int>> tweens;
 	bool showHighscores = false;
+	bool showChat = true;
+	bool chatInput = false;
 	std::vector<nc::DrawableNode*> indicators;
+
+    void RefreshChatDisplay();
+
+    void DrawChat();
+
+    void SendSendChat(const std::string &msg);
 };

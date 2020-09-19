@@ -8,6 +8,7 @@
 #include "../common/geometry.hpp"
 
 #include "deadfish.hpp"
+#include "flatbuffers/flatbuffers.h"
 #include "game_thread.hpp"
 #include "level_loader.hpp"
 
@@ -369,6 +370,15 @@ void executeCommandKill(Player &player, uint16_t id)
 	sendServerMessage(player, builder, DeadFish::ServerMessageUnion_SimpleServerEvent, ev.Union());
 }
 
+void castChatMessage(Player &player, std::string &message)
+{
+    flatbuffers::FlatBufferBuilder builder;
+    auto entry = DeadFish::CreateChatEntryDirect(builder, player.playerID, message.c_str());
+    auto update = DeadFish::CreateChatUpdate(builder, entry);
+    auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_ChatUpdate, update.Union());
+    sendToAll(data);
+}
+
 void sendHighscores()
 {
 	flatbuffers::FlatBufferBuilder builder;
@@ -396,31 +406,37 @@ void gameOnMessage(websocketpp::connection_hdl hdl, const server::message_ptr& m
 
 	switch (clientMessage->event_type())
 	{
-	case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandMove:
-	{
-		const auto event = clientMessage->event_as_CommandMove();
-		p.targetPosition = glm::vec2(event->target()->x(), event->target()->y());
-		p.state = p.state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
-		p.killTarget = nullptr;
-		p.lastAttack = std::chrono::system_clock::from_time_t(0);
-	}
-	break;
-	case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandRun:
-	{
-		const auto event = clientMessage->event_as_CommandRun();
-		p.state = event->run() ? MobState::RUNNING : MobState::WALKING;
-	}
-	break;
-	case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandKill:
-	{
-		const auto event = clientMessage->event_as_CommandKill();
-		executeCommandKill(p, event->mobID());
-	}
-	break;
-
-	default:
-		std::cout << "gameOnMessage: some other message type received\n";
-		break;
+        case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandMove:
+        {
+            const auto event = clientMessage->event_as_CommandMove();
+            p.targetPosition = glm::vec2(event->target()->x(), event->target()->y());
+            p.state = p.state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
+            p.killTarget = nullptr;
+            p.lastAttack = std::chrono::system_clock::from_time_t(0);
+        }
+        break;
+        case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandRun:
+        {
+            const auto event = clientMessage->event_as_CommandRun();
+            p.state = event->run() ? MobState::RUNNING : MobState::WALKING;
+        }
+        break;
+        case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandKill:
+        {
+            const auto event = clientMessage->event_as_CommandKill();
+            executeCommandKill(p, event->mobID());
+        }
+        break;
+	    case DeadFish::ClientMessageUnion::ClientMessageUnion_SendChat:
+        {
+            const auto event = clientMessage->event_as_SendChat();
+            auto s = std::string(event->message()->str());
+            castChatMessage(p, s);
+        }
+        break;
+        default:
+            std::cout << "gameOnMessage: some other message type received\n";
+            break;
 	}
 }
 
