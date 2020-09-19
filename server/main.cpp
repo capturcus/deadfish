@@ -48,10 +48,12 @@ void addNewPlayer(const std::string &name, websocketpp::connection_hdl hdl)
 
 void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg)
 {
+	std::cout << "on_message\n";
 	std::cout << "message from " << (uint64_t)hdl.lock().get() << "\n";
 
 	const auto payload = msg->get_payload();
 	const auto clientMessage = flatbuffers::GetRoot<DeadFish::ClientMessage>(payload.c_str());
+
 	switch (clientMessage->event_type())
 	{
 	case DeadFish::ClientMessageUnion::ClientMessageUnion_JoinRequest:
@@ -65,8 +67,10 @@ void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg)
 	case DeadFish::ClientMessageUnion::ClientMessageUnion_PlayerReady:
 	{
 		auto pl = getPlayerByConnHdl(hdl);
-		if (!pl)
+		if (!pl) {
+			sendGameAlreadyInProgress(hdl);
 			return;
+		}
 		pl->ready = true;
 		sendInitMetadata();
 		for (auto& p : gameState.players) {
@@ -116,6 +120,13 @@ void on_close(websocketpp::connection_hdl hdl)
 	}
 }
 
+void on_open(websocketpp::connection_hdl hdl) {
+	if (gameState.phase == GamePhase::GAME) {
+		sendGameAlreadyInProgress(hdl);
+		return;
+	}
+}
+
 int main()
 {
 	boost::property_tree::ini_parser::read_ini(INI_PATH, gameState.config);
@@ -124,6 +135,7 @@ int main()
 
 	websocket_server.get_alog().clear_channels(websocketpp::log::alevel::all);
 
+	websocket_server.set_open_handler(&on_open);
 	websocket_server.set_message_handler(&on_message);
 	websocket_server.set_reuse_addr(true);
 	websocket_server.set_close_handler(&on_close);

@@ -8,9 +8,10 @@
 #include <ncine/Sprite.h>
 #include <ncine/Texture.h>
 
+#include "fb_util.hpp"
+#include "game_data.hpp"
 #include "menu_state.hpp"
 #include "state_manager.hpp"
-#include "game_data.hpp"
 #include "util.hpp"
 
 namespace nc = ncine;
