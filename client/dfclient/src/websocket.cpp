@@ -2,18 +2,22 @@
 
 WebSocketManager webSocketManager;
 
-void WebSocketManager::Update() {
-	for (auto& ws: this->websockets) {
-		if (ws->toBeOpened) {
-			ws->onOpen();
-			ws->toBeOpened = false;
-		}
-		
-		for (auto& msg: ws->messageQueue)
-			ws->onMessage(msg);
-		
-		ws->messageQueue.clear();
+// Runs in game loop thread
+Messages WebSocketManager::GetMessages() {
+	Messages m;
+	if (!_ws) {
+		return m;
 	}
+
+	std::lock_guard<std::mutex> guard(_ws->mq_mutex);
+	m.opened = _ws->toBeOpened;
+	m.data_msgs.swap(_ws->messageQueue);
+
+	if (m.opened) {
+		_ws->toBeOpened = false;
+	}
+
+	return m;
 }
 
 #ifdef __EMSCRIPTEN__
@@ -34,20 +38,15 @@ typedef WebSocketEmscripten WebSocketType;
 
 EM_BOOL WebSocketEmscriptenOnMessage(int eventType, const EmscriptenWebSocketMessageEvent *e, void *userData) {
 	WebSocketEmscripten* socket = (WebSocketEmscripten*) userData;
-	if (!socket->onMessage) // TODO: see whether this hinders performance and remove it if it does
-		return false;
-
-	std::string data = std::string(e->data, e->data + e->numBytes);
-	socket->onMessage(data);
+	std::lock_guard<std::mutex> guard(wspp->mq_mutex);
+	socket->messageQueue.push_back(std::string(e->data, e->data + e->numBytes));
 	return false;
 }
 
 EM_BOOL WebSocketEmscriptenOnOpen(int eventType, const EmscriptenWebSocketOpenEvent *websocketEvent, void *userData) {
 	WebSocketEmscripten* socket = (WebSocketEmscripten*) userData;
-	if (!socket->onOpen)
-		return false;
-
-	socket->onOpen();
+	std::lock_guard<std::mutex> guard(socket->mq_mutex);
+	socket->toBeOpened = true;
 	return false;
 }
 
@@ -103,12 +102,13 @@ std::map<void*, WebSocketPP*> clients;
 
 void WebSocketPPOnMessage(websocketpp::connection_hdl hdl, WebSocketPPClient::message_ptr msg) {
 	WebSocketPP* wspp = clients[hdl.lock().get()];
-	const std::string& data = msg->get_payload();
-	wspp->messageQueue.push_back(data);
+	std::lock_guard<std::mutex> guard(wspp->mq_mutex);
+	wspp->messageQueue.push_back(msg->get_payload());
 }
 
 void WebSocketPPOnOpen(websocketpp::connection_hdl hdl) {
 	WebSocketPP* wspp = clients[hdl.lock().get()];
+	std::lock_guard<std::mutex> guard(wspp->mq_mutex);
 	wspp->toBeOpened = true;
 }
 
@@ -150,12 +150,13 @@ bool WebSocketPP::Send(std::string& data) {
 	this->c.send(this->myHdl, data, websocketpp::frame::opcode::binary, ec);
 	if (ec)
 		std::cout << "Echo failed because: " << ec.message() << std::endl;
+
+	// FIXME return bool
 }
 
 #endif
 
 WebSocket* CreateWebSocket() {
-	auto ws = std::make_unique<WebSocketType>();
-	webSocketManager.websockets.push_back(std::move(ws));
-	return webSocketManager.websockets.back().get();
+	webSocketManager._ws = std::make_unique<WebSocketType>();
+	return webSocketManager._ws.get();
 }

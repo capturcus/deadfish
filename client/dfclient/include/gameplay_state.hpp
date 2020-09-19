@@ -44,10 +44,9 @@ struct GameplayState
 	GameplayState(Resources& r) : _resources(r) {}
 	
 	void Create() override;
-	StateType Update() override;
+	StateType Update(Messages) override;
 	void CleanUp() override;
 
-	void OnMessage(const std::string& data);
 	void OnMouseButtonPressed(const ncine::MouseEvent &event) override;
 	void OnKeyPressed(const ncine::KeyboardEvent &event) override;
 	void OnKeyReleased(const ncine::KeyboardEvent &event) override;
@@ -71,5 +70,7 @@ struct GameplayState
 	ncine::TimeStamp lastMessageReceivedTime;
 
 private:
+	void OnMessage(const std::string& data);
+
 	Resources& _resources;
 };

@@ -2,6 +2,8 @@
 
 #include <ncine/IInputEventHandler.h>
 
+#include "messages.hpp"
+
 enum class StateType {
 	Menu,
 	Lobby,
@@ -9,12 +11,12 @@ enum class StateType {
 };
 
 struct GameState {
-    virtual void Create() = 0;
-    virtual StateType Update() = 0;
-    virtual void CleanUp() = 0;
-    virtual void OnKeyPressed(const ncine::KeyboardEvent &event) {}
+	virtual void Create() = 0;
+	virtual StateType Update(Messages) = 0;
+	virtual void CleanUp() = 0;
+	virtual void OnKeyPressed(const ncine::KeyboardEvent &event) {}
 	virtual void OnKeyReleased(const ncine::KeyboardEvent &event) {}
 	virtual void OnMouseButtonPressed(const ncine::MouseEvent &event) {}
 	virtual void OnMouseMoved(const ncine::MouseState &state) {}
-    virtual ~GameState() {}
+	virtual ~GameState() {}
 };

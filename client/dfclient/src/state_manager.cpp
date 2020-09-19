@@ -41,8 +41,7 @@ void StateManager::OnInit() {
 }
 
 void StateManager::OnFrameStart() {
-	webSocketManager.Update();
-	auto nextStateType = currentState->Update();
+	auto nextStateType = currentState->Update(webSocketManager.GetMessages());
 	if (nextStateType != currentStateType) {
 		EnterState(nextStateType);
 	}

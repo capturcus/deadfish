@@ -10,18 +10,17 @@
 #include "resources.hpp"
 #include "util.hpp"
 
-void LobbyState::OnMessage(const std::string& data) {
+bool LobbyState::OnMessage(const std::string& data) {
 	std::cout << "lobby received data\n";
 	auto level = FBUtilGetServerEvent(data, Level);
 	if (level) {
 		gameData.levelData = data; // copy it
-		enterGameplayOnNextUpdate = true;
-		return;
+		return true;
 	}
 	auto initMetadata = FBUtilGetServerEvent(data, InitMetadata);
 	if (!initMetadata) {
 		std::cout << "wrong data received\n";
-		return;
+		return false;
 	}
 	gameData.myMobID = initMetadata->yourMobID();
 	gameData.myPlayerID = initMetadata->yourPlayerID();
@@ -36,14 +35,13 @@ void LobbyState::OnMessage(const std::string& data) {
 		gameData.players.back().species = playerData->species();
 		gameData.players.back().playerID = playerData->playerID();
 	}
+
+	return false;
 }
 
 void LobbyState::Create() {
 	std::cout << "lobby create\n";
-	enterGameplayOnNextUpdate = false;
 
-	// if we're here then that means that the socket has already connected, send data
-	gameData.socket->onMessage = std::bind(&LobbyState::OnMessage, this, std::placeholders::_1);
 	flatbuffers::FlatBufferBuilder builder;
 	auto req = DeadFish::CreateJoinRequest(builder, builder.CreateString(gameData.myNickname));
 	auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_JoinRequest, req.Union());
@@ -68,16 +66,19 @@ void LobbyState::Create() {
 	this->readyButton->setPosition(screenWidth * 0.5f, screenHeight * 0.2f);
 }
 
-StateType LobbyState::Update() {
+StateType LobbyState::Update(Messages m) {
+	for (auto& msg: m.data_msgs) {
+		if (OnMessage(msg)) {
+			return StateType::Gameplay;
+		}
+	}
+
 	RedrawPlayers();
 	if (this->ready)
 		this->readyButton->setColor(128, 128, 128, 255);
 	else
 		this->readyButton->setColor(100, 0, 0, 255);
 
-	if (enterGameplayOnNextUpdate) {
-		return StateType::Gameplay;
-	}
 	return StateType::Lobby;
 }
 

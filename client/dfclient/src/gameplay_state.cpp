@@ -289,12 +289,15 @@ void GameplayState::Create() {
 	auto& rootNode = ncine::theApplication().rootNode();
 	this->cameraNode = std::make_unique<ncine::SceneNode>(&rootNode);
 	this->LoadLevel();
-	gameData.socket->onMessage = std::bind(&GameplayState::OnMessage, this, std::placeholders::_1);
 
 	lastMessageReceivedTime = ncine::TimeStamp::now();
 }
 
-StateType GameplayState::Update() {
+StateType GameplayState::Update(Messages m) {
+	for (auto& msg: m.data_msgs) {
+		OnMessage(msg);
+	}
+
 	auto now = ncine::TimeStamp::now();
 	float subDelta = (now.seconds() - lastMessageReceivedTime.seconds()) * ANIMATION_FPS;
 	if (subDelta < 0.f) {

@@ -11,12 +11,11 @@ public:
 	MenuState(Resources& r) : _resources(r) {}
 	
 	void Create() override;
-	StateType Update() override;
+	StateType Update(Messages) override;
 	void CleanUp() override;
 
 	bool TryConnect();
 
 private:
-	bool enterLobbyOnNextUpdate = false;
 	Resources& _resources;
 };
