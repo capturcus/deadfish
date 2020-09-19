@@ -38,10 +38,10 @@ StateManager stateManager;
 void MyEventHandler::onInit()
 {
 	stateManager.OnInit();
-	stateManager.AddState("menu", std::make_unique<MenuState>(stateManager));
-	stateManager.AddState("lobby", std::make_unique<LobbyState>(stateManager));
-	stateManager.AddState("gameplay", std::make_unique<GameplayState>(stateManager));
-	stateManager.EnterState("menu");
+	stateManager.AddState(StateType::Menu, std::make_unique<MenuState>(stateManager));
+	stateManager.AddState(StateType::Lobby, std::make_unique<LobbyState>(stateManager));
+	stateManager.AddState(StateType::Gameplay, std::make_unique<GameplayState>(stateManager));
+	stateManager.EnterState(StateType::Menu);
 }
 
 void MyEventHandler::onFrameStart()

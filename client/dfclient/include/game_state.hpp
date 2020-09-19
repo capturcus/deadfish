@@ -2,6 +2,12 @@
 
 #include <ncine/IInputEventHandler.h>
 
+enum class StateType {
+	Menu,
+	Lobby,
+	Gameplay
+};
+
 class StateManager;
 
 struct GameState {

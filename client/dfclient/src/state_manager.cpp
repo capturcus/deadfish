@@ -7,14 +7,14 @@
 #include "state_manager.hpp"
 #include "websocket.hpp"
 
-void StateManager::AddState(std::string name, std::unique_ptr<GameState>&& state) {
-	this->states[name] = std::move(state);
+void StateManager::AddState(StateType s, std::unique_ptr<GameState>&& state) {
+	this->states[s] = std::move(state);
 }
 
-void StateManager::EnterState(std::string name) {
+void StateManager::EnterState(StateType s) {
 	if (currentState)
 		currentState->CleanUp();
-	currentState = states[name].get();
+	currentState = states[s].get();
 	currentState->Create();
 }
 

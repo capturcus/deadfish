@@ -29,10 +29,9 @@ bool MenuState::TryConnect() {
 	gameData.serverAddress = "ws://" + gameData.serverAddress;
 	std::cout << "server " << gameData.serverAddress << ", my nickname " << gameData.myNickname << "\n";
 	gameData.socket = CreateWebSocket();
-	StateManager& forwardManager = this->manager;
 	gameData.socket->onOpen = [this](){
 		std::cout << "lambda go to lobby\n";
-		this->manager.EnterState("lobby");
+		this->manager.EnterState(StateType::Lobby);
 	};
 	int ret = gameData.socket->Connect(gameData.serverAddress);
 	if (ret < 0) {

@@ -15,7 +15,7 @@ void LobbyState::OnMessage(const std::string& data) {
 	auto level = FBUtilGetServerEvent(data, Level);
 	if (level) {
 		gameData.levelData = data; // copy it
-		manager.EnterState("gameplay");
+		manager.EnterState(StateType::Gameplay);
 		return;
 	}
 	auto initMetadata = FBUtilGetServerEvent(data, InitMetadata);

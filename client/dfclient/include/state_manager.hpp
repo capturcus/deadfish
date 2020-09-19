@@ -10,11 +10,11 @@
 
 #include "game_state.hpp"
 
-using StateMap = std::map<std::string, std::unique_ptr<GameState>>;
+using StateMap = std::map<StateType, std::unique_ptr<GameState>>;
 
 struct StateManager {
-	void AddState(std::string name, std::unique_ptr<GameState>&& state);
-	void EnterState(std::string name);
+	void AddState(StateType s, std::unique_ptr<GameState>&& state);
+	void EnterState(StateType s);
 	void OnFrameStart();
 	void OnInit();
 	void OnKeyPressed(const ncine::KeyboardEvent &event);
