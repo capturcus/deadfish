@@ -54,6 +54,8 @@ struct GameplayState
 	void ProcessDeathReport(const DeadFish::DeathReport* deathReport);
 	void ProcessHighscoreUpdate(const DeadFish::HighscoreUpdate* highscoreUpdate);
 	void CreateTextTween(ncine::TextNode* textPtr);
+	void CreateHidingSpotShowingTween(ncine::DrawableNode* hspot);
+	void CreateHidingSpotHidingTween(ncine::DrawableNode* hspot);
 	std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species);
 	void ToggleHighscores();
 	nc::MeshSprite* CreateIndicator(float angle, float force, int indicatorNum, bool visible);
