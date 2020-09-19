@@ -111,7 +111,6 @@ struct Bush : public Collideable {
 		}
 		return true;
 	}
-
 };
 
 struct Stone : public Collideable {

@@ -59,6 +59,7 @@ struct GameplayState
 	nc::MeshSprite* CreateIndicator(float angle, float force, int indicatorNum, bool visible);
 
 	std::vector<std::unique_ptr<ncine::DrawableNode>> nodes;
+	std::vector<std::unique_ptr<ncine::DrawableNode>> hiding_spots;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
 	std::map<uint16_t, Mob> mobs;
 	ncine::Sprite* mySprite = nullptr;

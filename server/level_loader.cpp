@@ -126,8 +126,6 @@ void loadLevel(std::string &path)
 	{
 		auto bush = level->bushes()->Get(i);
 		auto b = std::make_unique<Bush>();
-		// b->position = glm::vec2(bush->pos()->x(), bush->pos()->y());
-		// b->radius = bush->radius();
 		initBush(b.get(), bush);
 		gameState.level->bushes.push_back(std::move(b));
 	}

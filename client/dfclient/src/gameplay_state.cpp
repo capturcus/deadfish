@@ -80,7 +80,7 @@ void GameplayState::LoadLevel() {
 		auto bushSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), manager.textures["bush.png"].get(),
 			bush->pos()->x() * METERS2PIXELS, -bush->pos()->y() * METERS2PIXELS);
 		bushSprite->setLayer(HIDING_SPOTS_LAYER);
-		this->nodes.push_back(std::move(bushSprite));
+		this->hiding_spots.push_back(std::move(bushSprite));
 	}
 }
 
@@ -368,6 +368,21 @@ void GameplayState::Update() {
 	if (closestMob && smallestNorm < radiusSquared) {
 		closestMob->hoverMarker = std::make_unique<ncine::Sprite>(closestMob->sprite.get(), manager.textures["graycircle.png"].get());
 		closestMob->hoverMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
+	}
+
+	// hiding spot transparency
+	for (auto &&hspot : this->hiding_spots)
+	{
+		if (!this->mySprite) break;
+		auto distance = this->mySprite->position() - hspot->position();
+		auto radius_offset = ncine::Vector2f(this->mySprite->height()/4.f, this->mySprite->height()/4.f); // this seems to work quite nicely
+		auto radius = ncine::Vector2f(hspot->width()/2.0f, hspot->height()/2.0f);
+		radius += radius_offset;
+		if ((distance.x*distance.x)/(radius.x*radius.x) + (distance.y*distance.y)/(radius.x*radius.x) <= 1) { //równanie elipsy, dziwki
+			hspot->setAlphaF(0.5f);
+		}
+		else hspot->setAlphaF(1.0f);
+		
 	}
 }
 
