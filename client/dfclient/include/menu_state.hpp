@@ -2,6 +2,8 @@
 
 #include "game_state.hpp"
 
+#include "tweeny.h"
+
 struct MenuState
 	: public GameState
 {
@@ -12,4 +14,6 @@ struct MenuState
 	void CleanUp() override;
 
 	bool TryConnect();
+
+	std::vector<tweeny::tween<int>> tweens;
 };

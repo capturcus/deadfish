@@ -83,18 +83,6 @@ void GameplayState::LoadLevel() {
 	}
 }
 
-void GameplayState::CreateTextTween(ncine::TextNode* textPtr) {
-	auto tween = tweeny::from(255)
-		.to(255).during(60)
-		.to(0).during(60).onStep(
-		[textPtr] (tweeny::tween<int>& t, int v) -> bool {
-			auto textColor = textPtr->color();
-			textPtr->setColor(textColor.r(), textColor.g(), textColor.b(), v);
-			return false;
-		}
-	);
-	this->tweens.push_back(std::move(tween));
-}
 
 // this whole thing should probably be refactored
 void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport) {
@@ -117,7 +105,7 @@ void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport)
 		text->setString(("you killed " + killedName).c_str());
 		text->setPosition(screenWidth * 0.5f, screenHeight * 0.75f);
 		text->setScale(3.0f);
-		this->CreateTextTween(text.get());
+		this->tweens.push_back(CreateTextTween(text.get()));
 		
 	} else if (deathReport->killed() == gameData.myPlayerID) {
 		// i died :c
@@ -125,8 +113,7 @@ void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport)
 		text->setColor(255, 0, 0, 255);
 		text->setPosition(screenWidth * 0.5f, screenHeight * 0.5f);
 		text->setScale(2.0f);
-		auto textPtr = text.get();
-		this->CreateTextTween(text.get());
+		this->tweens.push_back(CreateTextTween(text.get()));
 	} else {
 		auto killer = gameData.players[deathReport->killer()].name;
 		auto killed = gameData.players[deathReport->killed()].name;
@@ -134,7 +121,7 @@ void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport)
 		text->setScale(0.5f);
 		text->setPosition(screenWidth * 0.8f, screenHeight * 0.8f);
 		text->setColor(0, 0, 0, 255);
-		this->CreateTextTween(text.get());
+		this->tweens.push_back(CreateTextTween(text.get()));
 	}
 	this->nodes.push_back(std::move(text));
 }

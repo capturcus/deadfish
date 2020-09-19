@@ -16,6 +16,8 @@ void LobbyState::OnMessage(const std::string& data) {
 	if (event) {
 		if (event->type() == DeadFish::SimpleServerEventType_GameAlreadyInProgress) {
 			std::cout << "game already in progress\n";
+			gameData.gameInProgress = true;
+			manager.EnterState("menu");
 			return;
 		}
 	}

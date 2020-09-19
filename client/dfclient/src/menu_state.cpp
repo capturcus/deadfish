@@ -24,6 +24,16 @@ void MenuState::Create() {
 	auto res = nc::theApplication().appConfiguration().resolution;
 	logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, manager.textures["deadfish.png"].get(), res.x*0.5f, res.y*0.6f);
 	nc::theApplication().gfxDevice().setClearColor(bgColor);
+	if (gameData.gameInProgress) {
+		std::cout << "menu game in progress\n";
+		auto text = new ncine::TextNode(&rootNode, this->manager.fonts["comic"].get());
+		text->setString("game already in progress");
+		text->setPosition(res.x * 0.5f, res.y * 0.75f);
+		text->setScale(2.0f);
+		text->setColor(0, 0, 0, 255);
+		this->tweens.push_back(CreateTextTween(text));
+		gameData.gameInProgress = false;
+	}
 }
 
 bool MenuState::TryConnect() {

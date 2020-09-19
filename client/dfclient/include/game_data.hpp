@@ -20,6 +20,7 @@ struct GameData {
     uint16_t myPlayerID;
     std::vector<Player> players;
     std::string levelData;
+    bool gameInProgress = false;
 
     WebSocket* socket = nullptr;
 };
