@@ -187,6 +187,17 @@ void GameplayState::OnMessage(const std::string& data) {
 		return;
 	}
 
+	auto simpleServerEvent = FBUtilGetServerEvent(data, SimpleServerEvent);
+	if (simpleServerEvent) {
+		if (simpleServerEvent->type() == DeadFish::SimpleServerEventType_GameEnded) {
+			gameEnded = true;
+			updateRemainingText(0);
+			return;
+		}
+
+		return;
+	}
+
 	auto worldState = FBUtilGetServerEvent(data, WorldState);
 	if (!worldState)
 		return;
@@ -260,6 +271,9 @@ void GameplayState::OnMessage(const std::string& data) {
 		auto indArc = CreateIndicator(ind->angle(), ind->force(), i, ind->visible());
 		this->indicators[i] = indArc;
 	}
+
+	// draw remaining time
+	updateRemainingText(worldState->stepsRemaining());
 }
 
 void Mob::setupLocRot(const DeadFish::Mob& msg) {
@@ -290,6 +304,7 @@ void GameplayState::Create() {
 	this->cameraNode = std::make_unique<ncine::SceneNode>(&rootNode);
 	this->LoadLevel();
 	gameData.socket->onMessage = std::bind(&GameplayState::OnMessage, this, std::placeholders::_1);
+	timeLeftNode = new ncine::TextNode(&rootNode, this->manager.fonts["comic"].get());
 
 	lastMessageReceivedTime = ncine::TimeStamp::now();
 }
@@ -313,7 +328,7 @@ void GameplayState::Update() {
 	// show highscores if necessary
 	const float screenWidth = ncine::theApplication().width();
 	const float screenHeight = ncine::theApplication().height();
-	if (this->showHighscores) {
+	if (this->showHighscores || gameEnded) {
 		ImGui::Begin("Highscores", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoCollapse);
 		ImGui::Columns(2);
@@ -428,4 +443,28 @@ void GameplayState::OnKeyReleased(const ncine::KeyboardEvent &event) {
 
 	if (event.sym == ncine::KeySym::TAB)
 		this->showHighscores = false;
+}
+
+void GameplayState::updateRemainingText(uint64_t remainingFrames) {
+	const float screenWidth = ncine::theApplication().width();
+	const float screenHeight = ncine::theApplication().height();
+
+	if (remainingFrames > 0) {
+		const uint64_t seconds = remainingFrames / uint64_t(ANIMATION_FPS);
+		char timeStr[32];
+		sprintf(timeStr, "%lu:%02lu", seconds / 60, seconds % 60);
+		timeLeftNode->setString(timeStr);
+		timeLeftNode->setColor(0, 0, 0, 255);
+		timeLeftNode->setPosition(screenWidth, screenHeight);
+		timeLeftNode->setAnchorPoint(1.f, 1.f);
+		timeLeftNode->setAlpha(127);
+		timeLeftNode->setScale(2.0f);
+	} else {
+		timeLeftNode->setString("Game over");
+		timeLeftNode->setColor(255, 0, 0, 255);
+		timeLeftNode->setPosition(screenWidth * 0.5f, screenHeight * 0.875f);
+		timeLeftNode->setAnchorPoint(0.5f, 0.5f);
+		timeLeftNode->setAlpha(255);
+		timeLeftNode->setScale(4.0f);
+	}
 }
