@@ -105,7 +105,7 @@ void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport)
 		text->setString(("you killed " + killedName).c_str());
 		text->setPosition(screenWidth * 0.5f, screenHeight * 0.75f);
 		text->setScale(3.0f);
-		this->tweens.push_back(CreateTextTween(text.get()));
+		this->manager.tweens.push_back(CreateTextTween(text.get()));
 		
 	} else if (deathReport->killed() == gameData.myPlayerID) {
 		// i died :c
@@ -113,7 +113,7 @@ void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport)
 		text->setColor(255, 0, 0, 255);
 		text->setPosition(screenWidth * 0.5f, screenHeight * 0.5f);
 		text->setScale(2.0f);
-		this->tweens.push_back(CreateTextTween(text.get()));
+		this->manager.tweens.push_back(CreateTextTween(text.get()));
 	} else {
 		auto killer = gameData.players[deathReport->killer()].name;
 		auto killed = gameData.players[deathReport->killed()].name;
@@ -121,7 +121,7 @@ void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport)
 		text->setScale(0.5f);
 		text->setPosition(screenWidth * 0.8f, screenHeight * 0.8f);
 		text->setColor(0, 0, 0, 255);
-		this->tweens.push_back(CreateTextTween(text.get()));
+		this->manager.tweens.push_back(CreateTextTween(text.get()));
 	}
 	this->nodes.push_back(std::move(text));
 }
@@ -256,13 +256,6 @@ void GameplayState::Create() {
 }
 
 void GameplayState::Update() {
-	// handle tweens
-	for (int i = this->tweens.size() - 1; i >= 0; i--) {
-		this->tweens[i].step(1);
-		if (this->tweens[i].progress() == 1.f)
-			this->tweens.erase(this->tweens.begin() + i);
-	}
-
 	// show highscores if necessary
 	const float screenWidth = ncine::theApplication().width();
 	const float screenHeight = ncine::theApplication().height();

@@ -31,7 +31,7 @@ void MenuState::Create() {
 		text->setPosition(res.x * 0.5f, res.y * 0.75f);
 		text->setScale(2.0f);
 		text->setColor(0, 0, 0, 255);
-		this->tweens.push_back(CreateTextTween(text));
+		this->manager.tweens.push_back(CreateTextTween(text));
 		gameData.gameInProgress = false;
 	}
 }

@@ -14,6 +14,4 @@ struct MenuState
 	void CleanUp() override;
 
 	bool TryConnect();
-
-	std::vector<tweeny::tween<int>> tweens;
 };

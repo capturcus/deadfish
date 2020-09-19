@@ -52,7 +52,6 @@ struct GameplayState
 	std::map<uint16_t, Mob> mobs;
 	ncine::Sprite* mySprite = nullptr;
 	uint32_t lastNodeID = 0;
-	std::vector<tweeny::tween<int>> tweens;
 	bool showHighscores = false;
 	std::vector<nc::DrawableNode*> indicators;
 };

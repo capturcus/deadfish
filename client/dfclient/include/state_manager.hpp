@@ -8,6 +8,8 @@
 
 #include "game_state.hpp"
 
+#include "tweeny.h"
+
 using StateMap = std::map<std::string, std::unique_ptr<GameState>>;
 
 struct StateManager {
@@ -24,4 +26,5 @@ struct StateManager {
 	GameState* currentState = nullptr;
 	std::map<std::string, std::unique_ptr<ncine::Font>> fonts;
 	std::map<std::string, std::unique_ptr<ncine::Texture>> textures;
+	std::vector<tweeny::tween<int>> tweens;
 };
