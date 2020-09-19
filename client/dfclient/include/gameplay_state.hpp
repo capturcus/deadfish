@@ -42,7 +42,7 @@ struct GameplayState
 	using GameState::GameState;
 	
 	void Create() override;
-	void Update() override;
+	StateType Update() override;
 	void CleanUp() override;
 
 	void OnMessage(const std::string& data);

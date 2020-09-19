@@ -10,8 +10,6 @@
 
 #include "game_state.hpp"
 
-using StateMap = std::map<StateType, std::unique_ptr<GameState>>;
-
 struct StateManager {
 	void AddState(StateType s, std::unique_ptr<GameState>&& state);
 	void EnterState(StateType s);
@@ -22,8 +20,11 @@ struct StateManager {
 	void OnMouseButtonPressed(const ncine::MouseEvent &event);
 	void OnMouseMoved(const ncine::MouseState &state);
 
-	StateMap states;
+	std::map<StateType, std::unique_ptr<GameState>> states;
+
 	GameState* currentState = nullptr;
+	std::optional<StateType> currentStateType = std::nullopt;
+
 	std::map<std::string, std::unique_ptr<ncine::Font>> fonts;
 	std::map<std::string, std::unique_ptr<ncine::Texture>> textures;
 

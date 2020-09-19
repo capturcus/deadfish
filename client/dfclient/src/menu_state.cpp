@@ -23,6 +23,7 @@ void MenuState::Create() {
 	auto res = nc::theApplication().appConfiguration().resolution;
 	logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, manager.textures["deadfish.png"].get(), res.x*0.5f, res.y*0.6f);
 	nc::theApplication().gfxDevice().setClearColor(bgColor);
+	enterLobbyOnNextUpdate = false;
 }
 
 bool MenuState::TryConnect() {
@@ -31,7 +32,7 @@ bool MenuState::TryConnect() {
 	gameData.socket = CreateWebSocket();
 	gameData.socket->onOpen = [this](){
 		std::cout << "lambda go to lobby\n";
-		this->manager.EnterState(StateType::Lobby);
+		enterLobbyOnNextUpdate = true;
 	};
 	int ret = gameData.socket->Connect(gameData.serverAddress);
 	if (ret < 0) {
@@ -43,7 +44,7 @@ bool MenuState::TryConnect() {
 	return true;
 }
 
-void MenuState::Update() {
+StateType MenuState::Update() {
 	ImGui::Begin("DeadFish", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
 		ImGuiWindowFlags_NoCollapse);
 	ImGui::SetWindowSize({350, 120});
@@ -59,6 +60,12 @@ void MenuState::Update() {
 		TryConnect();
 	}
 	ImGui::End();
+
+	if (enterLobbyOnNextUpdate) {
+		return StateType::Lobby;
+	}
+
+	return StateType::Menu;
 }
 
 void MenuState::CleanUp() {

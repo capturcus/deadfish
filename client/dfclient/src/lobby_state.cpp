@@ -15,7 +15,7 @@ void LobbyState::OnMessage(const std::string& data) {
 	auto level = FBUtilGetServerEvent(data, Level);
 	if (level) {
 		gameData.levelData = data; // copy it
-		manager.EnterState(StateType::Gameplay);
+		enterGameplayOnNextUpdate = true;
 		return;
 	}
 	auto initMetadata = FBUtilGetServerEvent(data, InitMetadata);
@@ -40,6 +40,7 @@ void LobbyState::OnMessage(const std::string& data) {
 
 void LobbyState::Create() {
 	std::cout << "lobby create\n";
+	enterGameplayOnNextUpdate = false;
 
 	// if we're here then that means that the socket has already connected, send data
 	gameData.socket->onMessage = std::bind(&LobbyState::OnMessage, this, std::placeholders::_1);
@@ -67,12 +68,17 @@ void LobbyState::Create() {
 	this->readyButton->setPosition(screenWidth * 0.5f, screenHeight * 0.2f);
 }
 
-void LobbyState::Update() {
+StateType LobbyState::Update() {
 	RedrawPlayers();
 	if (this->ready)
 		this->readyButton->setColor(128, 128, 128, 255);
 	else
 		this->readyButton->setColor(100, 0, 0, 255);
+
+	if (enterGameplayOnNextUpdate) {
+		return StateType::Gameplay;
+	}
+	return StateType::Lobby;
 }
 
 void LobbyState::CleanUp() {

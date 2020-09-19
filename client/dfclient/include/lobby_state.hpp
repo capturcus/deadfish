@@ -15,7 +15,7 @@ struct LobbyState
     using GameState::GameState;
     
     void Create() override;
-    void Update() override;
+    StateType Update() override;
     void CleanUp() override;
     void RedrawPlayers();
     void OnMouseButtonPressed(const ncine::MouseEvent &event) override;
@@ -27,4 +27,7 @@ struct LobbyState
     std::vector<std::unique_ptr<ncine::TextNode>> textNodes;
     std::unique_ptr<ncine::TextNode> readyButton;
     bool ready = false;
+
+private:
+	bool enterGameplayOnNextUpdate = false;
 };

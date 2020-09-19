@@ -8,8 +8,11 @@ struct MenuState
 	using GameState::GameState;
 	
 	void Create() override;
-	void Update() override;
+	StateType Update() override;
 	void CleanUp() override;
 
 	bool TryConnect();
+
+private:
+	bool enterLobbyOnNextUpdate = false;
 };

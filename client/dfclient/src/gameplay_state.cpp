@@ -294,7 +294,7 @@ void GameplayState::Create() {
 	lastMessageReceivedTime = ncine::TimeStamp::now();
 }
 
-void GameplayState::Update() {
+StateType GameplayState::Update() {
 	auto now = ncine::TimeStamp::now();
 	float subDelta = (now.seconds() - lastMessageReceivedTime.seconds()) * ANIMATION_FPS;
 	if (subDelta < 0.f) {
@@ -334,7 +334,7 @@ void GameplayState::Update() {
 	}
 
 	if (this->mySprite == nullptr)
-		return;
+		return StateType::Gameplay;
 
 	// manage the screen position in relation to my sprite
 	auto &mouseState = ncine::theApplication().inputManager().mouseState();
@@ -368,6 +368,8 @@ void GameplayState::Update() {
 		closestMob->hoverMarker = std::make_unique<ncine::Sprite>(closestMob->sprite.get(), manager.textures["graycircle.png"].get());
 		closestMob->hoverMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
 	}
+
+	return StateType::Gameplay;
 }
 
 void GameplayState::CleanUp() {

@@ -15,6 +15,7 @@ void StateManager::EnterState(StateType s) {
 	if (currentState)
 		currentState->CleanUp();
 	currentState = states[s].get();
+	currentStateType = s;
 	currentState->Create();
 }
 
@@ -41,7 +42,10 @@ void StateManager::OnInit() {
 
 void StateManager::OnFrameStart() {
 	webSocketManager.Update();
-	currentState->Update();
+	auto nextStateType = currentState->Update();
+	if (nextStateType != currentStateType) {
+		EnterState(nextStateType);
+	}
 }
 
 void StateManager::OnKeyPressed(const ncine::KeyboardEvent &event) {
