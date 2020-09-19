@@ -99,7 +99,7 @@ struct FOVCallback
 	float32 ReportFixture(b2Fixture *fixture, UNUSED const b2Vec2 &point, UNUSED const b2Vec2 &normal, UNUSED float32 fraction)
 	{
 		auto data = (Collideable *)fixture->GetBody()->GetUserData();
-		if (data && data != target && !data->obstructsSight())
+		if (data && data != target && !data->obstructsSight(player))
 			return 1.f;
 		if (fraction < minfraction)
 		{
@@ -111,6 +111,7 @@ struct FOVCallback
 	float minfraction = 1.f;
 	b2Fixture *closest = nullptr;
 	Mob *target = nullptr;
+	Player *player = nullptr;
 };
 
 bool playerSeeMob(Player &p, Mob &m)
@@ -119,6 +120,7 @@ bool playerSeeMob(Player &p, Mob &m)
 		return false; // can't see dead ppl lol
 	FOVCallback fovCallback;
 	fovCallback.target = &m;
+	fovCallback.player = &p;
 	auto ppos = p.deathTimeout > 0 ? g2b(p.targetPosition) : p.body->GetPosition();
 	auto mpos = m.body->GetPosition();
 	gameState.b2world->RayCast(&fovCallback, ppos, mpos);
@@ -244,6 +246,7 @@ void physicsInitMob(Mob *m, glm::vec2 pos, float angle, float radius, uint16 cat
 	fixtureDef.density = 1;
 	fixtureDef.friction = 0;
 	fixtureDef.filter.categoryBits = categoryBits;
+	fixtureDef.filter.maskBits = 0xFFFF & 0b1111111111111101; //no collision with bushes
 	m->body->CreateFixture(&fixtureDef);
 	m->body->SetUserData(m);
 }

@@ -40,14 +40,34 @@ void initStone(Stone *s, const DeadFish::Stone *dfstone)
 	s->body->SetUserData(s);
 }
 
+void initBush(Bush *b, const DeadFish::Bush *dfbush)
+{
+	b2BodyDef myBodyDef;
+	myBodyDef.type = b2_staticBody;
+	myBodyDef.position.Set(dfbush->pos()->x(), dfbush->pos()->y());
+	myBodyDef.angle = 0;
+	b->body = gameState.b2world->CreateBody(&myBodyDef);
+	b2CircleShape circleShape;
+	circleShape.m_radius = dfbush->radius();
+
+	b2FixtureDef fixtureDef;
+	fixtureDef.shape = &circleShape;
+	fixtureDef.density = 1;
+	fixtureDef.filter.categoryBits = 0x0002;
+	b->body->CreateFixture(&fixtureDef);
+	b->body->SetUserData(b);
+}
+
 flatbuffers::Offset<DeadFish::Level> serializeLevel(flatbuffers::FlatBufferBuilder &builder)
 {
 	// bushes
 	std::vector<flatbuffers::Offset<DeadFish::Bush>> bushOffsets;
 	for (auto &b : gameState.level->bushes)
 	{
-		DeadFish::Vec2 pos(b->position.x, b->position.y);
-		auto off = DeadFish::CreateBush(builder, b->radius, &pos);
+		DeadFish::Vec2 pos(b->body->GetPosition().x, b->body->GetPosition().y);
+		auto f = b->body->GetFixtureList();
+		auto c = (b2CircleShape *)f->GetShape();
+		auto off = DeadFish::CreateBush(builder, c->m_radius, &pos);
 		bushOffsets.push_back(off);
 	}
 	auto bushes = builder.CreateVector(bushOffsets);
@@ -106,8 +126,9 @@ void loadLevel(std::string &path)
 	{
 		auto bush = level->bushes()->Get(i);
 		auto b = std::make_unique<Bush>();
-		b->position = glm::vec2(bush->pos()->x(), bush->pos()->y());
-		b->radius = bush->radius();
+		// b->position = glm::vec2(bush->pos()->x(), bush->pos()->y());
+		// b->radius = bush->radius();
+		initBush(b.get(), bush);
 		gameState.level->bushes.push_back(std::move(b));
 	}
 
