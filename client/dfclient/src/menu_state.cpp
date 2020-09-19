@@ -18,7 +18,7 @@ namespace nc = ncine;
 nctl::UniquePtr<nc::Sprite> logoSprite;
 nc::Colorf bgColor(0.96875f, 0.97265625, 0.953125, 1.0f);
 
-void MenuState::Create() {
+MenuState::MenuState(Resources& r) : _resources(r) {
 	nc::SceneNode &rootNode = nc::theApplication().rootNode();
 	auto res = nc::theApplication().appConfiguration().resolution;
 	logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, _resources.textures["deadfish.png"].get(), res.x*0.5f, res.y*0.6f);
@@ -63,6 +63,6 @@ StateType MenuState::Update(Messages m) {
 	return StateType::Menu;
 }
 
-void MenuState::CleanUp() {
+MenuState::~MenuState() {
 	logoSprite.reset(nullptr);
 }

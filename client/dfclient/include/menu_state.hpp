@@ -8,14 +8,13 @@ struct MenuState
 	: public GameState
 {
 public:
-	MenuState(Resources& r) : _resources(r) {}
+	MenuState(Resources& r);
+	~MenuState() override;
 	
-	void Create() override;
 	StateType Update(Messages) override;
-	void CleanUp() override;
-
-	bool TryConnect();
 
 private:
+	bool TryConnect();
+
 	Resources& _resources;
 };

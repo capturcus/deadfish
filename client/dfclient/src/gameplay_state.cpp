@@ -283,7 +283,7 @@ void Mob::updateLocRot(float subDelta) {
 	sprite->setRotation(prevRotation + angleDelta * subDelta);
 }
 
-void GameplayState::Create() {
+GameplayState::GameplayState(Resources& r) : _resources(r) {
 	std::cout << "entered gameplay state\n";
 	ncine::theApplication().gfxDevice().setClearColor(ncine::Colorf(1, 1, 1, 1));
 	auto& rootNode = ncine::theApplication().rootNode();
@@ -291,6 +291,9 @@ void GameplayState::Create() {
 	this->LoadLevel();
 
 	lastMessageReceivedTime = ncine::TimeStamp::now();
+}
+
+GameplayState::~GameplayState() {
 }
 
 StateType GameplayState::Update(Messages m) {
@@ -373,10 +376,6 @@ StateType GameplayState::Update(Messages m) {
 	}
 
 	return StateType::Gameplay;
-}
-
-void GameplayState::CleanUp() {
-
 }
 
 void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {

@@ -39,7 +39,7 @@ bool LobbyState::OnMessage(const std::string& data) {
 	return false;
 }
 
-void LobbyState::Create() {
+LobbyState::LobbyState(Resources& r) : _resources(r) {
 	std::cout << "lobby create\n";
 
 	flatbuffers::FlatBufferBuilder builder;
@@ -82,7 +82,7 @@ StateType LobbyState::Update(Messages m) {
 	return StateType::Lobby;
 }
 
-void LobbyState::CleanUp() {
+LobbyState::~LobbyState() {
 	this->sceneNodes.clear();
 	this->textNodes.clear();
 	this->readyButton.reset(nullptr);

@@ -9,6 +9,10 @@
 #include <ncine/TextNode.h>
 #include <ncine/TimeStamp.h>
 
+namespace ncine {
+	class AnimatedSprite;
+}
+
 namespace nc = ncine;
 
 #include "tweeny.h"
@@ -41,15 +45,18 @@ class Resources;
 struct GameplayState
 	: public GameState
 {
-	GameplayState(Resources& r) : _resources(r) {}
+	GameplayState(Resources&);
+	~GameplayState() override;
 	
-	void Create() override;
 	StateType Update(Messages) override;
-	void CleanUp() override;
 
 	void OnMouseButtonPressed(const ncine::MouseEvent &event) override;
 	void OnKeyPressed(const ncine::KeyboardEvent &event) override;
 	void OnKeyReleased(const ncine::KeyboardEvent &event) override;
+
+private:
+	void OnMessage(const std::string& data);
+
 	void LoadLevel();
 	void ProcessDeathReport(const DeadFish::DeathReport* deathReport);
 	void ProcessHighscoreUpdate(const DeadFish::HighscoreUpdate* highscoreUpdate);
@@ -68,9 +75,6 @@ struct GameplayState
 	std::vector<nc::DrawableNode*> indicators;
 
 	ncine::TimeStamp lastMessageReceivedTime;
-
-private:
-	void OnMessage(const std::string& data);
 
 	Resources& _resources;
 };

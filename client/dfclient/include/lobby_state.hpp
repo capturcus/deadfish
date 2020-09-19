@@ -13,13 +13,16 @@ class Resources;
 struct LobbyState
 	: public GameState
 {
-	LobbyState(Resources& r) : _resources(r) {}
+	LobbyState(Resources& r);
+	~LobbyState() override;
 
-	void Create() override;
 	StateType Update(Messages m) override;
-	void CleanUp() override;
-	void RedrawPlayers();
 	void OnMouseButtonPressed(const ncine::MouseEvent &event) override;
+
+private:
+	bool OnMessage(const std::string& data); // true == should enter gameplay
+
+	void RedrawPlayers();
 
 	void SendPlayerReady();
 
@@ -27,9 +30,6 @@ struct LobbyState
 	std::vector<std::unique_ptr<ncine::TextNode>> textNodes;
 	std::unique_ptr<ncine::TextNode> readyButton;
 	bool ready = false;
-
-private:
-	bool OnMessage(const std::string& data); // true == should enter gameplay
 
 	Resources& _resources;
 };

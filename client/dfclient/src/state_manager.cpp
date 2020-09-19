@@ -4,24 +4,16 @@
 #include <ncine/Texture.h>
 #include <ncine/Application.h>
 
+#include "menu_state.hpp"
+#include "lobby_state.hpp"
+#include "gameplay_state.hpp"
+
 #include "state_manager.hpp"
 #include "websocket.hpp"
 
-void StateManager::AddState(StateType s, std::unique_ptr<GameState>&& state) {
-	this->states[s] = std::move(state);
-}
-
-void StateManager::EnterState(StateType s) {
-	if (currentState)
-		currentState->CleanUp();
-	currentState = states[s].get();
-	currentStateType = s;
-	currentState->Create();
-}
-
 const char* TEXTURES_PATH = "textures";
 
-void StateManager::OnInit() {
+StateManager::StateManager() {
 	auto rootPath = ncine::theApplication().appConfiguration().dataPath();
 	auto dir = ncine::FileSystem::Directory((rootPath + TEXTURES_PATH).data());
 	const char* file = dir.readNext();
@@ -38,27 +30,43 @@ void StateManager::OnInit() {
 
 	_resources._wilhelmAudioBuffer = std::make_unique<ncine::AudioBuffer>((rootPath + "/sounds/wilhelm.wav").data());
 	_resources._wilhelmSound = std::make_unique<ncine::AudioBufferPlayer>(_resources._wilhelmAudioBuffer.get());
+
+	_currentStateType = StateType::Menu;
+	_currentState = std::make_unique<MenuState>(_resources);
 }
 
 void StateManager::OnFrameStart() {
-	auto nextStateType = currentState->Update(webSocketManager.GetMessages());
-	if (nextStateType != currentStateType) {
-		EnterState(nextStateType);
+	auto nextStateType = _currentState->Update(webSocketManager.GetMessages());
+	if (nextStateType == _currentStateType) {
+		return;
+	}
+
+	_currentStateType = nextStateType;
+	switch (nextStateType) {
+		case StateType::Menu:
+			_currentState = std::make_unique<MenuState>(_resources);
+			break;
+		case StateType::Lobby:
+			_currentState = std::make_unique<LobbyState>(_resources);
+			break;
+		case StateType::Gameplay:
+			_currentState = std::make_unique<GameplayState>(_resources);
+			break;
 	}
 }
 
 void StateManager::OnKeyPressed(const ncine::KeyboardEvent &event) {
-	currentState->OnKeyPressed(event);
+	_currentState->OnKeyPressed(event);
 }
 
 void StateManager::OnKeyReleased(const ncine::KeyboardEvent &event) {
-	currentState->OnKeyReleased(event);
+	_currentState->OnKeyReleased(event);
 }
 
 void StateManager::OnMouseButtonPressed(const ncine::MouseEvent &event) {
-	currentState->OnMouseButtonPressed(event);
+	_currentState->OnMouseButtonPressed(event);
 }
 
 void StateManager::OnMouseMoved(const ncine::MouseState &state) {
-	currentState->OnMouseMoved(state);
+	_currentState->OnMouseMoved(state);
 }
