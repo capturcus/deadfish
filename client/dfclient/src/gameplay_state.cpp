@@ -79,6 +79,7 @@ void GameplayState::LoadLevel() {
 		auto bush = level->bushes()->Get(i);
 		auto bushSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), manager.textures["bush.png"].get(),
 			bush->pos()->x() * METERS2PIXELS, -bush->pos()->y() * METERS2PIXELS);
+		bushSprite->setLayer(HIDING_SPOTS_LAYER);
 		this->nodes.push_back(std::move(bushSprite));
 	}
 }
