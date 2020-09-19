@@ -121,6 +121,8 @@ void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport)
 		
 	} else if (deathReport->killed() == gameData.myPlayerID) {
 		// i died :c
+		manager._wilhelmSound->play();
+
 		text->setString(("you have been killed by " + gameData.players[deathReport->killer()].name).c_str());
 		text->setColor(255, 0, 0, 255);
 		text->setPosition(screenWidth * 0.5f, screenHeight * 0.5f);

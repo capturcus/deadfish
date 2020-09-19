@@ -34,6 +34,9 @@ void StateManager::OnInit() {
 		file = dir.readNext();
 	}
 	fonts["comic"] = std::make_unique<ncine::Font>((rootPath + "fonts/comic.fnt").data(), (rootPath + "fonts/comic.png").data());
+
+	_wilhelmAudioBuffer = std::make_unique<ncine::AudioBuffer>((rootPath + "/sounds/wilhelm.wav").data());
+	_wilhelmSound = std::make_unique<ncine::AudioBufferPlayer>(_wilhelmAudioBuffer.get());
 }
 
 void StateManager::OnFrameStart() {
