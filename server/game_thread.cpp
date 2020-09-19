@@ -174,7 +174,7 @@ flatbuffers::Offset<DeadFish::Mob> createFBMob(flatbuffers::FlatBufferBuilder &b
 									relation);
 }
 
-flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBufferBuilder &builder)
+flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBufferBuilder &builder, uint64_t framesRemaining)
 {
 	std::vector<flatbuffers::Offset<DeadFish::Mob>> mobs;
 	std::vector<flatbuffers::Offset<DeadFish::Indicator>> indicators;
@@ -208,7 +208,7 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 	auto mobsOffset = builder.CreateVector(mobs);
 	auto indicatorsOffset = builder.CreateVector(indicators);
 
-	auto worldState = DeadFish::CreateWorldState(builder, mobsOffset, indicatorsOffset);
+	auto worldState = DeadFish::CreateWorldState(builder, mobsOffset, indicatorsOffset, framesRemaining);
 
 	return worldState.Union();
 }
@@ -514,7 +514,7 @@ void gameThread()
 		for (auto &p : gameState.players)
 		{
 			builder.Clear();
-			auto offset = makeWorldState(*p, builder);
+			auto offset = makeWorldState(*p, builder, roundTimer);
 			sendServerMessage(*p, builder, DeadFish::ServerMessageUnion_WorldState, offset);
 		}
 
