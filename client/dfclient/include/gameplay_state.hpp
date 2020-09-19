@@ -7,6 +7,7 @@
 #include <ncine/MeshSprite.h>
 #include <ncine/Sprite.h>
 #include <ncine/TextNode.h>
+#include <ncine/TimeStamp.h>
 
 namespace nc = ncine;
 
@@ -25,6 +26,14 @@ struct Mob {
 	DeadFish::MobState state = DeadFish::MobState_Walk;
 	std::unique_ptr<ncine::Sprite> hoverMarker;
 	std::unique_ptr<ncine::Sprite> relationMarker;
+
+	ncine::Vector2f prevPosition = {};
+	ncine::Vector2f currPosition = {};
+	float prevRotation = 0.f;
+	float currRotation = 0.f;
+
+	void setupLocRot(const DeadFish::Mob& msg);
+	void updateLocRot(float subDelta);
 };
 
 struct GameplayState
@@ -56,4 +65,6 @@ struct GameplayState
 	std::vector<tweeny::tween<int>> tweens;
 	bool showHighscores = false;
 	std::vector<nc::DrawableNode*> indicators;
+
+	ncine::TimeStamp lastMessageReceivedTime;
 };

@@ -171,6 +171,8 @@ nc::MeshSprite* GameplayState::CreateIndicator(float angle, float force, int ind
 }
 
 void GameplayState::OnMessage(const std::string& data) {
+	lastMessageReceivedTime = ncine::TimeStamp::now();
+
 	auto highscoreUpdate = FBUtilGetServerEvent(data, HighscoreUpdate);
 	if (highscoreUpdate) {
 		this->ProcessHighscoreUpdate(highscoreUpdate);
@@ -202,8 +204,7 @@ void GameplayState::OnMessage(const std::string& data) {
 			mobItr = this->mobs.find(mobData->mobID());
 		}
 		Mob& mob = mobItr->second;
-		mob.sprite->setPosition(mobData->pos()->x() * METERS2PIXELS, -mobData->pos()->y() * METERS2PIXELS);
-		mob.sprite->setRotation(-mobData->angle() * 180 / M_PI);
+		mob.setupLocRot(*mobData);
 		mob.seen = true;
 		if (mobData->state() != mob.state) {
 			mob.state = mobData->state();
@@ -259,6 +260,27 @@ void GameplayState::OnMessage(const std::string& data) {
 	}
 }
 
+void Mob::setupLocRot(const DeadFish::Mob& msg) {
+	prevPosition = currPosition;
+	prevRotation = currRotation;
+
+	currPosition.x = msg.pos()->x() * METERS2PIXELS;
+	currPosition.y = -msg.pos()->y() * METERS2PIXELS;
+	currRotation = -msg.angle() * 180.f / M_PI;
+}
+
+void Mob::updateLocRot(float subDelta) {
+	float angleDelta = currRotation - prevRotation;
+	if (angleDelta > M_PI) {
+		angleDelta -= 2.f * M_PI;
+	} else if (angleDelta < -M_PI) {
+		angleDelta += 2.f * M_PI;
+	}
+
+	sprite->setPosition(prevPosition + (currPosition - prevPosition) * subDelta);
+	sprite->setRotation(prevRotation + angleDelta * subDelta);
+}
+
 void GameplayState::Create() {
 	std::cout << "entered gameplay state\n";
 	ncine::theApplication().gfxDevice().setClearColor(ncine::Colorf(1, 1, 1, 1));
@@ -266,9 +288,19 @@ void GameplayState::Create() {
 	this->cameraNode = std::make_unique<ncine::SceneNode>(&rootNode);
 	this->LoadLevel();
 	gameData.socket->onMessage = std::bind(&GameplayState::OnMessage, this, std::placeholders::_1);
+
+	lastMessageReceivedTime = ncine::TimeStamp::now();
 }
 
 void GameplayState::Update() {
+	auto now = ncine::TimeStamp::now();
+	float subDelta = (now.seconds() - lastMessageReceivedTime.seconds()) * ANIMATION_FPS;
+	if (subDelta < 0.f) {
+		subDelta = 0.f;
+	} else if (subDelta > 1.f) {
+		subDelta = 1.f;
+	}
+
 	// handle tweens
 	for (int i = this->tweens.size() - 1; i >= 0; i--) {
 		this->tweens[i].step(1);
@@ -292,6 +324,11 @@ void GameplayState::Update() {
 		ImGui::SetWindowPos({screenWidth/2 - 200.f, screenHeight/2 - 200.f});
 		ImGui::SetWindowSize({400.f, 400.f});
 		ImGui::End();
+	}
+
+	// Update mob positions
+	for (auto& mob : this->mobs) {
+		mob.second.updateLocRot(subDelta);
 	}
 
 	if (this->mySprite == nullptr)
