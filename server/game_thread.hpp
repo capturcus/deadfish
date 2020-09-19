@@ -6,7 +6,7 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg);
 bool operator==(websocketpp::connection_hdl &a, websocketpp::connection_hdl &b);
 void spawnPlayer(Player& p);
 void spawnCivilian();
-Player& getPlayerByConnHdl(websocketpp::connection_hdl &hdl);
+Player* getPlayerByConnHdl(websocketpp::connection_hdl &hdl);
 void sendServerMessage(Player& player,
 	flatbuffers::FlatBufferBuilder &builder,
 	DeadFish::ServerMessageUnion type,

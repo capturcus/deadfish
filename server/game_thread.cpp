@@ -77,19 +77,19 @@ void stopAll()
 	}
 }
 
-Player &getPlayerByConnHdl(websocketpp::connection_hdl &hdl)
+Player* getPlayerByConnHdl(websocketpp::connection_hdl &hdl)
 {
 	auto player = gameState.players.begin();
 	while (player != gameState.players.end())
 	{
 		if ((*player)->conn_hdl == hdl)
 		{
-			return *(player->get());
+			return player->get();
 		}
 		player++;
 	}
 	std::cout << "getPlayerByConnHdl PLAYER NOT FOUND\n";
-	exit(1);
+	return nullptr;
 }
 
 struct FOVCallback
@@ -389,8 +389,10 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
 	const auto clientMessage = flatbuffers::GetRoot<DeadFish::ClientMessage>(payload.c_str());
 	const auto guard = gameState.lock();
 
-	auto &p = getPlayerByConnHdl(hdl);
-	if (p.state == MobState::ATTACKING)
+	auto p = getPlayerByConnHdl(hdl);
+	if (!p)
+		return;
+	if (p->state == MobState::ATTACKING)
 		return;
 
 	switch (clientMessage->event_type())
@@ -398,22 +400,22 @@ void gameOnMessage(websocketpp::connection_hdl hdl, server::message_ptr msg)
 	case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandMove:
 	{
 		const auto event = clientMessage->event_as_CommandMove();
-		p.targetPosition = glm::vec2(event->target()->x(), event->target()->y());
-		p.state = p.state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
-		p.killTarget = nullptr;
-		p.lastAttack = std::chrono::system_clock::from_time_t(0);
+		p->targetPosition = glm::vec2(event->target()->x(), event->target()->y());
+		p->state = p->state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
+		p->killTarget = nullptr;
+		p->lastAttack = std::chrono::system_clock::from_time_t(0);
 	}
 	break;
 	case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandRun:
 	{
 		const auto event = clientMessage->event_as_CommandRun();
-		p.state = event->run() ? MobState::RUNNING : MobState::WALKING;
+		p->state = event->run() ? MobState::RUNNING : MobState::WALKING;
 	}
 	break;
 	case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandKill:
 	{
 		const auto event = clientMessage->event_as_CommandKill();
-		executeCommandKill(p, event->mobID());
+		executeCommandKill(*p, event->mobID());
 	}
 	break;
 

@@ -64,8 +64,10 @@ void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg)
 	break;
 	case DeadFish::ClientMessageUnion::ClientMessageUnion_PlayerReady:
 	{
-		auto& pl = getPlayerByConnHdl(hdl);
-		pl.ready = true;
+		auto pl = getPlayerByConnHdl(hdl);
+		if (!pl)
+			return;
+		pl->ready = true;
 		sendInitMetadata();
 		for (auto& p : gameState.players) {
 			if (!p->ready)
