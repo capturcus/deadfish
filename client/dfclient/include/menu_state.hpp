@@ -2,10 +2,13 @@
 
 #include "game_state.hpp"
 
+class Resources;
+
 struct MenuState
 	: public GameState
 {
-	using GameState::GameState;
+public:
+	MenuState(Resources& r) : _resources(r) {}
 	
 	void Create() override;
 	StateType Update() override;
@@ -15,4 +18,5 @@ struct MenuState
 
 private:
 	bool enterLobbyOnNextUpdate = false;
+	Resources& _resources;
 };

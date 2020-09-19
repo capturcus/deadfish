@@ -30,14 +30,14 @@ void StateManager::OnInit() {
 		auto absPath = rootPath.data() + std::string(TEXTURES_PATH) + "/" + std::string(file);
 		if (ncine::FileSystem::isFile(absPath.c_str())) {
 			std::cout << "loading " << file << " " << absPath << "\n";
-			textures[file] = std::make_unique<ncine::Texture>(absPath.c_str());
+			_resources.textures[file] = std::make_unique<ncine::Texture>(absPath.c_str());
 		}
 		file = dir.readNext();
 	}
-	fonts["comic"] = std::make_unique<ncine::Font>((rootPath + "fonts/comic.fnt").data(), (rootPath + "fonts/comic.png").data());
+	_resources.fonts["comic"] = std::make_unique<ncine::Font>((rootPath + "fonts/comic.fnt").data(), (rootPath + "fonts/comic.png").data());
 
-	_wilhelmAudioBuffer = std::make_unique<ncine::AudioBuffer>((rootPath + "/sounds/wilhelm.wav").data());
-	_wilhelmSound = std::make_unique<ncine::AudioBufferPlayer>(_wilhelmAudioBuffer.get());
+	_resources._wilhelmAudioBuffer = std::make_unique<ncine::AudioBuffer>((rootPath + "/sounds/wilhelm.wav").data());
+	_resources._wilhelmSound = std::make_unique<ncine::AudioBufferPlayer>(_resources._wilhelmAudioBuffer.get());
 }
 
 void StateManager::OnFrameStart() {

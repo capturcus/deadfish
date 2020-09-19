@@ -7,7 +7,7 @@
 #include "game_data.hpp"
 #include "../../../common/deadfish_generated.h"
 #include "fb_util.hpp"
-#include "state_manager.hpp"
+#include "resources.hpp"
 #include "util.hpp"
 
 void LobbyState::OnMessage(const std::string& data) {
@@ -55,14 +55,14 @@ void LobbyState::Create() {
 	const float screenWidth = ncine::theApplication().width();
 	const float screenHeight = ncine::theApplication().height();
 
-	auto text = std::make_unique<ncine::TextNode>(&rootNode, this->manager.fonts["comic"].get());
+	auto text = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic"].get());
 	text->setScale(1.0f);
 	text->setString("players in lobby:");
 	text->setPosition(screenWidth * 0.3f, screenHeight * 0.8f);
 	text->setColor(0, 0, 0, 255);
 	this->sceneNodes.push_back(std::move(text));
 
-	this->readyButton = std::make_unique<ncine::TextNode>(&rootNode, this->manager.fonts["comic"].get());
+	this->readyButton = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic"].get());
 	this->readyButton->setScale(1.0f);
 	this->readyButton->setString("READY");
 	this->readyButton->setPosition(screenWidth * 0.5f, screenHeight * 0.2f);
@@ -94,7 +94,7 @@ void LobbyState::RedrawPlayers() {
 	const float screenWidth = ncine::theApplication().width();
 	const float screenHeight = ncine::theApplication().height();
 	for (auto& p : gameData.players) {
-		auto text = std::make_unique<ncine::TextNode>(&rootNode, this->manager.fonts["comic"].get());
+		auto text = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic"].get());
 		text->setScale(1.0f);
 		text->setString(p.name.c_str());
 		text->setPosition(screenWidth * 0.3f, screenHeight * 0.75f - 40*playerNum);

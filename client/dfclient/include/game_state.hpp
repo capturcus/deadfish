@@ -8,11 +8,7 @@ enum class StateType {
 	Gameplay
 };
 
-class StateManager;
-
 struct GameState {
-    GameState(StateManager& manager_)
-        : manager(manager_) {}
     virtual void Create() = 0;
     virtual StateType Update() = 0;
     virtual void CleanUp() = 0;
@@ -21,6 +17,4 @@ struct GameState {
 	virtual void OnMouseButtonPressed(const ncine::MouseEvent &event) {}
 	virtual void OnMouseMoved(const ncine::MouseState &state) {}
     virtual ~GameState() {}
-
-    StateManager& manager;
 };

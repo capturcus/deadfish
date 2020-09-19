@@ -14,7 +14,7 @@
 #include "fb_util.hpp"
 #include "game_data.hpp"
 #include "gameplay_state.hpp"
-#include "state_manager.hpp"
+#include "resources.hpp"
 #include "util.hpp"
 
 const float ANIMATION_FPS = 20.f;
@@ -43,7 +43,7 @@ ncine::Vector2i spriteCoords(int spriteNum) {
 }
 
 std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species) {
-	std::unique_ptr<ncine::AnimatedSprite> ret = std::make_unique<ncine::AnimatedSprite>(parent, manager.textures["fish.png"].get());
+	std::unique_ptr<ncine::AnimatedSprite> ret = std::make_unique<ncine::AnimatedSprite>(parent, _resources.textures["fish.png"].get());
 	int currentImg = species * IMGS_PER_SPECIES;
 	for (int animNumber = 0; animNumber < FISH_ANIMATIONS::MAX; animNumber++) {
 		nctl::UniquePtr<ncine::RectAnimation> animation =
@@ -70,14 +70,14 @@ void GameplayState::LoadLevel() {
 
 	for (int i = 0; i < level->stones()->size(); i++) {
 		auto stone = level->stones()->Get(i);
-		auto stoneSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), manager.textures["stone.png"].get(),
+		auto stoneSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures["stone.png"].get(),
 			stone->pos()->x() * METERS2PIXELS, -stone->pos()->y() * METERS2PIXELS);
 		this->nodes.push_back(std::move(stoneSprite));
 	}
 
 	for (int i = 0; i < level->bushes()->size(); i++) {
 		auto bush = level->bushes()->Get(i);
-		auto bushSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), manager.textures["bush.png"].get(),
+		auto bushSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures["bush.png"].get(),
 			bush->pos()->x() * METERS2PIXELS, -bush->pos()->y() * METERS2PIXELS);
 		this->nodes.push_back(std::move(bushSprite));
 	}
@@ -99,7 +99,7 @@ void GameplayState::CreateTextTween(ncine::TextNode* textPtr) {
 // this whole thing should probably be refactored
 void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport) {
 	auto& rootNode = ncine::theApplication().rootNode();
-	auto text = std::make_unique<ncine::TextNode>(&rootNode, this->manager.fonts["comic"].get());
+	auto text = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic"].get());
 	const float screenWidth = ncine::theApplication().width();
 	const float screenHeight = ncine::theApplication().height();
 	if (deathReport->killer() == gameData.myPlayerID) {
@@ -121,7 +121,7 @@ void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport)
 		
 	} else if (deathReport->killed() == gameData.myPlayerID) {
 		// i died :c
-		manager._wilhelmSound->play();
+		_resources._wilhelmSound->play();
 
 		text->setString(("you have been killed by " + gameData.players[deathReport->killer()].name).c_str());
 		text->setColor(255, 0, 0, 255);
@@ -161,7 +161,7 @@ const float INDICATOR_OFFSET = 80.f;
  * @param force force of the indicator from 0.0 to 1.0
  * */
 nc::MeshSprite* GameplayState::CreateIndicator(float angle, float force, int indicatorNum, bool visible) {
-	auto arc = createArc(*this->mySprite, this->manager.textures["pixel.png"].get(), 0, 0,
+	auto arc = createArc(*this->mySprite, _resources.textures["pixel.png"].get(), 0, 0,
 		INDICATOR_OFFSET + indicatorNum * INDICATOR_WIDTH,
 		INDICATOR_OFFSET + (indicatorNum+1) * INDICATOR_WIDTH, force * 360.f);
 	arc->setRotation(-this->mySprite->rotation() - angle * TO_DEGREES - force * 180.f + 180.f);
@@ -223,10 +223,10 @@ void GameplayState::OnMessage(const std::string& data) {
 		if (mobData->relation() == DeadFish::PlayerRelation_None) {
 			mob.relationMarker.reset(nullptr);
 		} else if (mobData->relation() == DeadFish::PlayerRelation_Close) {
-			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), manager.textures["bluecircle.png"].get());
+			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), _resources.textures["bluecircle.png"].get());
 			mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
 		} else if (mobData->relation() == DeadFish::PlayerRelation_Targeted) {
-			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), manager.textures["redcircle.png"].get());
+			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), _resources.textures["redcircle.png"].get());
 			mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
 		}
 	}
@@ -365,7 +365,7 @@ StateType GameplayState::Update() {
 		}
 	}
 	if (closestMob && smallestNorm < radiusSquared) {
-		closestMob->hoverMarker = std::make_unique<ncine::Sprite>(closestMob->sprite.get(), manager.textures["graycircle.png"].get());
+		closestMob->hoverMarker = std::make_unique<ncine::Sprite>(closestMob->sprite.get(), _resources.textures["graycircle.png"].get());
 		closestMob->hoverMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
 	}
 

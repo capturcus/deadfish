@@ -36,10 +36,12 @@ struct Mob {
 	void updateLocRot(float subDelta);
 };
 
+class Resources;
+
 struct GameplayState
 	: public GameState
 {
-	using GameState::GameState;
+	GameplayState(Resources& r) : _resources(r) {}
 	
 	void Create() override;
 	StateType Update() override;
@@ -67,4 +69,7 @@ struct GameplayState
 	std::vector<nc::DrawableNode*> indicators;
 
 	ncine::TimeStamp lastMessageReceivedTime;
+
+private:
+	Resources& _resources;
 };

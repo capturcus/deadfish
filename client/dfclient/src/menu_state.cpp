@@ -9,7 +9,7 @@
 #include <ncine/Texture.h>
 
 #include "menu_state.hpp"
-#include "state_manager.hpp"
+#include "resources.hpp"
 #include "game_data.hpp"
 #include "util.hpp"
 
@@ -21,7 +21,7 @@ nc::Colorf bgColor(0.96875f, 0.97265625, 0.953125, 1.0f);
 void MenuState::Create() {
 	nc::SceneNode &rootNode = nc::theApplication().rootNode();
 	auto res = nc::theApplication().appConfiguration().resolution;
-	logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, manager.textures["deadfish.png"].get(), res.x*0.5f, res.y*0.6f);
+	logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, _resources.textures["deadfish.png"].get(), res.x*0.5f, res.y*0.6f);
 	nc::theApplication().gfxDevice().setClearColor(bgColor);
 	enterLobbyOnNextUpdate = false;
 }

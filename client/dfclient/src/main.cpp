@@ -38,9 +38,9 @@ StateManager stateManager;
 void MyEventHandler::onInit()
 {
 	stateManager.OnInit();
-	stateManager.AddState(StateType::Menu, std::make_unique<MenuState>(stateManager));
-	stateManager.AddState(StateType::Lobby, std::make_unique<LobbyState>(stateManager));
-	stateManager.AddState(StateType::Gameplay, std::make_unique<GameplayState>(stateManager));
+	stateManager.AddState(StateType::Menu, std::make_unique<MenuState>(stateManager._resources));
+	stateManager.AddState(StateType::Lobby, std::make_unique<LobbyState>(stateManager._resources));
+	stateManager.AddState(StateType::Gameplay, std::make_unique<GameplayState>(stateManager._resources));
 	stateManager.EnterState(StateType::Menu);
 }
 

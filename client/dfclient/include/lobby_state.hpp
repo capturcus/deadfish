@@ -8,11 +8,12 @@
 #include "game_state.hpp"
 #include "websocket.hpp"
 
+class Resources;
 
 struct LobbyState
     : public GameState
 {
-    using GameState::GameState;
+	LobbyState(Resources& r) : _resources(r) {}
     
     void Create() override;
     StateType Update() override;
@@ -30,4 +31,5 @@ struct LobbyState
 
 private:
 	bool enterGameplayOnNextUpdate = false;
+	Resources& _resources;
 };

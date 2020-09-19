@@ -1,14 +1,12 @@
 #pragma once
+
 #include <string>
 #include <memory>
 #include <map>
 #include <vector>
 
-#include <ncine/TextNode.h>
-#include <ncine/AudioBuffer.h>
-#include <ncine/AudioBufferPlayer.h>
-
 #include "game_state.hpp"
+#include "resources.hpp"
 
 struct StateManager {
 	void AddState(StateType s, std::unique_ptr<GameState>&& state);
@@ -25,9 +23,5 @@ struct StateManager {
 	GameState* currentState = nullptr;
 	std::optional<StateType> currentStateType = std::nullopt;
 
-	std::map<std::string, std::unique_ptr<ncine::Font>> fonts;
-	std::map<std::string, std::unique_ptr<ncine::Texture>> textures;
-
-	std::unique_ptr<ncine::AudioBuffer> _wilhelmAudioBuffer;
-	std::unique_ptr<ncine::AudioBufferPlayer> _wilhelmSound;
+	Resources _resources;
 };
