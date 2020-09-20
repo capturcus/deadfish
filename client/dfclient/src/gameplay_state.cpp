@@ -23,6 +23,9 @@ const int FISH_FRAME_HEIGHT = 120;
 const int IMGS_PER_ROW = 10;
 const int IMGS_PER_SPECIES = 80;
 
+const int MAX_HIDING_SPOT_OPACITY = 255;
+const int MIN_HIDING_SPOT_OPACITY = 128;
+
 enum FISH_ANIMATIONS {
 	WALK = 0,
 	RUN,
@@ -75,11 +78,12 @@ void GameplayState::LoadLevel() {
 		this->nodes.push_back(std::move(stoneSprite));
 	}
 
-	for (int i = 0; i < level->bushes()->size(); i++) {
-		auto bush = level->bushes()->Get(i);
-		auto bushSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), manager.textures["bush.png"].get(),
-			bush->pos()->x() * METERS2PIXELS, -bush->pos()->y() * METERS2PIXELS);
-		this->nodes.push_back(std::move(bushSprite));
+	for (int i = 0; i < level->hidingspots()->size(); i++) {
+		auto hspot = level->hidingspots()->Get(i);
+		auto hspotSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), manager.textures["bush.png"].get(),
+			hspot->pos()->x() * METERS2PIXELS, -hspot->pos()->y() * METERS2PIXELS);
+		hspotSprite->setLayer(HIDING_SPOTS_LAYER);
+		this->hiding_spots.push_back(std::move(hspotSprite));
 	}
 }
 
@@ -281,6 +285,18 @@ void GameplayState::Create() {
 	lastMessageReceivedTime = ncine::TimeStamp::now();
 }
 
+tweeny::tween<int>
+CreateHidingSpotTween(ncine::DrawableNode* hspot, int from, int to, int during) {
+	auto tween = tweeny::from(from)
+		.to(to).during(during).onStep(
+		[hspot] (tweeny::tween<int>& t, int v) -> bool {
+			hspot->setAlpha(v);
+			return false;
+		}
+	);
+	return tween;
+}
+
 void GameplayState::Update() {
 	auto now = ncine::TimeStamp::now();
 	float subDelta = (now.seconds() - lastMessageReceivedTime.seconds()) * ANIMATION_FPS;
@@ -347,6 +363,26 @@ void GameplayState::Update() {
 	if (closestMob && smallestNorm < radiusSquared) {
 		closestMob->hoverMarker = std::make_unique<ncine::Sprite>(closestMob->sprite.get(), manager.textures["graycircle.png"].get());
 		closestMob->hoverMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
+	}
+
+	// hiding spot transparency
+	for (auto &&hspot : this->hiding_spots)
+	{
+		if (!this->mySprite) break;
+		auto distance = this->mySprite->position() - hspot->position();
+		auto radius = ncine::Vector2f(hspot->width()/2.0f, hspot->height()/2.0f);
+		auto radius_offset = ncine::Vector2f(this->mySprite->height()/4.f, this->mySprite->height()/4.f); // uwzględnienie odległości krawędzi od jego środka
+		radius += radius_offset;
+		// FIXME: [future] równanie elipsy jest w poziomie w tej chwili, jak krzak będzie podłużny i obrócony, to nie będzie działało
+		if ((distance.x*distance.x)/(radius.x*radius.x) + (distance.y*distance.y)/(radius.y*radius.y) <= 1) { //równanie elipsy, dziwki
+			if (hspot->alpha() == MAX_HIDING_SPOT_OPACITY) {
+			auto tween = CreateHidingSpotTween(hspot.get(), MAX_HIDING_SPOT_OPACITY, MIN_HIDING_SPOT_OPACITY, 10);
+			this->manager.tweens.push_back(tween);
+			}
+		} else if (hspot->alpha() == MIN_HIDING_SPOT_OPACITY) {
+			auto tween = CreateHidingSpotTween(hspot.get(), MIN_HIDING_SPOT_OPACITY, MAX_HIDING_SPOT_OPACITY, 20);
+			this->manager.tweens.push_back(tween);
+		}
 	}
 }
 

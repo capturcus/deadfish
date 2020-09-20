@@ -46,7 +46,7 @@ enum class MobState {
 struct Collideable {
 	bool toBeDeleted = false;
 	virtual void handleCollision(UNUSED Collideable& other) {}
-	virtual bool obstructsSight() = 0;
+	virtual bool obstructsSight(Player*) = 0;
 
 	virtual ~Collideable(){}
 
@@ -62,7 +62,7 @@ struct Mob : public Collideable {
 	virtual void handleCollision(UNUSED Collideable& other) override {}
 	virtual void handleKill(Player& killer) = 0;
 	virtual bool isDead() { return false; }
-	virtual bool obstructsSight() override { return false; }
+	virtual bool obstructsSight(Player*) override { return false; }
 
 	glm::vec2 targetPosition;
 
@@ -101,19 +101,26 @@ struct Civilian : public Mob {
 	void collisionResolution();
 };
 
-struct Bush {
-	glm::vec2 position;
+struct HidingSpot : public Collideable {
+	b2Body* body = nullptr;
 	float radius = 0;
+	virtual bool obstructsSight(Player* p) override {
+		auto distance = b2Distance(body->GetPosition(), p->body->GetPosition());
+		if(distance < body->GetFixtureList()->GetShape()->m_radius) {
+			return false;
+		}
+		return true;
+	}
 };
 
 struct Stone : public Collideable {
 	b2Body* body = nullptr;
-	virtual bool obstructsSight() override { return true; }
+	virtual bool obstructsSight(Player*) override { return true; }
 };
 
 struct PlayerWall : public Collideable {
 	b2Body* body = nullptr;
-	virtual bool obstructsSight() override { return false; }
+	virtual bool obstructsSight(Player*) override { return false; }
 };
 
 struct NavPoint {
@@ -125,7 +132,7 @@ struct NavPoint {
 };
 
 struct Level {
-	std::vector<std::unique_ptr<Bush>> bushes;
+	std::vector<std::unique_ptr<HidingSpot>> hidingspots;
 	std::vector<std::unique_ptr<Stone>> stones;
 	std::vector<std::unique_ptr<PlayerWall>> playerwalls;
 	std::unordered_map<std::string, std::unique_ptr<NavPoint>> navpoints;

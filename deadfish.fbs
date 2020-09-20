@@ -12,7 +12,7 @@ table Stone {
     pos: Vec2;
 }
 
-table Bush {
+table HidingSpot {
     radius: float;
     pos: Vec2;
 }
@@ -32,7 +32,7 @@ table PlayerWall {
 }
 
 table Level {
-    bushes:[Bush];
+    hidingspots:[HidingSpot];
     stones:[Stone];
     navpoints:[NavPoint];
     playerwalls:[PlayerWall];

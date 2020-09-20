@@ -53,5 +53,5 @@ tweeny::tween<int> CreateTextTween(ncine::TextNode* textPtr) {
 			return false;
 		}
 	);
-	return std::move(tween);
+	return tween;
 }

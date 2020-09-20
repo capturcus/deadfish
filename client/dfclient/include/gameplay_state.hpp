@@ -19,6 +19,7 @@ namespace nc = ncine;
 const float PIXELS2METERS = 0.01f;
 const float METERS2PIXELS = 100.f;
 const int MOBS_LAYER = 16384;
+const int HIDING_SPOTS_LAYER = 24576;
 
 struct Mob {
 	std::unique_ptr<ncine::AnimatedSprite> sprite;
@@ -52,11 +53,14 @@ struct GameplayState
 	void LoadLevel();
 	void ProcessDeathReport(const DeadFish::DeathReport* deathReport);
 	void ProcessHighscoreUpdate(const DeadFish::HighscoreUpdate* highscoreUpdate);
+	void CreateHidingSpotShowingTween(ncine::DrawableNode* hspot);
+	void CreateHidingSpotHidingTween(ncine::DrawableNode* hspot);
 	std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species);
 	void ToggleHighscores();
 	nc::MeshSprite* CreateIndicator(float angle, float force, int indicatorNum, bool visible);
 
 	std::vector<std::unique_ptr<ncine::DrawableNode>> nodes;
+	std::vector<std::unique_ptr<ncine::DrawableNode>> hiding_spots;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
 	std::map<uint16_t, Mob> mobs;
 	ncine::Sprite* mySprite = nullptr;
