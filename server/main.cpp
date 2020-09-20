@@ -13,17 +13,17 @@ void sendInitMetadata()
 	for (auto &targetPlayer : gameState.players)
 	{
 		flatbuffers::FlatBufferBuilder builder(1);
-		std::vector<flatbuffers::Offset<DeadFish::InitPlayer>> playerOffsets;
+		std::vector<flatbuffers::Offset<FlatBuffGenerated::InitPlayer>> playerOffsets;
 		for (size_t i = 0; i < gameState.players.size(); i++)
 		{
 			auto& player = gameState.players[i];
 			auto name = builder.CreateString(player->name.c_str());
-			auto playerOffset = DeadFish::CreateInitPlayer(builder, i, name, player->species, player->ready);
+			auto playerOffset = FlatBuffGenerated::CreateInitPlayer(builder, i, name, player->species, player->ready);
 			playerOffsets.push_back(playerOffset);
 		}
 		auto players = builder.CreateVector(playerOffsets);
-		auto metadata = DeadFish::CreateInitMetadata(builder, players, targetPlayer->mobID, targetPlayer->playerID);
-		sendServerMessage(*targetPlayer, builder, DeadFish::ServerMessageUnion_InitMetadata, metadata.Union());
+		auto metadata = FlatBuffGenerated::CreateInitMetadata(builder, players, targetPlayer->mobID, targetPlayer->playerID);
+		sendServerMessage(*targetPlayer, builder, FlatBuffGenerated::ServerMessageUnion_InitMetadata, metadata.Union());
 	}
 }
 
@@ -51,10 +51,10 @@ void on_message(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
 	std::cout << "message from " << (uint64_t)hdl.lock().get() << "\n";
 
 	const auto payload = msg->get_payload();
-	const auto clientMessage = flatbuffers::GetRoot<DeadFish::ClientMessage>(payload.c_str());
+	const auto clientMessage = flatbuffers::GetRoot<FlatBuffGenerated::ClientMessage>(payload.c_str());
 	switch (clientMessage->event_type())
 	{
-	case DeadFish::ClientMessageUnion::ClientMessageUnion_JoinRequest:
+	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_JoinRequest:
 	{
 		const auto event = clientMessage->event_as_JoinRequest();
 		std::cout << "new player " << event->name()->c_str() << "\n";
@@ -62,7 +62,7 @@ void on_message(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
 		std::cout << "player count " << gameState.players.size() << "\n";
 	}
 	break;
-	case DeadFish::ClientMessageUnion::ClientMessageUnion_PlayerReady:
+	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_PlayerReady:
 	{
 		auto pl = getPlayerByConnHdl(hdl);
 		if (!pl)

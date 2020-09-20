@@ -1,11 +1,11 @@
 #pragma once
 #include "../../../common/deadfish_generated.h"
 
-#define FBUtilGetServerEvent(DATA, TYPE) GetServerEvent<DeadFish::TYPE>(DATA, DeadFish::ServerMessageUnion_##TYPE)
+#define FBUtilGetServerEvent(DATA, TYPE) GetServerEvent<FlatBuffGenerated::TYPE>(DATA, FlatBuffGenerated::ServerMessageUnion_##TYPE)
 
 template<typename T>
-const T *GetServerEvent(const std::string& data, DeadFish::ServerMessageUnion type) {
-    auto serverMessage = flatbuffers::GetRoot<DeadFish::ServerMessage>(data.data());
+const T *GetServerEvent(const std::string& data, FlatBuffGenerated::ServerMessageUnion type) {
+    auto serverMessage = flatbuffers::GetRoot<FlatBuffGenerated::ServerMessage>(data.data());
     if (serverMessage->event_type() != type)
         return nullptr;
     return (const T *)serverMessage->event();

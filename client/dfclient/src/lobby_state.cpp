@@ -44,8 +44,8 @@ void LobbyState::Create() {
 	// if we're here then that means that the socket has already connected, send data
 	gameData.socket->onMessage = std::bind(&LobbyState::OnMessage, this, std::placeholders::_1);
 	flatbuffers::FlatBufferBuilder builder;
-	auto req = DeadFish::CreateJoinRequest(builder, builder.CreateString(gameData.myNickname));
-	auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_JoinRequest, req.Union());
+	auto req = FlatBuffGenerated::CreateJoinRequest(builder, builder.CreateString(gameData.myNickname));
+	auto message = FlatBuffGenerated::CreateClientMessage(builder, FlatBuffGenerated::ClientMessageUnion_JoinRequest, req.Union());
 	builder.Finish(message);
 
 	SendData(builder);
@@ -103,8 +103,8 @@ void LobbyState::RedrawPlayers() {
 
 void LobbyState::SendPlayerReady() {
 	flatbuffers::FlatBufferBuilder builder;
-	auto ready = DeadFish::CreatePlayerReady(builder);
-	auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_PlayerReady, ready.Union());
+	auto ready = FlatBuffGenerated::CreatePlayerReady(builder);
+	auto message = FlatBuffGenerated::CreateClientMessage(builder, FlatBuffGenerated::ClientMessageUnion_PlayerReady, ready.Union());
 	builder.Finish(message);
 
 	SendData(builder);

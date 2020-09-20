@@ -23,7 +23,7 @@ const int MOBS_LAYER = 16384;
 struct Mob {
 	std::unique_ptr<ncine::AnimatedSprite> sprite;
 	bool seen;
-	DeadFish::MobState state = DeadFish::MobState_Walk;
+	FlatBuffGenerated::MobState state = FlatBuffGenerated::MobState_Walk;
 	std::unique_ptr<ncine::Sprite> hoverMarker;
 	std::unique_ptr<ncine::Sprite> relationMarker;
 
@@ -32,7 +32,7 @@ struct Mob {
 	float prevRotation = 0.f;
 	float currRotation = 0.f;
 
-	void setupLocRot(const DeadFish::Mob& msg);
+	void setupLocRot(const FlatBuffGenerated::Mob& msg);
 	void updateLocRot(float subDelta);
 };
 
@@ -50,8 +50,8 @@ struct GameplayState
 	void OnKeyPressed(const ncine::KeyboardEvent &event) override;
 	void OnKeyReleased(const ncine::KeyboardEvent &event) override;
 	void LoadLevel();
-	void ProcessDeathReport(const DeadFish::DeathReport* deathReport);
-	void ProcessHighscoreUpdate(const DeadFish::HighscoreUpdate* highscoreUpdate);
+	void ProcessDeathReport(const FlatBuffGenerated::DeathReport* deathReport);
+	void ProcessHighscoreUpdate(const FlatBuffGenerated::HighscoreUpdate* highscoreUpdate);
 	void CreateTextTween(ncine::TextNode* textPtr);
 	std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species);
 	void ToggleHighscores();

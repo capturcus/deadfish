@@ -245,8 +245,8 @@ void Civilian::handleKill(Player& killer) {
 
 	// send the deathreport killed npc message
 	flatbuffers::FlatBufferBuilder builder;
-	auto ev = DeadFish::CreateDeathReport(builder, killer.playerID, -1);
-	sendServerMessage(killer, builder, DeadFish::ServerMessageUnion_DeathReport, ev.Union());
+	auto ev = FlatBuffGenerated::CreateDeathReport(builder, killer.playerID, -1);
+	sendServerMessage(killer, builder, FlatBuffGenerated::ServerMessageUnion_DeathReport, ev.Union());
 	std::cout << "sent a death report\n";
 
 	sendHighscores();
@@ -273,8 +273,8 @@ void Player::handleKill(Player& killer) {
 
 	// send the deathreport message
 	flatbuffers::FlatBufferBuilder builder;
-	auto ev = DeadFish::CreateDeathReport(builder, killer.playerID, this->playerID);
-	auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_DeathReport, ev.Union());
+	auto ev = FlatBuffGenerated::CreateDeathReport(builder, killer.playerID, this->playerID);
+	auto data = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_DeathReport, ev.Union());
 	sendToAll(data);
 
 	sendHighscores();
