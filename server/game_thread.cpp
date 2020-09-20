@@ -246,7 +246,7 @@ void physicsInitMob(Mob *m, glm::vec2 pos, float angle, float radius, uint16 cat
 	fixtureDef.density = 1;
 	fixtureDef.friction = 0;
 	fixtureDef.filter.categoryBits = categoryBits;
-	fixtureDef.filter.maskBits = 0xFFFF & 0b1111111111111101; //no collision with bushes
+	fixtureDef.filter.maskBits = 0xFFFF & 0b1111111111111101; //no collision with hiding spots
 	m->body->CreateFixture(&fixtureDef);
 	m->body->SetUserData(m);
 }

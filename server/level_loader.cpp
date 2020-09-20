@@ -40,15 +40,15 @@ void initStone(Stone *s, const DeadFish::Stone *dfstone)
 	s->body->SetUserData(s);
 }
 
-void initBush(Bush *b, const DeadFish::Bush *dfbush)
+void initHidingSpot(HidingSpot *b, const DeadFish::HidingSpot *dfhspot)
 {
 	b2BodyDef myBodyDef;
 	myBodyDef.type = b2_staticBody;
-	myBodyDef.position.Set(dfbush->pos()->x(), dfbush->pos()->y());
+	myBodyDef.position.Set(dfhspot->pos()->x(), dfhspot->pos()->y());
 	myBodyDef.angle = 0;
 	b->body = gameState.b2world->CreateBody(&myBodyDef);
 	b2CircleShape circleShape;
-	circleShape.m_radius = dfbush->radius();
+	circleShape.m_radius = dfhspot->radius();
 
 	b2FixtureDef fixtureDef;
 	fixtureDef.shape = &circleShape;
@@ -60,17 +60,17 @@ void initBush(Bush *b, const DeadFish::Bush *dfbush)
 
 flatbuffers::Offset<DeadFish::Level> serializeLevel(flatbuffers::FlatBufferBuilder &builder)
 {
-	// bushes
-	std::vector<flatbuffers::Offset<DeadFish::Bush>> bushOffsets;
-	for (auto &b : gameState.level->bushes)
+	// hiding spots
+	std::vector<flatbuffers::Offset<DeadFish::HidingSpot>> hspotOffsets;
+	for (auto &b : gameState.level->hidingspots)
 	{
 		DeadFish::Vec2 pos(b->body->GetPosition().x, b->body->GetPosition().y);
 		auto f = b->body->GetFixtureList();
 		auto c = (b2CircleShape *)f->GetShape();
-		auto off = DeadFish::CreateBush(builder, c->m_radius, &pos);
-		bushOffsets.push_back(off);
+		auto off = DeadFish::CreateHidingSpot(builder, c->m_radius, &pos);
+		hspotOffsets.push_back(off);
 	}
-	auto bushes = builder.CreateVector(bushOffsets);
+	auto hidingspots = builder.CreateVector(hspotOffsets);
 
 	// stones
 	std::vector<flatbuffers::Offset<DeadFish::Stone>> stoneOffsets;
@@ -85,7 +85,7 @@ flatbuffers::Offset<DeadFish::Level> serializeLevel(flatbuffers::FlatBufferBuild
 	auto stones = builder.CreateVector(stoneOffsets);
 
 	DeadFish::Vec2 size(gameState.level->size.x, gameState.level->size.y);
-	auto level = DeadFish::CreateLevel(builder, bushes, stones, 0, 0, &size);
+	auto level = DeadFish::CreateLevel(builder, hidingspots, stones, 0, 0, &size);
 	return level;
 }
 
@@ -121,13 +121,13 @@ void loadLevel(std::string &path)
 
 	auto level = flatbuffers::GetRoot<DeadFish::Level>(memblock.data());
 
-	// bushes
-	for (size_t i = 0; i < level->bushes()->size(); i++)
+	// hiding spots
+	for (size_t i = 0; i < level->hidingspots()->size(); i++)
 	{
-		auto bush = level->bushes()->Get(i);
-		auto b = std::make_unique<Bush>();
-		initBush(b.get(), bush);
-		gameState.level->bushes.push_back(std::move(b));
+		auto hspot = level->hidingspots()->Get(i);
+		auto hs = std::make_unique<HidingSpot>();
+		initHidingSpot(hs.get(), hspot);
+		gameState.level->hidingspots.push_back(std::move(hs));
 	}
 
 	// stones

@@ -101,7 +101,7 @@ struct Civilian : public Mob {
 	void collisionResolution();
 };
 
-struct Bush : public Collideable {
+struct HidingSpot : public Collideable {
 	b2Body* body = nullptr;
 	float radius = 0;
 	virtual bool obstructsSight(Player* p) override {
@@ -132,7 +132,7 @@ struct NavPoint {
 };
 
 struct Level {
-	std::vector<std::unique_ptr<Bush>> bushes;
+	std::vector<std::unique_ptr<HidingSpot>> hidingspots;
 	std::vector<std::unique_ptr<Stone>> stones;
 	std::vector<std::unique_ptr<PlayerWall>> playerwalls;
 	std::unordered_map<std::string, std::unique_ptr<NavPoint>> navpoints;
