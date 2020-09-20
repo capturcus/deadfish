@@ -78,12 +78,12 @@ void GameplayState::LoadLevel() {
 		this->nodes.push_back(std::move(stoneSprite));
 	}
 
-	for (int i = 0; i < level->bushes()->size(); i++) {
-		auto bush = level->bushes()->Get(i);
-		auto bushSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), manager.textures["bush.png"].get(),
-			bush->pos()->x() * METERS2PIXELS, -bush->pos()->y() * METERS2PIXELS);
-		bushSprite->setLayer(HIDING_SPOTS_LAYER);
-		this->hiding_spots.push_back(std::move(bushSprite));
+	for (int i = 0; i < level->hidingspots()->size(); i++) {
+		auto hspot = level->hidingspots()->Get(i);
+		auto hspotSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), manager.textures["bush.png"].get(),
+			hspot->pos()->x() * METERS2PIXELS, -hspot->pos()->y() * METERS2PIXELS);
+		hspotSprite->setLayer(HIDING_SPOTS_LAYER);
+		this->hiding_spots.push_back(std::move(hspotSprite));
 	}
 }
 
