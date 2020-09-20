@@ -378,9 +378,10 @@ void GameplayState::Update() {
 	{
 		if (!this->mySprite) break;
 		auto distance = this->mySprite->position() - hspot->position();
-		auto radius_offset = ncine::Vector2f(this->mySprite->height()/4.f, this->mySprite->height()/4.f); // this seems to work quite nicely
 		auto radius = ncine::Vector2f(hspot->width()/2.0f, hspot->height()/2.0f);
+		auto radius_offset = ncine::Vector2f(this->mySprite->height()/4.f, this->mySprite->height()/4.f); // uwzględnienie odległości krawędzi od jego środka
 		radius += radius_offset;
+		// FIXME: [future] równanie elipsy jest w poziomie w tej chwili, jak krzak będzie podłużny i obrócony, to nie będzie działało
 		if ((distance.x*distance.x)/(radius.x*radius.x) + (distance.y*distance.y)/(radius.y*radius.y) <= 1) { //równanie elipsy, dziwki
 			if (hspot->alpha() == MAX_HIDING_SPOT_OPACITY) {
 			this->CreateHidingSpotShowingTween(hspot.get());
