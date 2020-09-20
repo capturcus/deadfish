@@ -12,10 +12,13 @@ namespace nc = ncine;
 
 #include "websocket.hpp"
 
+#include "tweeny.h"
+
 bool IntersectsNode(float x, float y, nc::DrawableNode& node);
 void SendData(flatbuffers::FlatBufferBuilder& builder);
 nc::MeshSprite* createArc(nc::SceneNode& rootNode, nc::Texture* texture,
 	float x, float y, float outerRadius, float innerRadius, int degrees);
+tweeny::tween<int> CreateTextTween(ncine::TextNode* textPtr);
 
 namespace deadfish {
 

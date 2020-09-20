@@ -1,3 +1,5 @@
+#include <ncine/TextNode.h>
+
 #include "util.hpp"
 #include "game_data.hpp"
 
@@ -39,4 +41,17 @@ nc::MeshSprite* createArc(nc::SceneNode& rootNode, nc::Texture* texture,
 	ret->createVerticesFromTexels(texels.size(), texels.data());
 	ret->setAnchorPoint(-100, -100); // for the love of god i have no idea why this should be like that
 	return ret;
+}
+
+tweeny::tween<int> CreateTextTween(ncine::TextNode* textPtr) {
+	auto tween = tweeny::from(255)
+		.to(255).during(60)
+		.to(0).during(60).onStep(
+		[textPtr] (tweeny::tween<int>& t, int v) -> bool {
+			auto textColor = textPtr->color();
+			textPtr->setColor(textColor.r(), textColor.g(), textColor.b(), v);
+			return false;
+		}
+	);
+	return std::move(tween);
 }

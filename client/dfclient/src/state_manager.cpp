@@ -41,6 +41,12 @@ void StateManager::OnInit() {
 
 void StateManager::OnFrameStart() {
 	webSocketManager.Update();
+	// handle tweens
+	for (int i = this->tweens.size() - 1; i >= 0; i--) {
+		this->tweens[i].step(1);
+		if (this->tweens[i].progress() == 1.f)
+			this->tweens.erase(this->tweens.begin() + i);
+	}
 	currentState->Update();
 }
 

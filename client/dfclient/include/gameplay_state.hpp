@@ -52,7 +52,6 @@ struct GameplayState
 	void LoadLevel();
 	void ProcessDeathReport(const DeadFish::DeathReport* deathReport);
 	void ProcessHighscoreUpdate(const DeadFish::HighscoreUpdate* highscoreUpdate);
-	void CreateTextTween(ncine::TextNode* textPtr);
 	std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species);
 	void ToggleHighscores();
 	nc::MeshSprite* CreateIndicator(float angle, float force, int indicatorNum, bool visible);
@@ -62,7 +61,6 @@ struct GameplayState
 	std::map<uint16_t, Mob> mobs;
 	ncine::Sprite* mySprite = nullptr;
 	uint32_t lastNodeID = 0;
-	std::vector<tweeny::tween<int>> tweens;
 	bool showHighscores = false;
 	std::vector<nc::DrawableNode*> indicators;
 

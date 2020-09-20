@@ -17,3 +17,4 @@ std::string makeServerMessage(flatbuffers::FlatBufferBuilder &builder,
 bool mobSeePoint(Mob &m, b2Vec2 &point);
 void sendToAll(std::string &data);
 void sendHighscores();
+void sendGameAlreadyInProgress(const websocketpp::connection_hdl& hdl);

@@ -43,13 +43,25 @@ std::string makeServerMessage(flatbuffers::FlatBufferBuilder &builder,
 							  flatbuffers::Offset<void> offset)
 {
 	auto message = DeadFish::CreateServerMessage(builder,
-												 type,
-												 offset);
+							type,
+							offset);
 	builder.Finish(message);
 	auto data = builder.GetBufferPointer();
 	auto size = builder.GetSize();
 	auto str = std::string(data, data + size);
 	return str;
+}
+
+
+void sendGameAlreadyInProgress(const websocketpp::connection_hdl& hdl)
+{
+	std::cout << "sending game already in progress";
+	flatbuffers::FlatBufferBuilder builder;
+	auto offset = DeadFish::CreateSimpleServerEvent(builder,
+		DeadFish::SimpleServerEventType_GameAlreadyInProgress);
+	auto str = makeServerMessage(builder, DeadFish::ServerMessageUnion_SimpleServerEvent,
+		offset.Union());
+	websocket_server.send(hdl, str, websocketpp::frame::opcode::binary);
 }
 
 void sendServerMessage(Player &player,
@@ -386,13 +398,16 @@ void sendHighscores()
 
 void gameOnMessage(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
 {
+	std::cout << "gameOnMessage\n";
 	const auto payload = msg->get_payload();
 	const auto clientMessage = flatbuffers::GetRoot<DeadFish::ClientMessage>(payload.c_str());
 	const auto guard = gameState.lock();
 
 	auto p = getPlayerByConnHdl(hdl);
-	if (!p)
+	if (!p) {
+		sendGameAlreadyInProgress(hdl);
 		return;
+	}
 	if (p->state == MobState::ATTACKING)
 		return;
 

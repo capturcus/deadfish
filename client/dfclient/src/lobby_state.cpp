@@ -12,6 +12,15 @@
 
 void LobbyState::OnMessage(const std::string& data) {
 	std::cout << "lobby received data\n";
+	auto event = FBUtilGetServerEvent(data, SimpleServerEvent);
+	if (event) {
+		if (event->type() == DeadFish::SimpleServerEventType_GameAlreadyInProgress) {
+			std::cout << "game already in progress\n";
+			gameData.gameInProgress = true;
+			manager.EnterState("menu");
+			return;
+		}
+	}
 	auto level = FBUtilGetServerEvent(data, Level);
 	if (level) {
 		gameData.levelData = data; // copy it

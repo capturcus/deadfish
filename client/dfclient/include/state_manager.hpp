@@ -10,6 +10,8 @@
 
 #include "game_state.hpp"
 
+#include "tweeny.h"
+
 using StateMap = std::map<std::string, std::unique_ptr<GameState>>;
 
 struct StateManager {
@@ -29,4 +31,5 @@ struct StateManager {
 
 	std::unique_ptr<ncine::AudioBuffer> _wilhelmAudioBuffer;
 	std::unique_ptr<ncine::AudioBufferPlayer> _wilhelmSound;
+	std::vector<tweeny::tween<int>> tweens;
 };
