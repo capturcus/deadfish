@@ -59,6 +59,8 @@ struct GameplayState
 	void ToggleHighscores();
 	nc::MeshSprite* CreateIndicator(float angle, float force, int indicatorNum, bool visible);
 
+	void updateRemainingText(uint64_t remainingFrames);
+
 	std::vector<std::unique_ptr<ncine::DrawableNode>> nodes;
 	std::vector<std::unique_ptr<ncine::DrawableNode>> hiding_spots;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
@@ -66,7 +68,9 @@ struct GameplayState
 	ncine::Sprite* mySprite = nullptr;
 	uint32_t lastNodeID = 0;
 	bool showHighscores = false;
+	bool gameEnded = false;
 	std::vector<nc::DrawableNode*> indicators;
+	ncine::TextNode* timeLeftNode = nullptr;
 
 	ncine::TimeStamp lastMessageReceivedTime;
 };

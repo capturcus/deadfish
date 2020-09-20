@@ -105,6 +105,7 @@ table Indicator {
 table WorldState {
   mobs:[Mob];
   indicators:[Indicator];
+  stepsRemaining:uint64;
 }
 
 table HighscoreEntry {
