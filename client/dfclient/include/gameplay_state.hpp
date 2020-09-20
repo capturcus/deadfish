@@ -37,7 +37,7 @@ struct Mob {
 	float prevRotation = 0.f;
 	float currRotation = 0.f;
 
-	void setupLocRot(const DeadFish::Mob& msg);
+	void setupLocRot(const DeadFish::Mob& msg, bool firstUpdate);
 	void updateLocRot(float subDelta);
 };
 
