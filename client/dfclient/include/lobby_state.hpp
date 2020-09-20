@@ -8,23 +8,28 @@
 #include "game_state.hpp"
 #include "websocket.hpp"
 
+class Resources;
 
 struct LobbyState
-    : public GameState
+	: public GameState
 {
-    using GameState::GameState;
-    
-    void Create() override;
-    void Update() override;
-    void CleanUp() override;
-    void RedrawPlayers();
-    void OnMouseButtonPressed(const ncine::MouseEvent &event) override;
+	LobbyState(Resources& r);
+	~LobbyState() override;
 
-    void OnMessage(const std::string& data);
-    void SendPlayerReady();
+	StateType Update(Messages m) override;
+	void OnMouseButtonPressed(const ncine::MouseEvent &event) override;
 
-    std::vector<std::unique_ptr<ncine::SceneNode>> sceneNodes;
-    std::vector<std::unique_ptr<ncine::TextNode>> textNodes;
-    std::unique_ptr<ncine::TextNode> readyButton;
-    bool ready = false;
+private:
+	StateType OnMessage(const std::string& data);
+
+	void RedrawPlayers();
+
+	void SendPlayerReady();
+
+	std::vector<std::unique_ptr<ncine::SceneNode>> sceneNodes;
+	std::vector<std::unique_ptr<ncine::TextNode>> textNodes;
+	std::unique_ptr<ncine::TextNode> readyButton;
+	bool ready = false;
+
+	Resources& _resources;
 };

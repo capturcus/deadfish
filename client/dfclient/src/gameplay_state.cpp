@@ -14,7 +14,7 @@
 #include "fb_util.hpp"
 #include "game_data.hpp"
 #include "gameplay_state.hpp"
-#include "state_manager.hpp"
+#include "resources.hpp"
 #include "util.hpp"
 
 const float ANIMATION_FPS = 20.f;
@@ -46,7 +46,7 @@ ncine::Vector2i spriteCoords(int spriteNum) {
 }
 
 std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species) {
-	std::unique_ptr<ncine::AnimatedSprite> ret = std::make_unique<ncine::AnimatedSprite>(parent, manager.textures["fish.png"].get());
+	std::unique_ptr<ncine::AnimatedSprite> ret = std::make_unique<ncine::AnimatedSprite>(parent, _resources.textures["fish.png"].get());
 	int currentImg = species * IMGS_PER_SPECIES;
 	for (int animNumber = 0; animNumber < FISH_ANIMATIONS::MAX; animNumber++) {
 		nctl::UniquePtr<ncine::RectAnimation> animation =
@@ -73,14 +73,14 @@ void GameplayState::LoadLevel() {
 
 	for (int i = 0; i < level->stones()->size(); i++) {
 		auto stone = level->stones()->Get(i);
-		auto stoneSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), manager.textures["stone.png"].get(),
+		auto stoneSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures["stone.png"].get(),
 			stone->pos()->x() * METERS2PIXELS, -stone->pos()->y() * METERS2PIXELS);
 		this->nodes.push_back(std::move(stoneSprite));
 	}
 
 	for (int i = 0; i < level->hidingspots()->size(); i++) {
 		auto hspot = level->hidingspots()->Get(i);
-		auto hspotSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), manager.textures["bush.png"].get(),
+		auto hspotSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures["bush.png"].get(),
 			hspot->pos()->x() * METERS2PIXELS, -hspot->pos()->y() * METERS2PIXELS);
 		hspotSprite->setLayer(HIDING_SPOTS_LAYER);
 		this->hiding_spots.push_back(std::move(hspotSprite));
@@ -91,7 +91,7 @@ void GameplayState::LoadLevel() {
 // this whole thing should probably be refactored
 void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport) {
 	auto& rootNode = ncine::theApplication().rootNode();
-	auto text = std::make_unique<ncine::TextNode>(&rootNode, this->manager.fonts["comic"].get());
+	auto text = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic"].get());
 	const float screenWidth = ncine::theApplication().width();
 	const float screenHeight = ncine::theApplication().height();
 	if (deathReport->killer() == gameData.myPlayerID) {
@@ -109,17 +109,17 @@ void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport)
 		text->setString(("you killed " + killedName).c_str());
 		text->setPosition(screenWidth * 0.5f, screenHeight * 0.75f);
 		text->setScale(3.0f);
-		this->manager.tweens.push_back(CreateTextTween(text.get()));
+		_resources._tweens.push_back(CreateTextTween(text.get()));
 		
 	} else if (deathReport->killed() == gameData.myPlayerID) {
 		// i died :c
-		manager._wilhelmSound->play();
+		_resources._wilhelmSound->play();
 
 		text->setString(("you have been killed by " + gameData.players[deathReport->killer()].name).c_str());
 		text->setColor(255, 0, 0, 255);
 		text->setPosition(screenWidth * 0.5f, screenHeight * 0.5f);
 		text->setScale(2.0f);
-		this->manager.tweens.push_back(CreateTextTween(text.get()));
+		_resources._tweens.push_back(CreateTextTween(text.get()));
 	} else {
 		auto killer = gameData.players[deathReport->killer()].name;
 		auto killed = gameData.players[deathReport->killed()].name;
@@ -127,7 +127,7 @@ void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport)
 		text->setScale(0.5f);
 		text->setPosition(screenWidth * 0.8f, screenHeight * 0.8f);
 		text->setColor(0, 0, 0, 255);
-		this->manager.tweens.push_back(CreateTextTween(text.get()));
+		_resources._tweens.push_back(CreateTextTween(text.get()));
 	}
 	this->nodes.push_back(std::move(text));
 }
@@ -152,7 +152,7 @@ const float INDICATOR_OFFSET = 80.f;
  * @param force force of the indicator from 0.0 to 1.0
  * */
 nc::MeshSprite* GameplayState::CreateIndicator(float angle, float force, int indicatorNum, bool visible) {
-	auto arc = createArc(*this->mySprite, this->manager.textures["pixel.png"].get(), 0, 0,
+	auto arc = createArc(*this->mySprite, _resources.textures["pixel.png"].get(), 0, 0,
 		INDICATOR_OFFSET + indicatorNum * INDICATOR_WIDTH,
 		INDICATOR_OFFSET + (indicatorNum+1) * INDICATOR_WIDTH, force * 360.f);
 	arc->setRotation(-this->mySprite->rotation() - angle * TO_DEGREES - force * 180.f + 180.f);
@@ -224,10 +224,10 @@ void GameplayState::OnMessage(const std::string& data) {
 		if (mobData->relation() == DeadFish::PlayerRelation_None) {
 			mob.relationMarker.reset(nullptr);
 		} else if (mobData->relation() == DeadFish::PlayerRelation_Close) {
-			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), manager.textures["bluecircle.png"].get());
+			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), _resources.textures["bluecircle.png"].get());
 			mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
 		} else if (mobData->relation() == DeadFish::PlayerRelation_Targeted) {
-			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), manager.textures["redcircle.png"].get());
+			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), _resources.textures["redcircle.png"].get());
 			mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
 		}
 	}
@@ -287,14 +287,13 @@ void Mob::updateLocRot(float subDelta) {
 	sprite->setRotation(prevRotation + angleDelta * subDelta);
 }
 
-void GameplayState::Create() {
+GameplayState::GameplayState(Resources& r) : _resources(r) {
 	std::cout << "entered gameplay state\n";
 	ncine::theApplication().gfxDevice().setClearColor(ncine::Colorf(1, 1, 1, 1));
 	auto& rootNode = ncine::theApplication().rootNode();
 	this->cameraNode = std::make_unique<ncine::SceneNode>(&rootNode);
 	this->LoadLevel();
-	gameData.socket->onMessage = std::bind(&GameplayState::OnMessage, this, std::placeholders::_1);
-	timeLeftNode = new ncine::TextNode(&rootNode, this->manager.fonts["comic"].get());
+	timeLeftNode = new ncine::TextNode(&rootNode, _resources.fonts["comic"].get());
 
 	lastMessageReceivedTime = ncine::TimeStamp::now();
 }
@@ -311,7 +310,14 @@ CreateHidingSpotTween(ncine::DrawableNode* hspot, int from, int to, int during) 
 	return tween;
 }
 
-void GameplayState::Update() {
+GameplayState::~GameplayState() {
+}
+
+StateType GameplayState::Update(Messages m) {
+	for (auto& msg: m.data_msgs) {
+		OnMessage(msg);
+	}
+
 	auto now = ncine::TimeStamp::now();
 	float subDelta = (now.seconds() - lastMessageReceivedTime.seconds()) * ANIMATION_FPS;
 	if (subDelta < 0.f) {
@@ -344,7 +350,7 @@ void GameplayState::Update() {
 	}
 
 	if (this->mySprite == nullptr)
-		return;
+		return StateType::Gameplay;
 
 	// manage the screen position in relation to my sprite
 	auto &mouseState = ncine::theApplication().inputManager().mouseState();
@@ -375,7 +381,7 @@ void GameplayState::Update() {
 		}
 	}
 	if (closestMob && smallestNorm < radiusSquared) {
-		closestMob->hoverMarker = std::make_unique<ncine::Sprite>(closestMob->sprite.get(), manager.textures["graycircle.png"].get());
+		closestMob->hoverMarker = std::make_unique<ncine::Sprite>(closestMob->sprite.get(), _resources.textures["graycircle.png"].get());
 		closestMob->hoverMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
 	}
 
@@ -391,17 +397,15 @@ void GameplayState::Update() {
 		if ((distance.x*distance.x)/(radius.x*radius.x) + (distance.y*distance.y)/(radius.y*radius.y) <= 1) { //równanie elipsy, dziwki
 			if (hspot->alpha() == MAX_HIDING_SPOT_OPACITY) {
 			auto tween = CreateHidingSpotTween(hspot.get(), MAX_HIDING_SPOT_OPACITY, MIN_HIDING_SPOT_OPACITY, 10);
-			this->manager.tweens.push_back(tween);
+			_resources._tweens.push_back(tween);
 			}
 		} else if (hspot->alpha() == MIN_HIDING_SPOT_OPACITY) {
 			auto tween = CreateHidingSpotTween(hspot.get(), MIN_HIDING_SPOT_OPACITY, MAX_HIDING_SPOT_OPACITY, 20);
-			this->manager.tweens.push_back(tween);
+			_resources._tweens.push_back(tween);
 		}
 	}
-}
 
-void GameplayState::CleanUp() {
-
+	return StateType::Gameplay;
 }
 
 void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {

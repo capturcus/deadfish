@@ -33,38 +33,34 @@ void MyEventHandler::onPreInit(nc::AppConfiguration &config)
 }
 
 GameData gameData;
-StateManager stateManager;
+std::optional<StateManager> stateManager;
 
 void MyEventHandler::onInit()
 {
-	stateManager.OnInit();
-	stateManager.AddState("menu", std::make_unique<MenuState>(stateManager));
-	stateManager.AddState("lobby", std::make_unique<LobbyState>(stateManager));
-	stateManager.AddState("gameplay", std::make_unique<GameplayState>(stateManager));
-	stateManager.EnterState("menu");
+	stateManager.emplace();
 }
 
 void MyEventHandler::onFrameStart()
 {
-	stateManager.OnFrameStart();
+	stateManager->OnFrameStart();
 }
 
 void MyEventHandler::onKeyPressed(const nc::KeyboardEvent &event)
 {
-	stateManager.OnKeyPressed(event);
+	stateManager->OnKeyPressed(event);
 }
 
 void MyEventHandler::onKeyReleased(const nc::KeyboardEvent &event)
 {
-	stateManager.OnKeyReleased(event);
+	stateManager->OnKeyReleased(event);
 }
 
 void MyEventHandler::onMouseButtonPressed(const nc::MouseEvent &event)
 {
-	stateManager.OnMouseButtonPressed(event);
+	stateManager->OnMouseButtonPressed(event);
 }
 
 void MyEventHandler::onMouseMoved(const nc::MouseState &state)
 {
-	stateManager.OnMouseMoved(state);
+	stateManager->OnMouseMoved(state);
 }

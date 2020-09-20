@@ -1,24 +1,28 @@
 #pragma once
+
 #include <string>
 #include <memory>
 #include <vector>
+#include <mutex>
 #include <functional>
 
-struct WebSocket {
-    virtual int Connect(std::string& address) = 0;
-    virtual bool Send(std::string& data) = 0;
-    virtual ~WebSocket() {}
-    std::function<void(const std::string&)> onMessage = nullptr;
-    std::function<void()> onOpen = nullptr;
+#include "messages.hpp"
 
-    bool toBeOpened;
-    std::vector<std::string> messageQueue;
+struct WebSocket {
+	virtual int Connect(std::string& address) = 0;
+	virtual bool Send(std::string& data) = 0;
+	virtual ~WebSocket() {}
+
+	// TODO use lock-free queue instead?
+	std::mutex mq_mutex;
+	bool toBeOpened = false;
+	std::vector<std::string> messageQueue;
 };
 
 struct WebSocketManager {
-    void Update();
+	Messages GetMessages();
 
-    std::vector<std::unique_ptr<WebSocket>> websockets;
+	std::unique_ptr<WebSocket> _ws;
 };
 
 WebSocket* CreateWebSocket();

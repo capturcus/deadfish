@@ -2,19 +2,19 @@
 
 #include <ncine/IInputEventHandler.h>
 
-class StateManager;
+#include "messages.hpp"
+
+enum class StateType {
+	Menu,
+	Lobby,
+	Gameplay
+};
 
 struct GameState {
-    GameState(StateManager& manager_)
-        : manager(manager_) {}
-    virtual void Create() = 0;
-    virtual void Update() = 0;
-    virtual void CleanUp() = 0;
-    virtual void OnKeyPressed(const ncine::KeyboardEvent &event) {}
+	virtual StateType Update(Messages) = 0;
+	virtual void OnKeyPressed(const ncine::KeyboardEvent &event) {}
 	virtual void OnKeyReleased(const ncine::KeyboardEvent &event) {}
 	virtual void OnMouseButtonPressed(const ncine::MouseEvent &event) {}
 	virtual void OnMouseMoved(const ncine::MouseState &state) {}
-    virtual ~GameState() {}
-
-    StateManager& manager;
+	virtual ~GameState() {}
 };

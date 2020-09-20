@@ -4,14 +4,19 @@
 
 #include "tweeny.h"
 
+class Resources;
+
 struct MenuState
 	: public GameState
 {
-	using GameState::GameState;
+public:
+	MenuState(Resources& r);
+	~MenuState() override;
 	
-	void Create() override;
-	void Update() override;
-	void CleanUp() override;
+	StateType Update(Messages) override;
 
+private:
 	bool TryConnect();
+
+	Resources& _resources;
 };

@@ -1,5 +1,5 @@
-#include <iostream>
 #include <functional>
+#include <iostream>
 
 #include <ncine/Application.h>
 #include <ncine/imgui.h>
@@ -10,8 +10,9 @@
 
 #include "fb_util.hpp"
 #include "game_data.hpp"
+#include "game_data.hpp"
 #include "menu_state.hpp"
-#include "state_manager.hpp"
+#include "resources.hpp"
 #include "util.hpp"
 
 namespace nc = ncine;
@@ -19,19 +20,19 @@ namespace nc = ncine;
 nctl::UniquePtr<nc::Sprite> logoSprite;
 nc::Colorf bgColor(0.96875f, 0.97265625, 0.953125, 1.0f);
 
-void MenuState::Create() {
+MenuState::MenuState(Resources& r) : _resources(r) {
 	nc::SceneNode &rootNode = nc::theApplication().rootNode();
 	auto res = nc::theApplication().appConfiguration().resolution;
-	logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, manager.textures["deadfish.png"].get(), res.x*0.5f, res.y*0.6f);
+	logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, _resources.textures["deadfish.png"].get(), res.x*0.5f, res.y*0.6f);
 	nc::theApplication().gfxDevice().setClearColor(bgColor);
 	if (gameData.gameInProgress) {
 		std::cout << "menu game in progress\n";
-		auto text = new ncine::TextNode(&rootNode, this->manager.fonts["comic"].get());
+		auto text = new ncine::TextNode(&rootNode, _resources.fonts["comic"].get());
 		text->setString("game already in progress");
 		text->setPosition(res.x * 0.5f, res.y * 0.75f);
 		text->setScale(2.0f);
 		text->setColor(0, 0, 0, 255);
-		this->manager.tweens.push_back(CreateTextTween(text));
+		_resources._tweens.push_back(CreateTextTween(text));
 		gameData.gameInProgress = false;
 	}
 }
@@ -40,11 +41,6 @@ bool MenuState::TryConnect() {
 	gameData.serverAddress = "ws://" + gameData.serverAddress;
 	std::cout << "server " << gameData.serverAddress << ", my nickname " << gameData.myNickname << "\n";
 	gameData.socket = CreateWebSocket();
-	StateManager& forwardManager = this->manager;
-	gameData.socket->onOpen = [this](){
-		std::cout << "lambda go to lobby\n";
-		this->manager.EnterState("lobby");
-	};
 	int ret = gameData.socket->Connect(gameData.serverAddress);
 	if (ret < 0) {
 		std::cout << "socket->Connect failed " << ret << "\n";
@@ -55,7 +51,11 @@ bool MenuState::TryConnect() {
 	return true;
 }
 
-void MenuState::Update() {
+StateType MenuState::Update(Messages m) {
+	if (m.opened) {
+		return StateType::Lobby;
+	}
+
 	ImGui::Begin("DeadFish", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
 		ImGuiWindowFlags_NoCollapse);
 	ImGui::SetWindowSize({350, 120});
@@ -71,8 +71,10 @@ void MenuState::Update() {
 		TryConnect();
 	}
 	ImGui::End();
+
+	return StateType::Menu;
 }
 
-void MenuState::CleanUp() {
+MenuState::~MenuState() {
 	logoSprite.reset(nullptr);
 }
