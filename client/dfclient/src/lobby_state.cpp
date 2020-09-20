@@ -14,7 +14,7 @@ StateType LobbyState::OnMessage(const std::string& data) {
 	std::cout << "lobby received data\n";
 	auto event = FBUtilGetServerEvent(data, SimpleServerEvent);
 	if (event) {
-		if (event->type() == DeadFish::SimpleServerEventType_GameAlreadyInProgress) {
+		if (event->type() == FlatBuffGenerated::SimpleServerEventType_GameAlreadyInProgress) {
 			std::cout << "game already in progress\n";
 			gameData.gameInProgress = true;
 			return StateType::Menu;
@@ -51,8 +51,8 @@ LobbyState::LobbyState(Resources& r) : _resources(r) {
 	std::cout << "lobby create\n";
 
 	flatbuffers::FlatBufferBuilder builder;
-	auto req = DeadFish::CreateJoinRequest(builder, builder.CreateString(gameData.myNickname));
-	auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_JoinRequest, req.Union());
+	auto req = FlatBuffGenerated::CreateJoinRequest(builder, builder.CreateString(gameData.myNickname));
+	auto message = FlatBuffGenerated::CreateClientMessage(builder, FlatBuffGenerated::ClientMessageUnion_JoinRequest, req.Union());
 	builder.Finish(message);
 
 	SendData(builder);
@@ -119,8 +119,8 @@ void LobbyState::RedrawPlayers() {
 
 void LobbyState::SendPlayerReady() {
 	flatbuffers::FlatBufferBuilder builder;
-	auto ready = DeadFish::CreatePlayerReady(builder);
-	auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_PlayerReady, ready.Union());
+	auto ready = FlatBuffGenerated::CreatePlayerReady(builder);
+	auto message = FlatBuffGenerated::CreateClientMessage(builder, FlatBuffGenerated::ClientMessageUnion_PlayerReady, ready.Union());
 	builder.Finish(message);
 
 	SendData(builder);

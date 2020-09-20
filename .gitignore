@@ -4,4 +4,4 @@ assets/
 .vscode/
 client/data
 client/imgui.ini
-
+levelpacker/FlatBuffGenerated/

@@ -39,10 +39,10 @@ uint16_t newMobID()
 }
 
 std::string makeServerMessage(flatbuffers::FlatBufferBuilder &builder,
-							  DeadFish::ServerMessageUnion type,
+							  FlatBuffGenerated::ServerMessageUnion type,
 							  flatbuffers::Offset<void> offset)
 {
-	auto message = DeadFish::CreateServerMessage(builder,
+	auto message = FlatBuffGenerated::CreateServerMessage(builder,
 							type,
 							offset);
 	builder.Finish(message);
@@ -57,16 +57,16 @@ void sendGameAlreadyInProgress(const websocketpp::connection_hdl& hdl)
 {
 	std::cout << "sending game already in progress";
 	flatbuffers::FlatBufferBuilder builder;
-	auto offset = DeadFish::CreateSimpleServerEvent(builder,
-		DeadFish::SimpleServerEventType_GameAlreadyInProgress);
-	auto str = makeServerMessage(builder, DeadFish::ServerMessageUnion_SimpleServerEvent,
+	auto offset = FlatBuffGenerated::CreateSimpleServerEvent(builder,
+		FlatBuffGenerated::SimpleServerEventType_GameAlreadyInProgress);
+	auto str = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_SimpleServerEvent,
 		offset.Union());
 	websocket_server.send(hdl, str, websocketpp::frame::opcode::binary);
 }
 
 void sendServerMessage(Player &player,
 					   flatbuffers::FlatBufferBuilder &builder,
-					   DeadFish::ServerMessageUnion type,
+					   FlatBuffGenerated::ServerMessageUnion type,
 					   flatbuffers::Offset<void> offset)
 {
 	auto str = makeServerMessage(builder, type, offset);
@@ -155,7 +155,7 @@ float revLerp(float min, float max, float val)
 	return (val - min) / (max - min);
 }
 
-flatbuffers::Offset<DeadFish::Indicator>
+flatbuffers::Offset<FlatBuffGenerated::Indicator>
 makePlayerIndicator(flatbuffers::FlatBufferBuilder &builder,
 					Player &rootPlayer,
 					Player &otherPlayer)
@@ -165,33 +165,33 @@ makePlayerIndicator(flatbuffers::FlatBufferBuilder &builder,
 	float angle = 0;
 	if (force != 0)
 		angle = angleFromVector(toTarget);
-	return DeadFish::CreateIndicator(builder, angle,
+	return FlatBuffGenerated::CreateIndicator(builder, angle,
 		force, playerSeeMob(rootPlayer, otherPlayer));
 }
 
-flatbuffers::Offset<DeadFish::Mob> createFBMob(flatbuffers::FlatBufferBuilder &builder,
+flatbuffers::Offset<FlatBuffGenerated::Mob> createFBMob(flatbuffers::FlatBufferBuilder &builder,
 	Player& player, const Mob* m)
 {
 	auto distance = b2Distance(m->body->GetPosition(), player.body->GetPosition());
-	DeadFish::PlayerRelation relation = DeadFish::PlayerRelation_None;
+	FlatBuffGenerated::PlayerRelation relation = FlatBuffGenerated::PlayerRelation_None;
 	if (distance < KILL_DISTANCE && player.mobID != m->mobID)
-		relation = DeadFish::PlayerRelation_Close;
+		relation = FlatBuffGenerated::PlayerRelation_Close;
 	if (player.killTarget == m)
-		relation = DeadFish::PlayerRelation_Targeted;
-	auto posVec = DeadFish::Vec2(m->body->GetPosition().x, m->body->GetPosition().y);
-	return DeadFish::CreateMob(builder,
+		relation = FlatBuffGenerated::PlayerRelation_Targeted;
+	auto posVec = FlatBuffGenerated::Vec2(m->body->GetPosition().x, m->body->GetPosition().y);
+	return FlatBuffGenerated::CreateMob(builder,
 									m->mobID,
 									&posVec,
 									m->body->GetAngle(),
-									(DeadFish::MobState)m->state,
+									(FlatBuffGenerated::MobState)m->state,
 									m->species,
 									relation);
 }
 
 flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBufferBuilder &builder, uint64_t framesRemaining)
 {
-	std::vector<flatbuffers::Offset<DeadFish::Mob>> mobs;
-	std::vector<flatbuffers::Offset<DeadFish::Indicator>> indicators;
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::Mob>> mobs;
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::Indicator>> indicators;
 	for (auto &c : gameState.civilians)
 	{
 		if (!playerSeeMob(player, *c))
@@ -222,7 +222,7 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 	auto mobsOffset = builder.CreateVector(mobs);
 	auto indicatorsOffset = builder.CreateVector(indicators);
 
-	auto worldState = DeadFish::CreateWorldState(builder, mobsOffset, indicatorsOffset, framesRemaining);
+	auto worldState = FlatBuffGenerated::CreateWorldState(builder, mobsOffset, indicatorsOffset, framesRemaining);
 
 	return worldState.Union();
 }
@@ -380,22 +380,22 @@ void executeCommandKill(Player &player, uint16_t id)
 	}
 	// send message too far
 	flatbuffers::FlatBufferBuilder builder(1);
-	auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_TooFarToKill);
-	sendServerMessage(player, builder, DeadFish::ServerMessageUnion_SimpleServerEvent, ev.Union());
+	auto ev = FlatBuffGenerated::CreateSimpleServerEvent(builder, FlatBuffGenerated::SimpleServerEventType_TooFarToKill);
+	sendServerMessage(player, builder, FlatBuffGenerated::ServerMessageUnion_SimpleServerEvent, ev.Union());
 }
 
 void sendHighscores()
 {
 	flatbuffers::FlatBufferBuilder builder;
-	std::vector<flatbuffers::Offset<DeadFish::HighscoreEntry>> entries;
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::HighscoreEntry>> entries;
 	for (auto &p : gameState.players)
 	{
-		auto entry = DeadFish::CreateHighscoreEntry(builder, p->playerID, p->points);
+		auto entry = FlatBuffGenerated::CreateHighscoreEntry(builder, p->playerID, p->points);
 		entries.push_back(entry);
 	}
 	auto v = builder.CreateVector(entries);
-	auto update = DeadFish::CreateHighscoreUpdate(builder, v);
-	auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_HighscoreUpdate, update.Union());
+	auto update = FlatBuffGenerated::CreateHighscoreUpdate(builder, v);
+	auto data = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_HighscoreUpdate, update.Union());
 	sendToAll(data);
 }
 
@@ -403,7 +403,7 @@ void gameOnMessage(websocketpp::connection_hdl hdl, const server::message_ptr& m
 {
 	std::cout << "gameOnMessage\n";
 	const auto payload = msg->get_payload();
-	const auto clientMessage = flatbuffers::GetRoot<DeadFish::ClientMessage>(payload.c_str());
+	const auto clientMessage = flatbuffers::GetRoot<FlatBuffGenerated::ClientMessage>(payload.c_str());
 	const auto guard = gameState.lock();
 
 	auto p = getPlayerByConnHdl(hdl);
@@ -416,7 +416,7 @@ void gameOnMessage(websocketpp::connection_hdl hdl, const server::message_ptr& m
 
 	switch (clientMessage->event_type())
 	{
-	case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandMove:
+	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_CommandMove:
 	{
 		const auto event = clientMessage->event_as_CommandMove();
 		p->targetPosition = glm::vec2(event->target()->x(), event->target()->y());
@@ -425,13 +425,13 @@ void gameOnMessage(websocketpp::connection_hdl hdl, const server::message_ptr& m
 		p->lastAttack = std::chrono::system_clock::from_time_t(0);
 	}
 	break;
-	case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandRun:
+	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_CommandRun:
 	{
 		const auto event = clientMessage->event_as_CommandRun();
 		p->state = event->run() ? MobState::RUNNING : MobState::WALKING;
 	}
 	break;
-	case DeadFish::ClientMessageUnion::ClientMessageUnion_CommandKill:
+	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_CommandKill:
 	{
 		const auto event = clientMessage->event_as_CommandKill();
 		executeCommandKill(*p, event->mobID());
@@ -463,7 +463,7 @@ void gameThread()
 
 		// send level to clients
 		auto levelOffset = serializeLevel(builder);
-		auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_Level, levelOffset.Union());
+		auto data = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_Level, levelOffset.Union());
 		sendToAll(data);
 
 		// shuffle the players to give them random species
@@ -491,8 +491,8 @@ void gameThread()
 		{
 			// send game end message to everyone
 			builder.Clear();
-			auto ev = DeadFish::CreateSimpleServerEvent(builder, DeadFish::SimpleServerEventType_GameEnded);
-			auto data = makeServerMessage(builder, DeadFish::ServerMessageUnion_SimpleServerEvent, ev.Union());
+			auto ev = FlatBuffGenerated::CreateSimpleServerEvent(builder, FlatBuffGenerated::SimpleServerEventType_GameEnded);
+			auto data = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_SimpleServerEvent, ev.Union());
 			sendToAll(data);
 			// FIXME: Proper closing of all connections, so that this sleep is unnecessary
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -533,7 +533,7 @@ void gameThread()
 		{
 			builder.Clear();
 			auto offset = makeWorldState(*p, builder, roundTimer);
-			sendServerMessage(*p, builder, DeadFish::ServerMessageUnion_WorldState, offset);
+			sendServerMessage(*p, builder, FlatBuffGenerated::ServerMessageUnion_WorldState, offset);
 		}
 
 		// Drop the lock

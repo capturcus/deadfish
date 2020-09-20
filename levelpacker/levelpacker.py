@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import configparser, os, json, flatbuffers
-import DeadFish.Bush, DeadFish.Level, DeadFish.Stone, \
-    DeadFish.Vec2, DeadFish.NavPoint, DeadFish.PlayerWall
+import FlatBuffGenerated.Bush, FlatBuffGenerated.Level, FlatBuffGenerated.Stone, \
+    FlatBuffGenerated.Vec2, FlatBuffGenerated.NavPoint, FlatBuffGenerated.PlayerWall
 from functools import reduce
 import xml.dom.minidom as minidom
 from collections import namedtuple
@@ -34,18 +34,18 @@ def handle_objects(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Buil
         gid = int(o.getAttribute('gid'))
 
         if gid == 1:
-            DeadFish.Bush.BushStart(builder)
-            DeadFish.Bush.BushAddRadius(builder, radius * GLOBAL_SCALE)
-            pos = DeadFish.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
-            DeadFish.Bush.BushAddPos(builder, pos)
-            objs.bushes.append(DeadFish.Bush.BushEnd(builder))
+            FlatBuffGenerated.Bush.BushStart(builder)
+            FlatBuffGenerated.Bush.BushAddRadius(builder, radius * GLOBAL_SCALE)
+            pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
+            FlatBuffGenerated.Bush.BushAddPos(builder, pos)
+            objs.bushes.append(FlatBuffGenerated.Bush.BushEnd(builder))
 
         elif gid == 2:
-            DeadFish.Stone.StoneStart(builder)
-            DeadFish.Stone.StoneAddRadius(builder, radius * GLOBAL_SCALE)
-            pos = DeadFish.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
-            DeadFish.Stone.StoneAddPos(builder, pos)
-            objs.stones.append(DeadFish.Stone.StoneEnd(builder))
+            FlatBuffGenerated.Stone.StoneStart(builder)
+            FlatBuffGenerated.Stone.StoneAddRadius(builder, radius * GLOBAL_SCALE)
+            pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
+            FlatBuffGenerated.Stone.StoneAddPos(builder, pos)
+            objs.stones.append(FlatBuffGenerated.Stone.StoneEnd(builder))
 
 
 def handle_meta(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
@@ -58,12 +58,12 @@ def handle_meta(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder
             width = float(o.getAttribute('width')) / 2.0
             height = float(o.getAttribute('height')) / 2.0
 
-            DeadFish.PlayerWall.PlayerWallStart(builder)
-            pos = DeadFish.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
-            DeadFish.PlayerWall.PlayerWallAddPosition(builder, pos)
-            size = DeadFish.Vec2.CreateVec2(builder, width * GLOBAL_SCALE, height * GLOBAL_SCALE)
-            DeadFish.PlayerWall.PlayerWallAddSize(builder, size)
-            pwall = DeadFish.PlayerWall.PlayerWallEnd(builder)
+            FlatBuffGenerated.PlayerWall.PlayerWallStart(builder)
+            pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
+            FlatBuffGenerated.PlayerWall.PlayerWallAddPosition(builder, pos)
+            size = FlatBuffGenerated.Vec2.CreateVec2(builder, width * GLOBAL_SCALE, height * GLOBAL_SCALE)
+            FlatBuffGenerated.PlayerWall.PlayerWallAddSize(builder, size)
+            pwall = FlatBuffGenerated.PlayerWall.PlayerWallEnd(builder)
             objs.playerwalls.append(pwall)
 
         elif typ == 'waypoint':
@@ -94,19 +94,19 @@ def handle_meta(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder
 
             name = builder.CreateString(name)
             neighOff = [builder.CreateString(x) for x in neighbors]
-            DeadFish.NavPoint.NavPointStartNeighborsVector(builder, len(neighOff))
+            FlatBuffGenerated.NavPoint.NavPointStartNeighborsVector(builder, len(neighOff))
             for b in neighOff:
                 builder.PrependUOffsetTRelative(b)
             neighs = builder.EndVector(len(neighOff))
-            DeadFish.NavPoint.NavPointStart(builder)
-            pos = DeadFish.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
-            DeadFish.NavPoint.NavPointAddPosition(builder, pos)
-            DeadFish.NavPoint.NavPointAddRadius(builder, radius)
-            DeadFish.NavPoint.NavPointAddName(builder, name)
-            DeadFish.NavPoint.NavPointAddNeighbors(builder, neighs)
-            DeadFish.NavPoint.NavPointAddIsspawn(builder, isspawn)
-            DeadFish.NavPoint.NavPointAddIsplayerspawn(builder, isplayerspawn)
-            objs.navpoints.append(DeadFish.NavPoint.NavPointEnd(builder))
+            FlatBuffGenerated.NavPoint.NavPointStart(builder)
+            pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
+            FlatBuffGenerated.NavPoint.NavPointAddPosition(builder, pos)
+            FlatBuffGenerated.NavPoint.NavPointAddRadius(builder, radius)
+            FlatBuffGenerated.NavPoint.NavPointAddName(builder, name)
+            FlatBuffGenerated.NavPoint.NavPointAddNeighbors(builder, neighs)
+            FlatBuffGenerated.NavPoint.NavPointAddIsspawn(builder, isspawn)
+            FlatBuffGenerated.NavPoint.NavPointAddIsplayerspawn(builder, isplayerspawn)
+            objs.navpoints.append(FlatBuffGenerated.NavPoint.NavPointEnd(builder))
 
 
 def process_level(path: str):
@@ -124,36 +124,36 @@ def process_level(path: str):
         else:
             print("WARNING: Unknown group {}".format(group_name))
     
-    DeadFish.Level.LevelStartBushesVector(builder, len(objs.bushes))
+    FlatBuffGenerated.Level.LevelStartBushesVector(builder, len(objs.bushes))
     for b in objs.bushes:
         builder.PrependUOffsetTRelative(b)
     bushesOff = builder.EndVector(len(objs.bushes))
 
-    DeadFish.Level.LevelStartStonesVector(builder, len(objs.stones))
+    FlatBuffGenerated.Level.LevelStartStonesVector(builder, len(objs.stones))
     for b in objs.stones:
         builder.PrependUOffsetTRelative(b)
     stonesOff = builder.EndVector(len(objs.stones))
 
-    DeadFish.Level.LevelStartNavpointsVector(builder, len(objs.navpoints))
+    FlatBuffGenerated.Level.LevelStartNavpointsVector(builder, len(objs.navpoints))
     for b in objs.navpoints:
         builder.PrependUOffsetTRelative(b)
     navpointsOff = builder.EndVector(len(objs.navpoints))
 
-    DeadFish.Level.LevelStartPlayerwallsVector(builder, len(objs.playerwalls))
+    FlatBuffGenerated.Level.LevelStartPlayerwallsVector(builder, len(objs.playerwalls))
     for b in objs.playerwalls:
         builder.PrependUOffsetTRelative(b)
     playerwallsOff = builder.EndVector(len(objs.playerwalls))
 
-    DeadFish.Level.LevelStart(builder)
-    DeadFish.Level.LevelAddBushes(builder, bushesOff)
-    DeadFish.Level.LevelAddStones(builder, stonesOff)
-    DeadFish.Level.LevelAddNavpoints(builder, navpointsOff)
-    DeadFish.Level.LevelAddPlayerwalls(builder, playerwallsOff)
-    size = DeadFish.Vec2.CreateVec2(builder,
+    FlatBuffGenerated.Level.LevelStart(builder)
+    FlatBuffGenerated.Level.LevelAddBushes(builder, bushesOff)
+    FlatBuffGenerated.Level.LevelAddStones(builder, stonesOff)
+    FlatBuffGenerated.Level.LevelAddNavpoints(builder, navpointsOff)
+    FlatBuffGenerated.Level.LevelAddPlayerwalls(builder, playerwallsOff)
+    size = FlatBuffGenerated.Vec2.CreateVec2(builder,
         float(map_node.getAttribute("width")) * float(map_node.getAttribute("tilewidth")) * GLOBAL_SCALE,
         float(map_node.getAttribute("height")) * float(map_node.getAttribute("tileheight")) * GLOBAL_SCALE)
-    DeadFish.Level.LevelAddSize(builder, size)
-    level = DeadFish.Level.LevelEnd(builder)
+    FlatBuffGenerated.Level.LevelAddSize(builder, size)
+    level = FlatBuffGenerated.Level.LevelEnd(builder)
     builder.Finish(level)
 
     buf = builder.Output()

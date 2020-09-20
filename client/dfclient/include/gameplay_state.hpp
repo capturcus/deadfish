@@ -28,7 +28,7 @@ const int HIDING_SPOTS_LAYER = 24576;
 struct Mob {
 	std::unique_ptr<ncine::AnimatedSprite> sprite;
 	bool seen;
-	DeadFish::MobState state = DeadFish::MobState_Walk;
+	FlatBuffGenerated::MobState state = FlatBuffGenerated::MobState_Walk;
 	std::unique_ptr<ncine::Sprite> hoverMarker;
 	std::unique_ptr<ncine::Sprite> relationMarker;
 
@@ -37,7 +37,7 @@ struct Mob {
 	float prevRotation = 0.f;
 	float currRotation = 0.f;
 
-	void setupLocRot(const DeadFish::Mob& msg, bool firstUpdate);
+	void setupLocRot(const FlatBuffGenerated::Mob& msg, bool firstUpdate);
 	void updateLocRot(float subDelta);
 };
 
@@ -59,8 +59,8 @@ private:
 	void OnMessage(const std::string& data);
 
 	void LoadLevel();
-	void ProcessDeathReport(const DeadFish::DeathReport* deathReport);
-	void ProcessHighscoreUpdate(const DeadFish::HighscoreUpdate* highscoreUpdate);
+	void ProcessDeathReport(const FlatBuffGenerated::DeathReport* deathReport);
+	void ProcessHighscoreUpdate(const FlatBuffGenerated::HighscoreUpdate* highscoreUpdate);
 	void CreateHidingSpotShowingTween(ncine::DrawableNode* hspot);
 	void CreateHidingSpotHidingTween(ncine::DrawableNode* hspot);
 	std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species);

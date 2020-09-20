@@ -89,7 +89,7 @@ void GameplayState::LoadLevel() {
 
 
 // this whole thing should probably be refactored
-void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport) {
+void GameplayState::ProcessDeathReport(const FlatBuffGenerated::DeathReport* deathReport) {
 	auto& rootNode = ncine::theApplication().rootNode();
 	auto text = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic"].get());
 	const float screenWidth = ncine::theApplication().width();
@@ -132,7 +132,7 @@ void GameplayState::ProcessDeathReport(const DeadFish::DeathReport* deathReport)
 	this->nodes.push_back(std::move(text));
 }
 
-void GameplayState::ProcessHighscoreUpdate(const DeadFish::HighscoreUpdate* highscoreUpdate) {
+void GameplayState::ProcessHighscoreUpdate(const FlatBuffGenerated::HighscoreUpdate* highscoreUpdate) {
 	for (int i = 0; i < highscoreUpdate->players()->size(); i++) {
 		auto highscoreEntry = highscoreUpdate->players()->Get(i);
 		// this is ugly, i know
@@ -180,7 +180,7 @@ void GameplayState::OnMessage(const std::string& data) {
 
 	auto simpleServerEvent = FBUtilGetServerEvent(data, SimpleServerEvent);
 	if (simpleServerEvent) {
-		if (simpleServerEvent->type() == DeadFish::SimpleServerEventType_GameEnded) {
+		if (simpleServerEvent->type() == FlatBuffGenerated::SimpleServerEventType_GameEnded) {
 			gameEnded = true;
 			updateRemainingText(0);
 		}
@@ -223,12 +223,12 @@ void GameplayState::OnMessage(const std::string& data) {
 			this->mySprite = mob.sprite.get();
 		}
 
-		if (mobData->relation() == DeadFish::PlayerRelation_None) {
+		if (mobData->relation() == FlatBuffGenerated::PlayerRelation_None) {
 			mob.relationMarker.reset(nullptr);
-		} else if (mobData->relation() == DeadFish::PlayerRelation_Close) {
+		} else if (mobData->relation() == FlatBuffGenerated::PlayerRelation_Close) {
 			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), _resources.textures["bluecircle.png"].get());
 			mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
-		} else if (mobData->relation() == DeadFish::PlayerRelation_Targeted) {
+		} else if (mobData->relation() == FlatBuffGenerated::PlayerRelation_Targeted) {
 			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), _resources.textures["redcircle.png"].get());
 			mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
 		}
@@ -268,7 +268,7 @@ void GameplayState::OnMessage(const std::string& data) {
 	updateRemainingText(worldState->stepsRemaining());
 }
 
-void Mob::setupLocRot(const DeadFish::Mob& msg, bool firstUpdate) {
+void Mob::setupLocRot(const FlatBuffGenerated::Mob& msg, bool firstUpdate) {
 	prevPosition = currPosition;
 	prevRotation = currRotation;
 
@@ -425,9 +425,9 @@ void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {
 		const float serverX = (this->mySprite->position().x + (event.x - screenWidth / 2) * 1.5f) * PIXELS2METERS;
 		const float serverY = -(this->mySprite->position().y + (event.y - screenHeight / 2) * 1.5f) * PIXELS2METERS;
 		flatbuffers::FlatBufferBuilder builder;
-		auto pos = DeadFish::Vec2(serverX, serverY);
-		auto cmdMove = DeadFish::CreateCommandMove(builder, &pos);
-		auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_CommandMove, cmdMove.Union());
+		auto pos = FlatBuffGenerated::Vec2(serverX, serverY);
+		auto cmdMove = FlatBuffGenerated::CreateCommandMove(builder, &pos);
+		auto message = FlatBuffGenerated::CreateClientMessage(builder, FlatBuffGenerated::ClientMessageUnion_CommandMove, cmdMove.Union());
 		builder.Finish(message);
 		SendData(builder);
 	}
@@ -437,8 +437,8 @@ void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {
 			if (mob.second.hoverMarker.get()) {
 				// if it is hovered kill it
 				flatbuffers::FlatBufferBuilder builder;
-				auto cmdKill = DeadFish::CreateCommandKill(builder, mob.first);
-				auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_CommandKill, cmdKill.Union());
+				auto cmdKill = FlatBuffGenerated::CreateCommandKill(builder, mob.first);
+				auto message = FlatBuffGenerated::CreateClientMessage(builder, FlatBuffGenerated::ClientMessageUnion_CommandKill, cmdKill.Union());
 				builder.Finish(message);
 				SendData(builder);
 				break;
@@ -449,8 +449,8 @@ void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {
 
 void SendCommandRun(bool run) {
 	flatbuffers::FlatBufferBuilder builder;
-	auto cmdRun = DeadFish::CreateCommandRun(builder, run);
-	auto message = DeadFish::CreateClientMessage(builder, DeadFish::ClientMessageUnion_CommandRun, cmdRun.Union());
+	auto cmdRun = FlatBuffGenerated::CreateCommandRun(builder, run);
+	auto message = FlatBuffGenerated::CreateClientMessage(builder, FlatBuffGenerated::ClientMessageUnion_CommandRun, cmdRun.Union());
 	builder.Finish(message);
 	SendData(builder);
 }
