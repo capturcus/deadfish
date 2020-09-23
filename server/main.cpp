@@ -59,6 +59,11 @@ void on_message(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
 	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_JoinRequest:
 	{
 		const auto event = clientMessage->event_as_JoinRequest();
+		if (gameState.players.size() == 6) {
+			sendGameAlreadyInProgress(hdl);
+			std::cout << "player " << event->name()->c_str() << " dropped, too many players\n";
+			return;
+		}
 		std::cout << "new player " << event->name()->c_str() << "\n";
 		addNewPlayer(event->name()->c_str(), hdl);
 		std::cout << "player count " << gameState.players.size() << "\n";
