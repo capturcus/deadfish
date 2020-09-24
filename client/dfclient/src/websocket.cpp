@@ -1,5 +1,7 @@
 #include "websocket.hpp"
 
+#include <iostream>
+
 WebSocketManager webSocketManager;
 
 // Runs in game loop thread
@@ -38,7 +40,7 @@ typedef WebSocketEmscripten WebSocketType;
 
 EM_BOOL WebSocketEmscriptenOnMessage(int eventType, const EmscriptenWebSocketMessageEvent *e, void *userData) {
 	WebSocketEmscripten* socket = (WebSocketEmscripten*) userData;
-	std::lock_guard<std::mutex> guard(wspp->mq_mutex);
+	std::lock_guard<std::mutex> guard(socket->mq_mutex);
 	socket->messageQueue.push_back(std::string(e->data, e->data + e->numBytes));
 	return false;
 }
@@ -47,6 +49,11 @@ EM_BOOL WebSocketEmscriptenOnOpen(int eventType, const EmscriptenWebSocketOpenEv
 	WebSocketEmscripten* socket = (WebSocketEmscripten*) userData;
 	std::lock_guard<std::mutex> guard(socket->mq_mutex);
 	socket->toBeOpened = true;
+	return false;
+}
+
+EM_BOOL WebSocketEmscriptenOnError(int eventType, const EmscriptenWebSocketErrorEvent *websocketEvent, void *userData) {
+	std::cout << "WebSocketEmscriptenOnError\n";
 	return false;
 }
 
@@ -69,7 +76,11 @@ int WebSocketEmscripten::Connect(std::string& address) {
 	if (emscripten_websocket_set_onopen_callback(this->_socket, this, WebSocketEmscriptenOnOpen) !=
 		EMSCRIPTEN_RESULT_SUCCESS)
 		return -1;
-
+	
+	if (emscripten_websocket_set_onerror_callback(this->_socket, this, WebSocketEmscriptenOnError) !=
+		EMSCRIPTEN_RESULT_SUCCESS)
+		return -1;
+	
 	return 0;
 }
 
