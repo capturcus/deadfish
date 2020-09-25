@@ -8,3 +8,7 @@
 [submodule "tweeny"]
 	path = tweeny
 	url = https://github.com/mobius3/tweeny
+[submodule "deadfish-data"]
+    path = assets/data
+    url = https://github.com/capturcus/deadfish-data
+
