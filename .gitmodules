@@ -12,3 +12,6 @@
     path = assets/data
     url = https://github.com/capturcus/deadfish-data
 
+[submodule "data"]
+	path = data
+	url = https://github.com/capturcus/deadfish-data
