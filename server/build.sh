@@ -4,3 +4,6 @@ cd build
 cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j
 ln -s ../deadfish.ini deadfish.ini
+
+cp /usr/lib/x86_64-linux-gnu/libBox2D.so.2.3.0 .
+cp ../run_server.sh .
