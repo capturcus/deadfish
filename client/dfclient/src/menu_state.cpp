@@ -47,7 +47,6 @@ bool MenuState::TryConnect() {
 		// TODO: some ui error handling
 		return false;
 	}
-	std::cout << "socket connected\n";
 	return true;
 }
 
