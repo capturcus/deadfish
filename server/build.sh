@@ -6,4 +6,5 @@ make -j
 ln -s ../deadfish.ini deadfish.ini
 
 cp /usr/lib/x86_64-linux-gnu/libBox2D.so.2.3.0 .
+cp /usr/lib/x86_64-linux-gnu/libboost_system.so.1.65.1 .
 cp ../run_server.sh .
