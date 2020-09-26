@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import configparser, os, json, flatbuffers
-import FlatBuffGenerated.Bush, FlatBuffGenerated.Level, FlatBuffGenerated.Stone, \
+import FlatBuffGenerated.HidingSpot, FlatBuffGenerated.Level, FlatBuffGenerated.Stone, \
     FlatBuffGenerated.Vec2, FlatBuffGenerated.NavPoint, FlatBuffGenerated.PlayerWall
 from functools import reduce
 import xml.dom.minidom as minidom
@@ -15,7 +15,7 @@ config.read("levelpacker.ini")
 
 levels_dir = config['default']['levels_dir']
 
-GameObjects = namedtuple('GameObjects', ['bushes', 'stones', 'navpoints', 'playerwalls'])
+GameObjects = namedtuple('GameObjects', ['hidingspots', 'stones', 'navpoints', 'playerwalls'])
 
 
 def get_pos(o: minidom.Node, flip_y: bool = False) -> (float, float):
@@ -34,11 +34,11 @@ def handle_objects(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Buil
         gid = int(o.getAttribute('gid'))
 
         if gid == 1:
-            FlatBuffGenerated.Bush.BushStart(builder)
-            FlatBuffGenerated.Bush.BushAddRadius(builder, radius * GLOBAL_SCALE)
+            FlatBuffGenerated.HidingSpot.HidingSpotStart(builder)
+            FlatBuffGenerated.HidingSpot.HidingSpotAddRadius(builder, radius * GLOBAL_SCALE)
             pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
-            FlatBuffGenerated.Bush.BushAddPos(builder, pos)
-            objs.bushes.append(FlatBuffGenerated.Bush.BushEnd(builder))
+            FlatBuffGenerated.HidingSpot.HidingSpotAddPos(builder, pos)
+            objs.hidingspots.append(FlatBuffGenerated.HidingSpot.HidingSpotEnd(builder))
 
         elif gid == 2:
             FlatBuffGenerated.Stone.StoneStart(builder)
@@ -124,10 +124,10 @@ def process_level(path: str):
         else:
             print("WARNING: Unknown group {}".format(group_name))
     
-    FlatBuffGenerated.Level.LevelStartBushesVector(builder, len(objs.bushes))
-    for b in objs.bushes:
-        builder.PrependUOffsetTRelative(b)
-    bushesOff = builder.EndVector(len(objs.bushes))
+    FlatBuffGenerated.Level.LevelStartHidingspotsVector(builder, len(objs.hidingspots))
+    for hs in objs.hidingspots:
+        builder.PrependUOffsetTRelative(hs)
+    hspotsOff = builder.EndVector(len(objs.hidingspots))
 
     FlatBuffGenerated.Level.LevelStartStonesVector(builder, len(objs.stones))
     for b in objs.stones:
@@ -145,7 +145,7 @@ def process_level(path: str):
     playerwallsOff = builder.EndVector(len(objs.playerwalls))
 
     FlatBuffGenerated.Level.LevelStart(builder)
-    FlatBuffGenerated.Level.LevelAddBushes(builder, bushesOff)
+    FlatBuffGenerated.Level.LevelAddHidingspots(builder, hspotsOff)
     FlatBuffGenerated.Level.LevelAddStones(builder, stonesOff)
     FlatBuffGenerated.Level.LevelAddNavpoints(builder, navpointsOff)
     FlatBuffGenerated.Level.LevelAddPlayerwalls(builder, playerwallsOff)
