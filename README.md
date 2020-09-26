@@ -32,7 +32,11 @@ The build is dockerized.
      - use the `run_server.sh` script from the `deadfish/server/build` directory (not `deadfish/server`).
      - you can launch the client directly from the `deadfish/client/dfclient-native` directory
      - you can run a http server (for instance `python -m SimpleHTTPServer`) in the `deadfish/client/dfclient-wasm` directory to load and run the wasm client
- - to build things after introducing some changes run `make` inside the container in the respective directories:
+ - to build things after introducing some changes run `make` in the main deadfish directory, there are 3 targets:
+     - server
+     - client-native
+     - client-wasm
+ - you can also run `make` manually inside the container in the respective directories:
      - server: `/deadfish/server/build`
      - native client: `/deadfish/client/dfclient-native`
      - wasm client: `/deadfish/client/dfclient-wasm`

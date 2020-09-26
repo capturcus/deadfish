@@ -1,4 +1,8 @@
 #!/bin/bash
+
+docker stop deadfish-env
+docker rm deadfish-env
+
 docker run -d --name deadfish-env \
 	-v $(realpath ..):/deadfish \
 	df-dev-env
