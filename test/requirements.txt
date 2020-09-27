@@ -1,1 +1,2 @@
 PyAutoGUI==0.9.50
+pytest==6.1.0
