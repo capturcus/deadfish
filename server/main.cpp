@@ -46,6 +46,16 @@ void addNewPlayer(const std::string &name, websocketpp::connection_hdl hdl)
 	sendInitMetadata();
 }
 
+void startGame() {
+	gameState.phase = GamePhase::GAME;
+	for (auto &p : gameState.players)
+	{
+		auto con = websocket_server.get_con_from_hdl(p->conn_hdl);
+		con->set_message_handler(&gameOnMessage);
+	}
+	new std::thread(gameThread); // leak the shit out of it yooo
+}
+
 void on_message(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
 {
 	std::cout << "on_message\n";
@@ -67,6 +77,11 @@ void on_message(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
 		std::cout << "new player " << event->name()->c_str() << "\n";
 		addNewPlayer(event->name()->c_str(), hdl);
 		std::cout << "player count " << gameState.players.size() << "\n";
+		if (gameState.options.count("numplayers")) {
+			auto numplayers = gameState.options["numplayers"].as<unsigned long>();
+			if (numplayers == gameState.players.size())
+				startGame();
+		}
 	}
 	break;
 	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_PlayerReady:
@@ -78,18 +93,13 @@ void on_message(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
 		}
 		pl->ready = true;
 		sendInitMetadata();
+		if (gameState.options.count("numplayers"))
+			return; // the game will start after a number of player will join, not after all being ready
 		for (auto& p : gameState.players) {
 			if (!p->ready)
 				return;
 		}
-		// all are ready, start game
-		gameState.phase = GamePhase::GAME;
-		for (auto &p : gameState.players)
-		{
-			auto con = websocket_server.get_con_from_hdl(p->conn_hdl);
-			con->set_message_handler(&gameOnMessage);
-		}
-		new std::thread(gameThread); // leak the shit out of it yooo
+		startGame();
 	}
 	break;
 
@@ -148,8 +158,10 @@ bool handleCliOptions(int argc, const char* const argv[]) {
 	boost_po::options_description desc("Deadfish server options");
 	desc.add_options()
 		("help,h", "show help message")
+		("test,t", "enter test mode")
 		("port,p", boost_po::value<int>(), "the port on which the server will be accepting connections")
 		("level,l", boost_po::value<std::string>(), "level flatbuffer file to be loaded by the server")
+		("numplayers,n", boost_po::value<unsigned long>(), "the server will launch the game after the specified amount of players will appear in lobby, not when everybody is ready")
 	;
 
 	boost_po::store(boost_po::parse_command_line(argc, argv, desc), gameState.options);

@@ -401,7 +401,6 @@ void sendHighscores()
 
 void gameOnMessage(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
 {
-	std::cout << "gameOnMessage\n";
 	const auto payload = msg->get_payload();
 	const auto clientMessage = flatbuffers::GetRoot<FlatBuffGenerated::ClientMessage>(payload.c_str());
 	const auto guard = gameState.lock();
@@ -466,8 +465,9 @@ void gameThread()
 		auto data = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_Level, levelOffset.Union());
 		sendToAll(data);
 
-		// shuffle the players to give them random species
-		std::shuffle(gameState.players.begin(), gameState.players.end(), std::mt19937(std::random_device()()));
+		// shuffle the players to give them random species unless it's a test
+		if (gameState.options.count("test") == 0)
+			std::shuffle(gameState.players.begin(), gameState.players.end(), std::mt19937(std::random_device()()));
 
 		uint8_t lastSpecies = 0;
 		for (auto &player : gameState.players)

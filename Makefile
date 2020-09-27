@@ -17,4 +17,4 @@ runclientnative:
 	cd client/dfclient-native; ./deadfishclient
 
 test: all
-	cd test; ./connect_test.py
+	cd test; pytest
