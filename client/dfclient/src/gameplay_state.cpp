@@ -75,6 +75,7 @@ void GameplayState::LoadLevel() {
 		auto stone = level->stones()->Get(i);
 		auto stoneSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures["stone.png"].get(),
 			stone->pos()->x() * METERS2PIXELS, -stone->pos()->y() * METERS2PIXELS);
+		stoneSprite->setRotation(stone->rotation());
 		this->nodes.push_back(std::move(stoneSprite));
 	}
 
@@ -82,6 +83,7 @@ void GameplayState::LoadLevel() {
 		auto hspot = level->hidingspots()->Get(i);
 		auto hspotSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures["bush.png"].get(),
 			hspot->pos()->x() * METERS2PIXELS, -hspot->pos()->y() * METERS2PIXELS);
+			hspotSprite->setRotation(hspot->rotation());
 		hspotSprite->setLayer(HIDING_SPOTS_LAYER);
 		this->hiding_spots.push_back(std::move(hspotSprite));
 	}

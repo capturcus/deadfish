@@ -28,7 +28,7 @@ void initStone(Stone *s, const FlatBuffGenerated::Stone *dfstone)
 	b2BodyDef myBodyDef;
 	myBodyDef.type = b2_staticBody;
 	myBodyDef.position.Set(dfstone->pos()->x(), dfstone->pos()->y());
-	myBodyDef.angle = 0;
+	myBodyDef.angle = -dfstone->rotation();
 	s->body = gameState.b2world->CreateBody(&myBodyDef);
 	b2CircleShape circleShape;
 	circleShape.m_radius = dfstone->radius();
@@ -45,7 +45,7 @@ void initHidingSpot(HidingSpot *b, const FlatBuffGenerated::HidingSpot *dfhspot)
 	b2BodyDef myBodyDef;
 	myBodyDef.type = b2_staticBody;
 	myBodyDef.position.Set(dfhspot->pos()->x(), dfhspot->pos()->y());
-	myBodyDef.angle = 0;
+	myBodyDef.angle = -dfhspot->rotation();
 	b->body = gameState.b2world->CreateBody(&myBodyDef);
 	b2CircleShape circleShape;
 	circleShape.m_radius = dfhspot->radius();
@@ -67,7 +67,7 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 		FlatBuffGenerated::Vec2 pos(b->body->GetPosition().x, b->body->GetPosition().y);
 		auto f = b->body->GetFixtureList();
 		auto c = (b2CircleShape *)f->GetShape();
-		auto off = FlatBuffGenerated::CreateHidingSpot(builder, c->m_radius, &pos);
+		auto off = FlatBuffGenerated::CreateHidingSpot(builder, c->m_radius, b->body->GetAngle(), &pos);
 		hspotOffsets.push_back(off);
 	}
 	auto hidingspots = builder.CreateVector(hspotOffsets);
@@ -79,7 +79,7 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 		FlatBuffGenerated::Vec2 pos(s->body->GetPosition().x, s->body->GetPosition().y);
 		auto f = s->body->GetFixtureList();
 		auto c = (b2CircleShape *)f->GetShape();
-		auto off = FlatBuffGenerated::CreateStone(builder, c->m_radius, &pos);
+		auto off = FlatBuffGenerated::CreateStone(builder, c->m_radius, s->body->GetAngle(), &pos);
 		stoneOffsets.push_back(off);
 	}
 	auto stones = builder.CreateVector(stoneOffsets);
