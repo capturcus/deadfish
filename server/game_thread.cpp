@@ -111,7 +111,8 @@ struct FOVCallback
 	float32 ReportFixture(b2Fixture *fixture, UNUSED const b2Vec2 &point, UNUSED const b2Vec2 &normal, UNUSED float32 fraction)
 	{
 		auto data = (Collideable *)fixture->GetBody()->GetUserData();
-		if (data && data != target && !data->obstructsSight(player))
+		// on return 1.f the currently reported fixture will be ignored and the raycast will continue
+		if (data && data != target && player && !data->obstructsSight(player))
 			return 1.f;
 		if (fraction < minfraction)
 		{

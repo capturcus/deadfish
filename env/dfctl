@@ -74,6 +74,18 @@ then
     exit 0
 fi
 
+if [ "$1" == "debs" ]
+then
+    cd server/build; LD_LIBRARY_PATH=$(realpath .) gdb --args ./deadfishserver -p 63987 -l ../../levels/big.bin
+    exit 0
+fi
+
+if [ "$1" == "debc" ]
+then
+    cd client/dfclient-native; gdb ./deadfishclient
+    exit 0
+fi
+
 echo """
 This is the control script for deadfish development.
 First you have to install it: sudo ./dfctl install. This will put the script in /usr/bin
