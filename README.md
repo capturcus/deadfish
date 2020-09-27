@@ -40,6 +40,7 @@ The build is dockerized.
      - server: `/deadfish/server/build`
      - native client: `/deadfish/client/dfclient-native`
      - wasm client: `/deadfish/client/dfclient-wasm`
+ - it is recommended to install the `dfctl` control script: `cd env; sudo ./dfctl install`, after installing it run `dfctl` to see the usage
 
 ## project files description
 
