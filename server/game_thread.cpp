@@ -458,7 +458,7 @@ void gameThread()
 
 		// load level
 		gameState.level = std::make_unique<Level>();
-		auto path = gameState.config.get<std::string>("default.level");
+		auto path = gameState.options["level"].as<std::string>();
 		loadLevel(path);
 
 		// send level to clients

@@ -24,7 +24,7 @@ cmake_minimum_required(VERSION 3.0.0)
 project(deadfishserver VERSION 0.1.0)
 include_directories("/snap/flatbuffers/current/include")
 
-find_package(Boost COMPONENTS system REQUIRED)
+find_package(Boost COMPONENTS system program_options REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Box2D REQUIRED)
 
@@ -39,6 +39,7 @@ add_executable(deadfishserver
 
 target_link_libraries(deadfishserver
   ${Boost_SYSTEM_LIBRARY}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
   Threads::Threads
   ${BOX2D_LIBRARY}
 )

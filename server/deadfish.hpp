@@ -7,14 +7,13 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <glm/vec2.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
+#include <boost/program_options.hpp>
 #include "../common/deadfish_generated.h"
 #include "../common/constants.hpp"
 
-#define UNUSED __attribute__((unused)) 
+namespace boost_po = boost::program_options;
 
-const std::string INI_PATH = "./deadfish.ini";
+#define UNUSED __attribute__((unused)) 
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 
@@ -155,7 +154,7 @@ public:
 		return std::make_unique<std::lock_guard<std::mutex>>(mut);
 	}
 
-	boost::property_tree::ptree config;
+	boost_po::variables_map options;
 };
 
 extern GameState gameState;

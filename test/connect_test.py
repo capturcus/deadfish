@@ -19,6 +19,7 @@ def main():
     time.sleep(1)
     mouseY -= 100
     pyautogui.click(mouseX, mouseY)
+    time.sleep(1)
     assert(server.poll() == None)
     assert(client.poll() == None)
     print("TEST PASSED")

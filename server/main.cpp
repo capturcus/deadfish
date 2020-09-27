@@ -132,11 +132,46 @@ void on_open(websocketpp::connection_hdl hdl) {
 	}
 }
 
-int main()
-{
-	boost::property_tree::ini_parser::read_ini(INI_PATH, gameState.config);
+template<typename T>
+bool ensureMandatoryOption(const char* opt) {
+	if (gameState.options.count(opt)) {
+		std::cout << opt << " = " << gameState.options[opt].as<T>() << "\n";
+	} else {
+		std::cout << opt << " option is required to start\n";
+		return false;
+	}
+	return true;
+}
 
+// returns true if we can proceed
+bool handleCliOptions(int argc, const char* const argv[]) {
+	boost_po::options_description desc("Deadfish server options");
+	desc.add_options()
+		("help,h", "show help message")
+		("port,p", boost_po::value<int>(), "the port on which the server will be accepting connections")
+		("level,l", boost_po::value<std::string>(), "level flatbuffer file to be loaded by the server")
+	;
+
+	boost_po::store(boost_po::parse_command_line(argc, argv, desc), gameState.options);
+	boost_po::notify(gameState.options);    
+
+	if (gameState.options.count("help")) {
+		std::cout << desc << "\n";
+		return false;
+	}
+
+	if (!ensureMandatoryOption<int>("port") || !ensureMandatoryOption<std::string>("level"))
+		return false;
+
+	return true;
+}
+
+int main(int argc, const char* const argv[])
+{
 	srand(time(nullptr));
+
+	if (!handleCliOptions(argc, argv))
+		return 1;
 
 	websocket_server.get_alog().clear_channels(websocketpp::log::alevel::all);
 
@@ -146,11 +181,11 @@ int main()
 	websocket_server.set_close_handler(&on_close);
 
 	websocket_server.init_asio();
-	int port = gameState.config.get<int>("default.port");
+	int port = gameState.options["port"].as<int>();
 	websocket_server.listen(port);
 	websocket_server.start_accept();
 
-	std::cout << "server started on port " << port << "\n";
+	std::cout << "server started\n";
 
 	websocket_server.run();
 
