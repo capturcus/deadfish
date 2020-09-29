@@ -1,1 +1,1 @@
-complete -W "startct stopct ct ctroot server clientnative clientwasm test recmakeserver recmakewasm recmakenative" dfctl
+complete -W "startct stopct ct ctroot server clientnative clientwasm test recmakeserver recmakewasm recmakenative debs debc" dfctl
