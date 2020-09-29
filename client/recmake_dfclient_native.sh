@@ -9,5 +9,7 @@ cp ./nCine-external/lib/libGLEWd.so.2.2 dfclient-native/
 cp ./nCine-external/lib/libglfw.so.3 dfclient-native/
 cp ./nCine-external/lib/libpng16d.so.16 dfclient-native/
 cp ./nCine-external/lib/libwebp.so.7 dfclient-native/
+cp ./nCine-external/lib/liblua5.3.so dfclient-native/
+cp /usr/lib/x86_64-linux-gnu/libboost_system.so.1.65.1 dfclient-native/
 
 ln -s ../../data dfclient-native

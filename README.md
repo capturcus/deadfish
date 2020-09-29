@@ -13,24 +13,34 @@ Game interface:
 - creatures that you're hovering over are marked by a gray circle
 - a creature that is currently targeted by you is marked by a red circle
 
-## development environment
+## how to build the game
 
-### common requirements
+The build is dockerized. 
 
-- flatbuffers compiler: `sudo snap install flatbuffers --edge` (this will also install the needed headers for cpp)
-- generate sources: `./generate.sh`
-
-### client prerequisites
-
-- install nvm
-- `nvm install --lts`, `nvm use --lts`
-- `cd client; npm i`
-- `npm run server:dev`
-
-### server prerequisites
-
-- `sudo apt install libboost-dev libboost-system-dev libbox2d-dev libwebsocketpp-dev libglm-dev`
-- `cd server; ./build.sh`
+ - install docker on your system
+ - download the `df-dev-env` image from [Google Drive](https://drive.google.com/file/d/1hKNhHi3mjIonS6vOdkzUOU_47f9bLSNX/view?usp=sharing)
+ - load the docker image: `docker load < df-dev-env.tar.gz`
+ - clone the repository
+ - go to `deadfish/env`, run `./run-docker.sh`, this will:
+     - create a docker container to execute the rest of the steps in it
+     - download submodules
+     - build the server
+     - build the native client
+     - download and install emscripten sdk
+     - build the wasm client
+ - after the build is completed you can run the game from the host system (not inside the container):
+     - use the `run_server.sh` script from the `deadfish/server/build` directory (not `deadfish/server`).
+     - you can launch the client directly from the `deadfish/client/dfclient-native` directory
+     - you can run a http server (for instance `python -m SimpleHTTPServer`) in the `deadfish/client/dfclient-wasm` directory to load and run the wasm client
+ - to build things after introducing some changes run `make` in the main deadfish directory, there are 3 targets:
+     - server
+     - client-native
+     - client-wasm
+ - you can also run `make` manually inside the container in the respective directories:
+     - server: `/deadfish/server/build`
+     - native client: `/deadfish/client/dfclient-native`
+     - wasm client: `/deadfish/client/dfclient-wasm`
+ - it is recommended to install the `dfctl` control script: `cd env; sudo ./dfctl install`, after installing it run `dfctl` to see the usage
 
 ## project files description
 
@@ -50,11 +60,7 @@ Game interface:
 
 ### client
 
-The game can be in one of a few states. All the states are in the client/src/states directory. Boot and preloader were already in the template, they bootstrap the application (I think that preloader is when you see the black screen before the logo loads). The majority of the code is in the gameplay state.
-
-Client/src/utils/fbutil.ts is also an important file. It contains functions for creating and reading flatbuffers. There is no generated way to verify that a binary message is of a certain type, so a function is created with MakeParser for all the generated flatbuffers types that I use in the client.
-
-Client/src/utils/fbutil.ts also contains the game state as an exported variable gameData.
+to be documented in the very near future
 
 ### server
 

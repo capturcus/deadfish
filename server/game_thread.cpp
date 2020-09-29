@@ -111,7 +111,8 @@ struct FOVCallback
 	float32 ReportFixture(b2Fixture *fixture, UNUSED const b2Vec2 &point, UNUSED const b2Vec2 &normal, UNUSED float32 fraction)
 	{
 		auto data = (Collideable *)fixture->GetBody()->GetUserData();
-		if (data && data != target && !data->obstructsSight(player))
+		// on return 1.f the currently reported fixture will be ignored and the raycast will continue
+		if (data && data != target && player && !data->obstructsSight(player))
 			return 1.f;
 		if (fraction < minfraction)
 		{
@@ -401,7 +402,6 @@ void sendHighscores()
 
 void gameOnMessage(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
 {
-	std::cout << "gameOnMessage\n";
 	const auto payload = msg->get_payload();
 	const auto clientMessage = flatbuffers::GetRoot<FlatBuffGenerated::ClientMessage>(payload.c_str());
 	const auto guard = gameState.lock();
@@ -458,7 +458,7 @@ void gameThread()
 
 		// load level
 		gameState.level = std::make_unique<Level>();
-		auto path = gameState.config.get<std::string>("default.level");
+		auto path = gameState.options["level"].as<std::string>();
 		loadLevel(path);
 
 		// send level to clients
@@ -466,8 +466,9 @@ void gameThread()
 		auto data = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_Level, levelOffset.Union());
 		sendToAll(data);
 
-		// shuffle the players to give them random species
-		std::shuffle(gameState.players.begin(), gameState.players.end(), std::mt19937(std::random_device()()));
+		// shuffle the players to give them random species unless it's a test
+		if (gameState.options.count("test") == 0)
+			std::shuffle(gameState.players.begin(), gameState.players.end(), std::mt19937(std::random_device()()));
 
 		uint8_t lastSpecies = 0;
 		for (auto &player : gameState.players)

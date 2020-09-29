@@ -1,0 +1,108 @@
+#!/bin/bash
+
+if [ "$1" == "install" ]
+then
+    cp $0 /usr/bin/dfctl
+    exit 0
+fi
+
+if [ "$1" == "startct" ]
+then
+    sudo docker start deadfish-env
+    exit 0
+fi
+
+if [ "$1" == "stopct" ]
+then
+    sudo docker stop deadfish-env
+    exit 0
+fi
+
+if [ "$1" == "server" ]
+then
+    cd server/build; ./run_server.sh
+    exit 0
+fi
+
+if [ "$1" == "clientnative" ]
+then
+    cd client/dfclient-native; ./deadfishclient
+    exit 0
+fi
+
+if [ "$1" == "test" ]
+then
+    cd test; pytest
+    exit 0
+fi
+
+if [ "$1" == "clientwasm" ]
+then
+    cd client/dfclient-wasm
+    python2 -m SimpleHTTPServer &
+    firefox http://localhost:8000/deadfishclient.html
+    exit 0
+fi
+
+if [ "$1" == "ct" ]
+then
+    sudo docker exec --user ubuntu -it deadfish-env /bin/bash
+    exit 0
+fi
+
+if [ "$1" == "ctroot" ]
+then
+    sudo docker exec -it deadfish-env /bin/bash
+    exit 0
+fi
+
+if [ "$1" == "recmakeserver" ]
+then
+    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/server && ./build.sh'
+    exit 0
+fi
+
+if [ "$1" == "recmakenative" ]
+then
+    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/client && ./recmake_dfclient_native.sh'
+    exit 0
+fi
+
+if [ "$1" == "recmakewasm" ]
+then
+    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'source /emsdk/emsdk_env.sh && cd /deadfish/client && ./recmake_dfclient_wasm.sh'
+    exit 0
+fi
+
+if [ "$1" == "debs" ]
+then
+    cd server/build; LD_LIBRARY_PATH=$(realpath .) gdb --args ./deadfishserver -p 63987 -l ../../levels/big.bin
+    exit 0
+fi
+
+if [ "$1" == "debc" ]
+then
+    cd client/dfclient-native; gdb ./deadfishclient
+    exit 0
+fi
+
+echo """
+This is the control script for deadfish development.
+First you have to install it: sudo ./dfctl install. This will put the script in /usr/bin
+Then just launch it from there: dfctl <option>
+If you want to build deadfish, use the Makefile in the main directory
+If you want to create the docker container use the ./run-docker.sh script from the env directory
+The options that interact with the deadfish tree (running things + tests) should be ran from the deadfish main directory
+Available options:
+    startct - start the development container
+    stopct - stop the development container
+    ct - enter the development container
+    ctroot - enter the development container as root
+    server - run server
+    clientnative - run the native client
+    clientwasm - run the python SimpleHTTPServer with the wasm client and launch firefox into it
+    test - run tests
+    recmakeserver - remove the server directory and build it from scratch
+    recmakewasm - remove the wasm client directory and build it from scratch
+    recmakenative - remove the native client directory and build it from scratch
+"""

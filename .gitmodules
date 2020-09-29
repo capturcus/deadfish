@@ -11,7 +11,9 @@
 [submodule "deadfish-data"]
     path = assets/data
     url = https://github.com/capturcus/deadfish-data
-
 [submodule "data"]
 	path = data
 	url = https://github.com/capturcus/deadfish-data
+[submodule "client/nCine-data"]
+	path = client/nCine-data
+	url = https://github.com/nCine/nCine-data
