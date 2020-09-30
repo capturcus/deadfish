@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.1" orientation="orthogonal" renderorder="right-down" width="20" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="4" nextobjectid="39">
+<map version="1.4" tiledversion="1.4.2" orientation="orthogonal" renderorder="right-down" width="20" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="4" nextobjectid="41">
  <tileset firstgid="1" source="default_tileset.tsx"/>
  <objectgroup id="2" name="objects">
   <object id="1" gid="1" x="102.175" y="107.415" width="128" height="128" rotation="315.663"/>
@@ -40,9 +40,23 @@
   <object id="36" gid="2" x="692.959" y="620.912" width="128" height="128"/>
  </objectgroup>
  <objectgroup id="3" name="meta">
-  <object id="38" name="pspawn6" x="64.6608" y="52.8713" width="282" height="282">
+  <object id="38" name="pspawn6" type="waypoint" x="64.6608" y="52.8713" width="282" height="282">
    <properties>
     <property name="isplayerspawn" type="bool" value="true"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="39" name="cspawn" type="waypoint" x="311" y="319" width="282" height="282">
+   <properties>
+    <property name="isspawn" type="bool" value="true"/>
+    <property name="wps" value="cspawn2"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="40" name="cspawn2" type="waypoint" x="343" y="37.6667" width="282" height="282">
+   <properties>
+    <property name="isspawn" type="bool" value="true"/>
+    <property name="wps" value="cspawn"/>
    </properties>
    <ellipse/>
   </object>
