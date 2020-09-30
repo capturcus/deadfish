@@ -286,6 +286,10 @@ void spawnCivilian()
 			spawns.push_back(p.first);
 		}
 	}
+	if (spawns.size() == 0) {
+		std::cout << "could not find any civilian spawns\n";
+		exit(1);
+	}
 	auto &spawnName = spawns[random() % spawns.size()];
 	auto spawn = gameState.level->navpoints[spawnName].get();
 	auto c = std::make_unique<Civilian>();
@@ -342,6 +346,10 @@ void spawnPlayer(Player &player)
 		}
 	}
 	auto spawn = gameState.level->navpoints[maxSpawn].get();
+	if (!spawn) {
+		std::cout << "could not find any spawn points on the map\n";
+		exit(1);
+	}
 	physicsInitMob(&player, spawn->position, 0, 0.3f, 3);
 	player.targetPosition = spawn->position;
 
