@@ -41,6 +41,7 @@ The build is dockerized.
      - native client: `/deadfish/client/dfclient-native`
      - wasm client: `/deadfish/client/dfclient-wasm`
  - it is recommended to install the `dfctl` control script: `cd env; sudo ./dfctl install`, after installing it run `dfctl` to see the usage
+     - `dfctl` supports word completion, but you have to reboot bash after installation (eg. with `exec bash`)
 
 ## Project files description
 

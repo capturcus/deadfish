@@ -2,7 +2,8 @@
 
 if [ "$1" == "install" ]
 then
-    cp $0 /usr/bin/dfctl
+    sudo cp $0 /usr/bin/dfctl
+    sudo cp ./dfctl-completion.bash /etc/bash_completion.d/
     exit 0
 fi
 
@@ -105,4 +106,6 @@ Available options:
     recmakeserver - remove the server directory and build it from scratch
     recmakewasm - remove the wasm client directory and build it from scratch
     recmakenative - remove the native client directory and build it from scratch
+    debs - start server debugging
+    debc - start client debugging
 """
