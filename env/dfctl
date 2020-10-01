@@ -40,7 +40,7 @@ fi
 if [ "$1" == "clientwasm" ]
 then
     cd client/dfclient-wasm
-    python2 -m SimpleHTTPServer &
+    python3 -m http.server &
     firefox http://localhost:8000/deadfishclient.html
     exit 0
 fi
