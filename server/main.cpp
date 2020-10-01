@@ -162,6 +162,7 @@ bool handleCliOptions(int argc, const char* const argv[]) {
 		("port,p", boost_po::value<int>(), "the port on which the server will be accepting connections")
 		("level,l", boost_po::value<std::string>(), "level flatbuffer file to be loaded by the server")
 		("numplayers,n", boost_po::value<unsigned long>(), "the server will launch the game after the specified amount of players will appear in lobby, not when everybody is ready")
+		("ghosttown,g", boost_po::value<bool>()->default_value(false)->implicit_value(true), "no mobs mode" )
 	;
 
 	boost_po::store(boost_po::parse_command_line(argc, argv, desc), gameState.options);

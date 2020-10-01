@@ -521,7 +521,7 @@ void gameThread()
 			p->update();
 
 		// spawn civilians if need be
-		if (civilianTimer == 0 && gameState.civilians.size() < MAX_CIVILIANS)
+		if (!gameState.options["ghosttown"].as<bool>() && civilianTimer == 0 && gameState.civilians.size() < MAX_CIVILIANS)
 		{
 			spawnCivilian();
 			civilianTimer = CIVILIAN_TIME;
