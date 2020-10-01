@@ -463,6 +463,9 @@ void GameplayState::OnKeyPressed(const ncine::KeyboardEvent &event) {
 	
 	if (event.sym == ncine::KeySym::TAB)
 		this->showHighscores = true;
+
+	if (event.sym == ncine::KeySym::ESCAPE)
+		nc::theApplication().quit();
 }
 
 void GameplayState::OnKeyReleased(const ncine::KeyboardEvent &event) {
