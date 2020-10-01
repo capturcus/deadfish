@@ -1,5 +1,5 @@
 FROM ubuntu:18.04
-RUN apt-get update && apt-get install -y git build-essential clang libboost-dev libboost-system-dev libboost-program-options-dev libbox2d-dev libwebsocketpp-dev libglm-dev wget libz-dev libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev python3 libpulse-dev && \
+RUN apt-get update && apt-get install -y git build-essential clang libboost-dev libboost-system-dev libboost-program-options-dev libbox2d-dev libwebsocketpp-dev libglm-dev wget libz-dev libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev python3 libpulse-dev python3-pip && \
     wget https://github.com/Kitware/CMake/releases/download/v3.18.3/cmake-3.18.3-Linux-x86_64.sh && \
     chmod +x cmake-3.18.3-Linux-x86_64.sh && mkdir -p /opt/cmake && \
     ./cmake-3.18.3-Linux-x86_64.sh --skip-license --prefix=/opt/cmake && \

@@ -106,6 +106,12 @@ then
     exit 0
 fi
 
+if [ "$1" == "levelpacker" ]
+then
+    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/levelpacker && ./levelpacker.py'
+    exit 0
+fi
+
 echo """
 This is the control script for deadfish development.
 First you have to install it: sudo ./dfctl install. This will put the script in /usr/bin
@@ -127,4 +133,5 @@ Available options:
     recmakenative - remove the native client directory and build it from scratch
     debs - start server debugging
     debc - start client debugging
+    levelpacker - run the levelpacker inside the container
 """
