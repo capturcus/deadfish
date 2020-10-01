@@ -353,6 +353,37 @@ StateType GameplayState::Update(Messages m) {
 		ImGui::End();
 	}
 
+	// show quit dialog if necessary
+	if (this->showQuitDialog) {
+		ImGui::Begin("Do you really want to quit?", &this->showQuitDialog, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoCollapse);
+		ImGui::SetCursorPosX(70);
+		ImGui::SetCursorPosY(30);
+
+		ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(7.0f, 0.0f, 0.6f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(7.0f, 0.0f, 0.7f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(7.0f, 0.0f, 0.8f));
+		if(ImGui::Button("No")) {
+			this->showQuitDialog = false;
+		}
+		ImGui::PopStyleColor(3);
+
+		ImGui::SameLine();
+		ImGui::SetCursorPosX(115);
+
+		ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.6f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(7.0f, 0.7f, 0.7f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(7.0f, 0.8f, 0.8f));
+		if (ImGui::Button("Yes")) {
+			nc::theApplication().quit();
+		}
+		ImGui::PopStyleColor(3);
+
+		ImGui::SetWindowPos({screenWidth/2 - 110.f, screenHeight/2 - 30.f});
+		ImGui::SetWindowSize({220, 60.f});
+		ImGui::End();
+	}
+
 	// Update mob positions
 	for (auto& mob : this->mobs) {
 		mob.second.updateLocRot(subDelta);
@@ -463,6 +494,9 @@ void GameplayState::OnKeyPressed(const ncine::KeyboardEvent &event) {
 	
 	if (event.sym == ncine::KeySym::TAB)
 		this->showHighscores = true;
+
+	if (event.sym == ncine::KeySym::ESCAPE)
+		this->showQuitDialog = !this->showQuitDialog;
 }
 
 void GameplayState::OnKeyReleased(const ncine::KeyboardEvent &event) {

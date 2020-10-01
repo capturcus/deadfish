@@ -1,5 +1,8 @@
-rm -rf build
-mkdir build
+if [ "$1" != "--keep" ]
+then
+    rm -rf build
+    mkdir build
+fi
 cd build
 cmake -DCMAKE_BUILD_TYPE=Debug ..
 make -j

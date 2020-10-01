@@ -40,7 +40,7 @@ fi
 if [ "$1" == "clientwasm" ]
 then
     cd client/dfclient-wasm
-    python2 -m SimpleHTTPServer &
+    python3 -m http.server &
     firefox http://localhost:8000/deadfishclient.html
     exit 0
 fi
@@ -56,6 +56,25 @@ then
     sudo docker exec -it deadfish-env /bin/bash
     exit 0
 fi
+
+if [ "$1" == "makeserver" ]
+then
+    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/server && ./build.sh --keep'
+    exit 0
+fi
+
+if [ "$1" == "makenative" ]
+then
+    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/client && ./recmake_dfclient_native.sh --keep'
+    exit 0
+fi
+
+if [ "$1" == "makewasm" ]
+then
+    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'source /emsdk/emsdk_env.sh && cd /deadfish/client && ./recmake_dfclient_wasm.sh --keep'
+    exit 0
+fi
+
 
 if [ "$1" == "recmakeserver" ]
 then

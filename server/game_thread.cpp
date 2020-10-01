@@ -482,6 +482,7 @@ void gameThread()
 	int civilianTimer = 0;
 	uint64_t roundTimer = ROUND_LENGTH;
 
+	// game loop
 	while (true)
 	{
 		auto maybe_guard = gameState.lock();
@@ -503,7 +504,7 @@ void gameThread()
 		// update physics
 		gameState.b2world->Step(1 / 20.0, 8, 3);
 
-		// update everyone
+		// update civilians
 		std::vector<int> despawns;
 		for (size_t i = 0; i < gameState.civilians.size(); i++)
 		{
@@ -513,15 +514,15 @@ void gameThread()
 		}
 		for (int i = despawns.size() - 1; i >= 0; i--)
 		{
-			// std::cout << "despawning civilian\n";
 			gameState.civilians.erase(gameState.civilians.begin() + despawns[i]);
 		}
 
+		// update players
 		for (auto &p : gameState.players)
 			p->update();
 
 		// spawn civilians if need be
-		if (civilianTimer == 0 && gameState.civilians.size() < MAX_CIVILIANS)
+		if (!gameState.options["ghosttown"].as<bool>() && civilianTimer == 0 && gameState.civilians.size() < MAX_CIVILIANS)
 		{
 			spawnCivilian();
 			civilianTimer = CIVILIAN_TIME;
