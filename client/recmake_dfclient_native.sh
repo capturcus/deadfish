@@ -1,5 +1,8 @@
 #!/bin/bash
-rm -rf dfclient-native
+if [ "$1" != "--keep" ]
+then
+    rm -rf dfclient-native
+fi
 
 cmake -DCMAKE_BUILD_TYPE=Debug -S dfclient -B dfclient-native
 cmake --build dfclient-native
@@ -12,4 +15,7 @@ cp ./nCine-external/lib/libwebp.so.7 dfclient-native/
 cp ./nCine-external/lib/liblua5.3.so dfclient-native/
 cp /usr/lib/x86_64-linux-gnu/libboost_system.so.1.65.1 dfclient-native/
 
-ln -s ../../data dfclient-native
+if [ "$1" != "--keep" ]
+then
+    ln -s ../../data dfclient-native
+fi
