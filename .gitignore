@@ -5,3 +5,4 @@ assets/
 client/data
 client/imgui.ini
 levelpacker/FlatBuffGenerated/
+levels/*.bin
