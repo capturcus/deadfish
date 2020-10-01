@@ -9,11 +9,13 @@ struct Vec2 {
 
 table Stone {
     radius: float;
+    rotation: float;
     pos: Vec2;
 }
 
 table HidingSpot {
     radius: float;
+    rotation: float;
     pos: Vec2;
 }
 

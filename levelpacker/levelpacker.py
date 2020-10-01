@@ -37,14 +37,22 @@ def handle_objects(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Buil
             FlatBuffGenerated.HidingSpot.HidingSpotStart(builder)
             FlatBuffGenerated.HidingSpot.HidingSpotAddRadius(builder, radius * GLOBAL_SCALE)
             pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
+            rot = 0
+            if o.getAttribute('rotation'):
+                rot = float(o.getAttribute('rotation'))
             FlatBuffGenerated.HidingSpot.HidingSpotAddPos(builder, pos)
+            FlatBuffGenerated.HidingSpot.HidingSpotAddRotation(builder, rot)
             objs.hidingspots.append(FlatBuffGenerated.HidingSpot.HidingSpotEnd(builder))
 
         elif gid == 2:
             FlatBuffGenerated.Stone.StoneStart(builder)
             FlatBuffGenerated.Stone.StoneAddRadius(builder, radius * GLOBAL_SCALE)
             pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
+            rot = 0
+            if o.getAttribute('rotation'):
+                rot = float(o.getAttribute('rotation'))
             FlatBuffGenerated.Stone.StoneAddPos(builder, pos)
+            FlatBuffGenerated.Stone.StoneAddRotation(builder, rot)
             objs.stones.append(FlatBuffGenerated.Stone.StoneEnd(builder))
 
 

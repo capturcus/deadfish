@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.4" tiledversion="1.4.2" orientation="orthogonal" renderorder="right-down" width="20" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="4" nextobjectid="41">
+ <tileset firstgid="1" source="default_tileset.tsx"/>
+ <objectgroup id="2" name="objects">
+  <object id="1" gid="1" x="102.175" y="107.415" width="128" height="128" rotation="315.663"/>
+  <object id="2" gid="1" x="319.626" y="104.795" width="128" height="128"/>
+  <object id="3" gid="1" x="535.766" y="95.6257" width="128" height="128" rotation="37.1018"/>
+  <object id="4" gid="1" x="547.556" y="314.386" width="128" height="128" rotation="92.13"/>
+  <object id="5" gid="1" x="313.076" y="328.795" width="128" height="128" rotation="14.8925"/>
+  <object id="6" gid="1" x="100.865" y="328.795" width="128" height="128" rotation="270.649"/>
+  <object id="7" gid="1" x="99.5556" y="589.474" width="128" height="128" rotation="211.007"/>
+  <object id="8" gid="1" x="314.386" y="565.895" width="128" height="128" rotation="183.083"/>
+  <object id="9" gid="1" x="547.556" y="563.275" width="128" height="128" rotation="122.498"/>
+  <object id="10" gid="2" x="-3.92982" y="-44.538" width="128" height="128"/>
+  <object id="11" gid="2" x="111.345" y="-61.5673" width="128" height="128"/>
+  <object id="12" gid="2" x="224" y="-61.5673" width="128" height="128"/>
+  <object id="13" gid="2" x="353.684" y="-58.9474" width="128" height="128"/>
+  <object id="14" gid="2" x="479.439" y="-43.2281" width="128" height="128"/>
+  <object id="15" gid="2" x="558.035" y="-36.6784" width="128" height="128"/>
+  <object id="16" gid="2" x="677.24" y="0" width="128" height="128"/>
+  <object id="17" gid="2" x="675.93" y="72.0468" width="128" height="128"/>
+  <object id="18" gid="2" x="687.719" y="183.392" width="128" height="128"/>
+  <object id="19" gid="2" x="686.409" y="299.977" width="128" height="128"/>
+  <object id="20" gid="2" x="683.789" y="413.942" width="128" height="128"/>
+  <object id="21" gid="2" x="690.339" y="535.766" width="128" height="128"/>
+  <object id="22" gid="2" x="665.45" y="668.07" width="128" height="128"/>
+  <object id="23" gid="2" x="539.696" y="698.199" width="128" height="128"/>
+  <object id="24" gid="2" x="417.871" y="690.339" width="128" height="128"/>
+  <object id="25" gid="2" x="307.836" y="702.129" width="128" height="128"/>
+  <object id="26" gid="2" x="197.801" y="699.509" width="128" height="128"/>
+  <object id="27" gid="2" x="58.9474" y="706.058" width="128" height="128"/>
+  <object id="28" gid="2" x="-32.7485" y="652.351" width="128" height="128"/>
+  <object id="29" gid="2" x="-74.6667" y="510.877" width="128" height="128"/>
+  <object id="30" gid="2" x="-61.5673" y="386.433" width="128" height="128"/>
+  <object id="31" gid="2" x="-61.5673" y="318.316" width="128" height="128"/>
+  <object id="32" gid="2" x="-51.0877" y="226.62" width="128" height="128"/>
+  <object id="33" gid="2" x="-51.0877" y="120.515" width="128" height="128"/>
+  <object id="34" gid="2" x="-51.0877" y="39.2982" width="128" height="128"/>
+  <object id="35" gid="2" x="-82.5263" y="594.713" width="128" height="128"/>
+  <object id="36" gid="2" x="692.959" y="620.912" width="128" height="128"/>
+ </objectgroup>
+ <objectgroup id="3" name="meta">
+  <object id="38" name="pspawn6" type="waypoint" x="64.6608" y="52.8713" width="282" height="282">
+   <properties>
+    <property name="isplayerspawn" type="bool" value="true"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="39" name="cspawn" type="waypoint" x="311" y="319" width="282" height="282">
+   <properties>
+    <property name="isspawn" type="bool" value="true"/>
+    <property name="wps" value="cspawn2"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="40" name="cspawn2" type="waypoint" x="343" y="37.6667" width="282" height="282">
+   <properties>
+    <property name="isspawn" type="bool" value="true"/>
+    <property name="wps" value="cspawn"/>
+   </properties>
+   <ellipse/>
+  </object>
+ </objectgroup>
+</map>
