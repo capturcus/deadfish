@@ -71,17 +71,16 @@ When the state of the game is changed from LOBBY to GAME, the websocket handler 
 The entry point is gameThread, and that's where the game loop is. The box2d world is updated, then objects are updated, then objects that marked for deletion are deleted. A mutex must be used because websocket callback (gameOnMessage) will be called on a different thread than the game loop.
 
 ## Level creation
-_(as of 29.09.2020)_
 
 ### Overview
 
-Levels are created in [Tiled](https://www.mapeditor.org/). However, contrary to the editor name, the maps are not tile based and all interactive objects are placed freely (as of now, at least). The maps contain visible objects: _obstacles_ (stones) and _hiding spots_ (bushes), as well as invisible, related to the game mechanics: _playerwalls_ and _waypoints_.
+Levels are created in [Tiled](https://www.mapeditor.org/). However, contrary to the editor name, the maps are not tile based and all interactive objects are placed freely. The maps contain visible objects: _obstacles_ (stones) and _hiding spots_ (bushes), as well as invisible, related to the game mechanics: _playerwalls_ and _waypoints_.
 
-It is __very__ important to use Tiled __version 1.4.0 or higher__. (Otherwise there will be positioning problems with every rotated object.)
+It is __very__ important to use Tiled __version 1.4.0 or higher__ (otherwise there will be positioning problems with every rotated object.) The newest versions are available on `snap` or on Tiled [website](https://www.mapeditor.org/) (the newest version available via `apt` is below 1.4.0).
 
 ### Pipeline
 
-The levels are created in Tiled and saved in the __.tlx__ format (Tiled XML). This is then parsed by [`levelpacker.py`](./levelpacker/levelpacker.py) and packed neatly into a flatbuffer, defined in [`deadfish.fbs`](./deadfish.fbs), producing a __.bin__ file. The flatbuffer bin is then imported and parsed by server upon launch. When clients connect, server packs and sends a simplified version for them, cutting out all server-side information.
+The levels are created in Tiled and saved in the __.tlx__ format (Tiled XML). This is then parsed by [`levelpacker.py`](./levelpacker/levelpacker.py) and packed neatly into a flatbuffer, defined in [`deadfish.fbs`](./deadfish.fbs), producing a __.bin__ file. The flatbuffer bin is then imported and parsed by server upon launch. When clients connect, server packs and sends a simplified version for them, cutting out all potentially sensitive server-side information.
 
 ### Structure
 
@@ -98,10 +97,10 @@ There should be two layers:
 
 The objects here are recognized by their `gid`, which is the ID of their "class" from the tileset. Due to this, using the [`default_tileset.tsx`](./levels/default_tileset.tsx) is strongly recommended. It can be imported to Tiled through "Map->Add External Tileset..." menu option.
 
-Currently only position and rotation are supported, scaled objects' behaviour is... weird and coincidental.
+Only position and rotation are supported, scaled objects' behaviour is... weird and coincidental. All objects should be left at their original size and dimensions.
 
 Obstacles (stones) are pretty self explanatory. They block way _and obstruct sight_.
-Hiding spots (bushes) function similarly to bushes from games like League of Legends. They don't block movement, but block sight unless you are inside them. Currently every single bush functions on its own.
+Hiding spots (bushes) function similarly to bushes from games like League of Legends. They don't block movement, but block sight unless you are inside them. However, unlike League of Legends, they are not grouped together - every single bush functions on its own.
 
 #### "Meta" layer 
 
