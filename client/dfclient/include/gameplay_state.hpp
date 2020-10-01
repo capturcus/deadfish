@@ -76,6 +76,7 @@ private:
 	ncine::Sprite* mySprite = nullptr;
 	uint32_t lastNodeID = 0;
 	bool showHighscores = false;
+	bool showQuitDialog = false;
 	bool gameEnded = false;
 	std::vector<nc::DrawableNode*> indicators;
 	ncine::TextNode* timeLeftNode = nullptr;
