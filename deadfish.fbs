@@ -7,16 +7,35 @@ struct Vec2 {
   y:float;
 }
 
-table Stone {
-    radius: float;
-    rotation: float;
+table Tile {
+  path: string;
+  size: Vec2;
+  id: uint16;
+}
+
+table Tileset {
+  path: string;
+  firstgid: uint16;
+}
+
+table Visible {
     pos: Vec2;
+    rotation: float;
+    gid: uint16;
+}
+
+table Collision {
+    pos: Vec2;
+    ellipse: bool;
+    radius: float;
+    polyverts: [Vec2];
 }
 
 table HidingSpot {
-    radius: float;
-    rotation: float;
     pos: Vec2;
+    ellipse: bool;
+    radius: float;
+    polyverts: [Vec2];
 }
 
 table NavPoint {
@@ -34,11 +53,13 @@ table PlayerWall {
 }
 
 table Level {
-    hidingspots:[HidingSpot];
-    stones:[Stone];
-    navpoints:[NavPoint];
-    playerwalls:[PlayerWall];
-    size:Vec2;
+  visible: [Visible];
+  hidingspots:[HidingSpot];
+  collision:[Collision];
+  navpoints:[NavPoint];
+  playerwalls:[PlayerWall];
+  tilesets:[Tileset];
+  size:Vec2;
 }
 
 // client

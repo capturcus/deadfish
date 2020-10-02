@@ -23,7 +23,7 @@ void initPlayerwall(const FlatBuffGenerated::PlayerWall *pw)
 	gameState.level->playerwalls.back()->body = staticBody;
 }
 
-void initStone(Stone *s, const FlatBuffGenerated::Stone *dfstone)
+void initStone(Collision *s, const FlatBuffGenerated::Collision *dfstone)
 {
 	b2BodyDef myBodyDef;
 	myBodyDef.type = b2_staticBody;
@@ -72,9 +72,9 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 	}
 	auto hidingspots = builder.CreateVector(hspotOffsets);
 
-	// stones
-	std::vector<flatbuffers::Offset<FlatBuffGenerated::Stone>> stoneOffsets;
-	for (auto &s : gameState.level->stones)
+	// collisions
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::Collision>> stoneOffsets;
+	for (auto &s : gameState.level->collisions)
 	{
 		FlatBuffGenerated::Vec2 pos(s->body->GetPosition().x, s->body->GetPosition().y);
 		auto f = s->body->GetFixtureList();
@@ -82,10 +82,10 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 		auto off = FlatBuffGenerated::CreateStone(builder, c->m_radius, s->body->GetAngle(), &pos);
 		stoneOffsets.push_back(off);
 	}
-	auto stones = builder.CreateVector(stoneOffsets);
+	auto collisions = builder.CreateVector(stoneOffsets);
 
 	FlatBuffGenerated::Vec2 size(gameState.level->size.x, gameState.level->size.y);
-	auto level = FlatBuffGenerated::CreateLevel(builder, hidingspots, stones, 0, 0, &size);
+	auto level = FlatBuffGenerated::CreateLevel(builder, hidingspots, collisions, 0, 0, &size);
 	return level;
 }
 
@@ -130,13 +130,13 @@ void loadLevel(std::string &path)
 		gameState.level->hidingspots.push_back(std::move(hs));
 	}
 
-	// stones
-	for (size_t i = 0; i < level->stones()->size(); i++)
+	// collisions
+	for (size_t i = 0; i < level->collisions()->size(); i++)
 	{
-		auto stone = level->stones()->Get(i);
-		auto s = std::make_unique<Stone>();
+		auto stone = level->collisions()->Get(i);
+		auto s = std::make_unique<Collision>();
 		initStone(s.get(), stone);
-		gameState.level->stones.push_back(std::move(s));
+		gameState.level->collisions.push_back(std::move(s));
 	}
 
 	// playerwalls

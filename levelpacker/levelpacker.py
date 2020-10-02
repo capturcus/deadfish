@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import configparser, os, json, flatbuffers
-import FlatBuffGenerated.HidingSpot, FlatBuffGenerated.Level, FlatBuffGenerated.Stone, \
-    FlatBuffGenerated.Vec2, FlatBuffGenerated.NavPoint, FlatBuffGenerated.PlayerWall
+import FlatBuffGenerated.Level, FlatBuffGenerated.Visible, FlatBuffGenerated.HidingSpot, \
+    FlatBuffGenerated.Collision, FlatBuffGenerated.Vec2, \
+    FlatBuffGenerated.Tile, FlatBuffGenerated.Tileset, \
+    FlatBuffGenerated.NavPoint, FlatBuffGenerated.PlayerWall
 from functools import reduce
 import xml.dom.minidom as minidom
 from collections import namedtuple
@@ -15,7 +17,7 @@ config.read("levelpacker.ini")
 
 levels_dir = config['default']['levels_dir']
 
-GameObjects = namedtuple('GameObjects', ['hidingspots', 'stones', 'navpoints', 'playerwalls'])
+GameObjects = namedtuple('GameObjects', ['visible', 'collision', 'hidingspots', 'navpoints', 'playerwalls', 'tilesets'])
 
 
 def get_pos(o: minidom.Node, flip_y: bool = False) -> (float, float):
@@ -26,37 +28,91 @@ def get_pos(o: minidom.Node, flip_y: bool = False) -> (float, float):
     return x, y
 
 
-def handle_objects(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
+def handle_visible_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
         x, y = get_pos(o, flip_y=True)
-        radius = float(o.getAttribute('width')) / 2.0
-
+        # radius = float(o.getAttribute('width')) / 2.0
+        rot = float(o.getAttribute('rotation') or 0)
         gid = int(o.getAttribute('gid'))
 
-        if gid == 1:
-            FlatBuffGenerated.HidingSpot.HidingSpotStart(builder)
-            FlatBuffGenerated.HidingSpot.HidingSpotAddRadius(builder, radius * GLOBAL_SCALE)
-            pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
-            rot = 0
-            if o.getAttribute('rotation'):
-                rot = float(o.getAttribute('rotation'))
-            FlatBuffGenerated.HidingSpot.HidingSpotAddPos(builder, pos)
-            FlatBuffGenerated.HidingSpot.HidingSpotAddRotation(builder, rot)
-            objs.hidingspots.append(FlatBuffGenerated.HidingSpot.HidingSpotEnd(builder))
+        FlatBuffGenerated.Visible.VisibleStart(builder)
+        pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
+        FlatBuffGenerated.Visible.VisibleAddPos(builder, pos)
+        FlatBuffGenerated.Visible.VisibleAddRotation(builder, rot)
+        FlatBuffGenerated.Visible.VisibleAddGid(builder, gid)
+        objs.visible.append(FlatBuffGenerated.Visible.VisibleEnd(builder))
 
-        elif gid == 2:
-            FlatBuffGenerated.Stone.StoneStart(builder)
-            FlatBuffGenerated.Stone.StoneAddRadius(builder, radius * GLOBAL_SCALE)
-            pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
-            rot = 0
-            if o.getAttribute('rotation'):
-                rot = float(o.getAttribute('rotation'))
-            FlatBuffGenerated.Stone.StoneAddPos(builder, pos)
-            FlatBuffGenerated.Stone.StoneAddRotation(builder, rot)
-            objs.stones.append(FlatBuffGenerated.Stone.StoneEnd(builder))
+def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
+    for o in g.getElementsByTagName('object'):
+        x, y = get_pos(o)
+        ellipse = False
+        radius = 0
+        polyverts = ""
+        polyvertsOffset = []
+
+        if o.getElementsByTagName('ellipse'):
+            ellipse = True
+            radius = float(o.getAttribute('width')) / 2.0
+        else:
+            polyverts = o.getElementsByTagName('polygon')[0].getAttribute('points')
+            polyverts = polyverts.split(' ')
+            for v in polyverts:
+                vert_x, vert_y = v.split(",")
+                vert_x_f = float(vert_x)
+                vert_y_f = float(vert_y)
+                vec = FlatBuffGenerated.Vec2.CreateVec2(builder, vert_x_f, vert_y_f)
+                polyvertsOffset.append(vec)
+        
+        FlatBuffGenerated.Collision.CollisionStartPolyvertsVector(builder, len(polyvertsOffset))
+        for v in polyvertsOffset:
+            builder.PrependUOffsetTRelative(v)
+        poly = builder.EndVector(len(polyvertsOffset))
+
+        FlatBuffGenerated.Collision.CollisionStart(builder)
+        pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
+        FlatBuffGenerated.Collision.CollisionAddPos(builder, pos)
+        FlatBuffGenerated.Collision.CollisionAddEllipse(builder, ellipse)
+        FlatBuffGenerated.Collision.CollisionAddRadius(builder, radius)
+        FlatBuffGenerated.Collision.CollisionAddPolyverts(builder, poly)
+        objs.hidingspots.append(FlatBuffGenerated.Collision.CollisionEnd(builder))
 
 
-def handle_meta(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
+def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
+    for o in g.getElementsByTagName('object'):
+        x, y = get_pos(o)
+        ellipse = False
+        radius = 0
+        polyverts = ""
+        polyvertsOffset = []
+
+        if o.getElementsByTagName('ellipse'):
+            ellipse = True
+            radius = float(o.getAttribute('width')) / 2.0
+        else:
+            polyverts = o.getElementsByTagName('polygon')[0].getAttribute('points')
+            polyverts = polyverts.split(' ')
+            for v in polyverts:
+                vert_x, vert_y = v.split(",")
+                vert_x_f = float(vert_x)
+                vert_y_f = float(vert_y)
+                vec = FlatBuffGenerated.Vec2.CreateVec2(builder, vert_x_f, vert_y_f)
+                polyvertsOffset.append(vec)
+        
+        FlatBuffGenerated.HidingSpot.HidingSpotStartPolyvertsVector(builder, len(polyvertsOffset))
+        for v in polyvertsOffset:
+            builder.PrependUOffsetTRelative(v)
+        poly = builder.EndVector(len(polyvertsOffset))
+
+        FlatBuffGenerated.HidingSpot.HidingSpotStart(builder)
+        pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
+        FlatBuffGenerated.HidingSpot.HidingSpotAddPos(builder, pos)
+        FlatBuffGenerated.HidingSpot.HidingSpotAddEllipse(builder, ellipse)
+        FlatBuffGenerated.HidingSpot.HidingSpotAddRadius(builder, radius)
+        FlatBuffGenerated.HidingSpot.HidingSpotAddPolyverts(builder, poly)
+        objs.hidingspots.append(FlatBuffGenerated.HidingSpot.HidingSpotEnd(builder))
+
+
+def handle_meta_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
         x, y = get_pos(o)
 
@@ -117,30 +173,51 @@ def handle_meta(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder
             objs.navpoints.append(FlatBuffGenerated.NavPoint.NavPointEnd(builder))
 
 
+def handle_tileset(ts: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
+    path = builder.CreateString(ts.getAttribute('source'))
+    firstgid = int(ts.getAttribute('firstgid'))
+    FlatBuffGenerated.Tileset.TilesetStart(builder)
+    FlatBuffGenerated.Tileset.TilesetAddPath(builder, path)
+    FlatBuffGenerated.Tileset.TilesetAddFirstgid(builder, firstgid)
+    objs.tilesets.append(FlatBuffGenerated.Tileset.TilesetEnd(builder))
+
+
 def process_level(path: str):
     dom = minidom.parse(path)
     map_node = dom.firstChild
-    objs = GameObjects([], [], [], [])
+    objs = GameObjects([], [], [], [], [], [])
     builder = flatbuffers.Builder(1)
+
+    for ts in map_node.getElementsByTagName('tileset'):
+        handle_tileset(ts, objs, builder)
 
     for g in map_node.getElementsByTagName('objectgroup'):
         group_name = g.getAttribute('name')
-        if group_name == 'objects':
-            handle_objects(g, objs, builder)
+        if group_name == 'visible':
+            handle_visible_layer(g, objs, builder)
+        elif group_name == 'collision':
+            handle_collision_layer(g, objs, builder)
+        elif group_name == 'hidingspots':
+            handle_hidingspots_layer(g, objs, builder)
         elif group_name == 'meta':
-            handle_meta(g, objs, builder)
+            handle_meta_layer(g, objs, builder)
         else:
             print("WARNING: Unknown group {}".format(group_name))
     
+    FlatBuffGenerated.Level.LevelStartVisibleVector(builder, len(objs.visible))
+    for v in objs.visible:
+        builder.PrependUOffsetTRelative(v)
+    visibleOff = builder.EndVector(len(objs.visible))
+
+    FlatBuffGenerated.Level.LevelStartCollisionVector(builder, len(objs.collision))
+    for c in objs.collision:
+        builder.PrependUOffsetTRelative(c)
+    collisionOff = builder.EndVector(len(objs.collision))
+
     FlatBuffGenerated.Level.LevelStartHidingspotsVector(builder, len(objs.hidingspots))
     for hs in objs.hidingspots:
         builder.PrependUOffsetTRelative(hs)
     hspotsOff = builder.EndVector(len(objs.hidingspots))
-
-    FlatBuffGenerated.Level.LevelStartStonesVector(builder, len(objs.stones))
-    for b in objs.stones:
-        builder.PrependUOffsetTRelative(b)
-    stonesOff = builder.EndVector(len(objs.stones))
 
     FlatBuffGenerated.Level.LevelStartNavpointsVector(builder, len(objs.navpoints))
     for b in objs.navpoints:
@@ -152,15 +229,22 @@ def process_level(path: str):
         builder.PrependUOffsetTRelative(b)
     playerwallsOff = builder.EndVector(len(objs.playerwalls))
 
+    FlatBuffGenerated.Level.LevelStartTilesetsVector(builder, len(objs.tilesets))
+    for t in objs.tilesets:
+        builder.PrependUOffsetTRelative(t)
+    tilesetsOff = builder.EndVector(len(objs.tilesets))
+
     FlatBuffGenerated.Level.LevelStart(builder)
+    FlatBuffGenerated.Level.LevelAddVisible(builder, visibleOff)
+    FlatBuffGenerated.Level.LevelAddCollision(builder, collisionOff)
     FlatBuffGenerated.Level.LevelAddHidingspots(builder, hspotsOff)
-    FlatBuffGenerated.Level.LevelAddStones(builder, stonesOff)
     FlatBuffGenerated.Level.LevelAddNavpoints(builder, navpointsOff)
     FlatBuffGenerated.Level.LevelAddPlayerwalls(builder, playerwallsOff)
     size = FlatBuffGenerated.Vec2.CreateVec2(builder,
         float(map_node.getAttribute("width")) * float(map_node.getAttribute("tilewidth")) * GLOBAL_SCALE,
         float(map_node.getAttribute("height")) * float(map_node.getAttribute("tileheight")) * GLOBAL_SCALE)
     FlatBuffGenerated.Level.LevelAddSize(builder, size)
+    FlatBuffGenerated.Level.LevelAddTilesets(builder, tilesetsOff)
     level = FlatBuffGenerated.Level.LevelEnd(builder)
     builder.Finish(level)
 
@@ -170,7 +254,16 @@ def process_level(path: str):
         f.write(buf)
 
 
+def process_tileset(path: str):
+    print("processing placeholder for tileset: "+path)
+
+
+# the actual script beginning
 for i in os.listdir(levels_dir):
     if i.endswith(".tmx"):
         # level file
         process_level(levels_dir+i)
+for ts in os.listdir(levels_dir+"tilesets"):
+    if ts.endswith(".tsx"):
+        # tileset file
+        process_tileset(levels_dir+"tilesets/"+ts)

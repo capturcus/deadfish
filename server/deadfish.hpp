@@ -100,6 +100,19 @@ struct Civilian : public Mob {
 	void collisionResolution();
 };
 
+// just a data container to be able to send it later to clients
+struct Tileset {
+	std::string path;
+	u_int16_t firstgid;
+};
+
+// same as above
+struct Visible {
+	glm::vec2 pos;
+	float rotation;
+	u_int16_t gid;
+};
+
 struct HidingSpot : public Collideable {
 	b2Body* body = nullptr;
 	float radius = 0;
@@ -112,7 +125,7 @@ struct HidingSpot : public Collideable {
 	}
 };
 
-struct Stone : public Collideable {
+struct Collision : public Collideable {
 	b2Body* body = nullptr;
 	virtual bool obstructsSight(Player*) override { return true; }
 };
@@ -131,8 +144,9 @@ struct NavPoint {
 };
 
 struct Level {
+	std::vector<std::unique_ptr<Visible>> visible;
+	std::vector<std::unique_ptr<Collision>> collisions;
 	std::vector<std::unique_ptr<HidingSpot>> hidingspots;
-	std::vector<std::unique_ptr<Stone>> stones;
 	std::vector<std::unique_ptr<PlayerWall>> playerwalls;
 	std::unordered_map<std::string, std::unique_ptr<NavPoint>> navpoints;
 	glm::vec2 size;
