@@ -1,7 +1,9 @@
 #include <complex>
 #include <functional>
 #include <iostream>
+#include <fstream>
 
+#include <ncine/FileSystem.h>
 #include <ncine/AnimatedSprite.h>
 #include <ncine/Application.h>
 #include <ncine/Colorf.h>
@@ -71,21 +73,49 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine:
 void GameplayState::LoadLevel() {
 	auto level = FBUtilGetServerEvent(gameData.levelData, Level);
 
-	for (int i = 0; i < level->collisions()->size(); i++) {
-		auto stone = level->collisions()->Get(i);
-		auto stoneSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures["stone.png"].get(),
-			stone->pos()->x() * METERS2PIXELS, -stone->pos()->y() * METERS2PIXELS);
-		stoneSprite->setRotation(stone->rotation());
-		this->nodes.push_back(std::move(stoneSprite));
+	// build (guid->sprite) map
+	struct Spriteinfo {
+		Spriteinfo() {}
+		Spriteinfo(std::string aName, float x, float y) : name(aName), size(x, y) {}
+		std::string name;
+		ncine::Vector2f size;
+	};
+
+	std::map<u_int16_t, Spriteinfo> sprites;
+
+	auto rootPath = ncine::theApplication().appConfiguration().dataPath();
+	auto folderPath = std::string((rootPath + LEVELS_PATH).data());
+	std::ifstream in;
+	for (auto fb_Ts : *level->tilesets()) {
+		std::string path = folderPath + fb_Ts->path()->c_str();
+		in.open(path, std::ios::in | std::ios::binary | std::ios::ate);
+		if (!in.is_open())
+		{
+			std::cout << "failed to open tileset file " << path << "\n";
+			exit(1);
+		}
+		auto size = in.tellg();
+		std::vector<char> memblock(size);
+		in.seekg(0, std::ios::beg);
+		in.read(memblock.data(), memblock.size());
+		in.close();
+
+		auto tileset = flatbuffers::GetRoot<FlatBuffGenerated::TileArray>(memblock.data());
+		for (auto tile : *tileset->tiles()) {
+			std::string name = tile->path()->str();
+			name = name.substr(name.find_last_of('/')+1);
+			Spriteinfo sinfo(name, tile->size()->x(), tile->size()->y());
+			std::pair<u_int16_t, Spriteinfo> pair(fb_Ts->firstgid()+tile->id(), std::move(sinfo));
+			sprites.insert(std::move(pair));
+		}
 	}
 
-	for (int i = 0; i < level->hidingspots()->size(); i++) {
-		auto hspot = level->hidingspots()->Get(i);
-		auto hspotSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures["bush.png"].get(),
-			hspot->pos()->x() * METERS2PIXELS, -hspot->pos()->y() * METERS2PIXELS);
-			hspotSprite->setRotation(hspot->rotation());
-		hspotSprite->setLayer(HIDING_SPOTS_LAYER);
-		this->hiding_spots.push_back(std::move(hspotSprite));
+	// initialize visible stuff
+	for (auto visible : *level->visible()) {
+		Spriteinfo sinfo = sprites[visible->gid()];
+		auto visibleSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[sinfo.name].get(),
+			visible->pos()->x() * METERS2PIXELS, -visible->pos()->y() * METERS2PIXELS);
+		this->nodes.push_back(std::move(visibleSprite));
 	}
 }
 

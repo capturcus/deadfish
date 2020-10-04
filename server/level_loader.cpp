@@ -70,36 +70,9 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 	}
 	auto hidingspots = builder.CreateVector(hspotOffsets);
 
-	// collisions
-	std::vector<flatbuffers::Offset<FlatBuffGenerated::Collision>> collisionOffsets;
-	for (auto &col : gameState.level->collisions)
-	{
-		FlatBuffGenerated::Vec2 pos(col->body->GetPosition().x, col->body->GetPosition().y);
-		bool ellipse = false;
-		float radius = 0;
-		flatbuffers::Offset<flatbuffers::Vector<const FlatBuffGenerated::Vec2 *>> polyverts = 0;
-
-		auto f = col->body->GetFixtureList();
-		if (auto circleShape = dynamic_cast<b2CircleShape*>(f->GetShape())) {
-			ellipse = true;
-			radius = circleShape->m_radius;
-		} else {
-			auto polyShape = dynamic_cast<b2PolygonShape*>(f->GetShape());
-			std::vector<const FlatBuffGenerated::Vec2* > temppolyverts;
-			for (auto vertex : polyShape->m_vertices) {
-				const auto v = std::make_unique<FlatBuffGenerated::Vec2>(vertex.x, vertex.y);
-				temppolyverts.push_back(std::move(v.get()));
-			}
-			polyverts = builder.CreateVector(temppolyverts);
-		}
-		auto off = FlatBuffGenerated::CreateCollision(builder, &pos, ellipse, radius, polyverts);
-		collisionOffsets.push_back(off);
-	}
-	auto collisions = builder.CreateVector(collisionOffsets);
-
 	// final
 	FlatBuffGenerated::Vec2 size(gameState.level->size.x, gameState.level->size.y);
-	auto level = FlatBuffGenerated::CreateLevel(builder, visible, hidingspots, collisions, 0, 0, tilesets, &size);
+	auto level = FlatBuffGenerated::CreateLevel(builder, visible, hidingspots, 0, 0, 0, tilesets, &size);
 	return level;
 }
 
