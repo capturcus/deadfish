@@ -242,6 +242,22 @@ class TestContactListener : public b2ContactListener
 			collideableB->handleCollision(*collideableA);
 		}
 	}
+
+	void EndContact(b2Contact *contact) override
+	{
+		auto collideableA = (Collideable *)contact->GetFixtureA()->GetBody()->GetUserData();
+		auto collideableB = (Collideable *)contact->GetFixtureB()->GetBody()->GetUserData();
+
+		if (collideableA && !collideableA->toBeDeleted &&
+			collideableB && !collideableB->toBeDeleted)
+		{
+			if (auto hidingSpot = dynamic_cast<HidingSpot*>(collideableA)) {
+				hidingSpot->playersInside.erase(dynamic_cast<Player*>(collideableB));
+			} else if ((hidingSpot = dynamic_cast<HidingSpot*>(collideableB))) {
+				hidingSpot->playersInside.erase(dynamic_cast<Player*>(collideableA));
+			}
+		}
+	}
 };
 
 void physicsInitMob(Mob *m, glm::vec2 pos, float angle, float radius, uint16 categoryBits = 1)
@@ -259,7 +275,7 @@ void physicsInitMob(Mob *m, glm::vec2 pos, float angle, float radius, uint16 cat
 	fixtureDef.density = 1;
 	fixtureDef.friction = 0;
 	fixtureDef.filter.categoryBits = categoryBits;
-	fixtureDef.filter.maskBits = 0xFFFF & 0b1111111111111101; //no collision with hiding spots
+	fixtureDef.filter.maskBits = 0xFFFF;
 	m->body->CreateFixture(&fixtureDef);
 	m->body->SetUserData(m);
 }

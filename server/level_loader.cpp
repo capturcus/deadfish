@@ -23,43 +23,17 @@ void initPlayerwall(const FlatBuffGenerated::PlayerWall *pw)
 	gameState.level->playerwalls.back()->body = staticBody;
 }
 
-void initStone(Collision *s, const FlatBuffGenerated::Collision *dfstone)
-{
-	b2BodyDef myBodyDef;
-	myBodyDef.type = b2_staticBody;
-	myBodyDef.position.Set(dfstone->pos()->x(), dfstone->pos()->y());
-	myBodyDef.angle = -dfstone->rotation();
-	s->body = gameState.b2world->CreateBody(&myBodyDef);
-	b2CircleShape circleShape;
-	circleShape.m_radius = dfstone->radius();
-
-	b2FixtureDef fixtureDef;
-	fixtureDef.shape = &circleShape;
-	fixtureDef.density = 1;
-	s->body->CreateFixture(&fixtureDef);
-	s->body->SetUserData(s);
-}
-
-void initHidingSpot(HidingSpot *b, const FlatBuffGenerated::HidingSpot *dfhspot)
-{
-	b2BodyDef myBodyDef;
-	myBodyDef.type = b2_staticBody;
-	myBodyDef.position.Set(dfhspot->pos()->x(), dfhspot->pos()->y());
-	myBodyDef.angle = -dfhspot->rotation();
-	b->body = gameState.b2world->CreateBody(&myBodyDef);
-	b2CircleShape circleShape;
-	circleShape.m_radius = dfhspot->radius();
-
-	b2FixtureDef fixtureDef;
-	fixtureDef.shape = &circleShape;
-	fixtureDef.density = 1;
-	fixtureDef.filter.categoryBits = 0x0002;
-	b->body->CreateFixture(&fixtureDef);
-	b->body->SetUserData(b);
-}
-
 flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBufferBuilder &builder)
 {
+	//tilesets
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::Tileset>> tilesetOffsets;
+	for (auto &ts : gameState.level->tilesets) {
+		auto path = builder.CreateString(ts->path);
+		auto offset = FlatBuffGenerated::CreateTileset(builder, path, ts->firstgid);
+		tilesetOffsets.push_back(offset);
+	}
+	auto tilesets = builder.CreateVector(tilesetOffsets);
+
 	// visible
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::Visible>> visibleOffsets;
 	for (auto &v : gameState.level->visible) {
@@ -71,30 +45,61 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 
 	// hiding spots
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::HidingSpot>> hspotOffsets;
-	for (auto &b : gameState.level->hidingspots)
+	for (auto &hs : gameState.level->hidingspots)
 	{
-		FlatBuffGenerated::Vec2 pos(b->body->GetPosition().x, b->body->GetPosition().y);
-		auto f = b->body->GetFixtureList();
-		auto c = (b2CircleShape *)f->GetShape();
-		auto off = FlatBuffGenerated::CreateHidingSpot(builder, c->m_radius, b->body->GetAngle(), &pos);
+		FlatBuffGenerated::Vec2 pos(hs->body->GetPosition().x, hs->body->GetPosition().y);
+		bool ellipse = false;
+		float radius = 0;
+		flatbuffers::Offset<flatbuffers::Vector<const FlatBuffGenerated::Vec2 *>> polyverts = 0;
+
+		auto f = hs->body->GetFixtureList();
+		if (auto circleShape = dynamic_cast<b2CircleShape*>(f->GetShape())) {
+			ellipse = true;
+			radius = circleShape->m_radius;
+		} else {
+			auto polyShape = dynamic_cast<b2PolygonShape*>(f->GetShape());
+			std::vector<const FlatBuffGenerated::Vec2* > temppolyverts;
+			for (auto vertex : polyShape->m_vertices) {
+				const auto v = std::make_unique<FlatBuffGenerated::Vec2>(vertex.x, vertex.y);
+				temppolyverts.push_back(std::move(v.get()));
+			}
+			polyverts = builder.CreateVector(temppolyverts);
+		}
+		auto off = FlatBuffGenerated::CreateHidingSpot(builder, &pos, ellipse, radius, polyverts);
 		hspotOffsets.push_back(off);
 	}
 	auto hidingspots = builder.CreateVector(hspotOffsets);
 
 	// collisions
-	std::vector<flatbuffers::Offset<FlatBuffGenerated::Collision>> stoneOffsets;
-	for (auto &s : gameState.level->collisions)
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::Collision>> collisionOffsets;
+	for (auto &col : gameState.level->collisions)
 	{
-		FlatBuffGenerated::Vec2 pos(s->body->GetPosition().x, s->body->GetPosition().y);
-		auto f = s->body->GetFixtureList();
-		auto c = (b2CircleShape *)f->GetShape();
-		auto off = FlatBuffGenerated::CreateStone(builder, c->m_radius, s->body->GetAngle(), &pos);
-		stoneOffsets.push_back(off);
-	}
-	auto collisions = builder.CreateVector(stoneOffsets);
+		FlatBuffGenerated::Vec2 pos(col->body->GetPosition().x, col->body->GetPosition().y);
+		bool ellipse = false;
+		float radius = 0;
+		flatbuffers::Offset<flatbuffers::Vector<const FlatBuffGenerated::Vec2 *>> polyverts = 0;
 
+		auto f = col->body->GetFixtureList();
+		if (auto circleShape = dynamic_cast<b2CircleShape*>(f->GetShape())) {
+			ellipse = true;
+			radius = circleShape->m_radius;
+		} else {
+			auto polyShape = dynamic_cast<b2PolygonShape*>(f->GetShape());
+			std::vector<const FlatBuffGenerated::Vec2* > temppolyverts;
+			for (auto vertex : polyShape->m_vertices) {
+				const auto v = std::make_unique<FlatBuffGenerated::Vec2>(vertex.x, vertex.y);
+				temppolyverts.push_back(std::move(v.get()));
+			}
+			polyverts = builder.CreateVector(temppolyverts);
+		}
+		auto off = FlatBuffGenerated::CreateCollision(builder, &pos, ellipse, radius, polyverts);
+		collisionOffsets.push_back(off);
+	}
+	auto collisions = builder.CreateVector(collisionOffsets);
+
+	// final
 	FlatBuffGenerated::Vec2 size(gameState.level->size.x, gameState.level->size.y);
-	auto level = FlatBuffGenerated::CreateLevel(builder, hidingspots, collisions, 0, 0, &size);
+	auto level = FlatBuffGenerated::CreateLevel(builder, visible, hidingspots, collisions, 0, 0, tilesets, &size);
 	return level;
 }
 
@@ -142,8 +147,7 @@ void loadLevel(std::string &path)
 	for (size_t i = 0; i < level->hidingspots()->size(); i++)
 	{
 		auto hspot = level->hidingspots()->Get(i);
-		auto hs = std::make_unique<HidingSpot>();
-		initHidingSpot(hs.get(), hspot);
+		auto hs = std::make_unique<HidingSpot>(hspot);
 		gameState.level->hidingspots.push_back(std::move(hs));
 	}
 
@@ -151,8 +155,7 @@ void loadLevel(std::string &path)
 	for (size_t i = 0; i < level->collision()->size(); i++)
 	{
 		auto stone = level->collision()->Get(i);
-		auto s = std::make_unique<Collision>();
-		initStone(s.get(), stone);
+		auto s = std::make_unique<Collision>(stone);
 		gameState.level->collisions.push_back(std::move(s));
 	}
 

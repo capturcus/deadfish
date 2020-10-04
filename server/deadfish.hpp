@@ -109,26 +109,23 @@ struct Tileset {
 
 // just a data container to be able to send it later to clients
 struct Visible {
-	Visible(FlatBuffGenerated::Visible fb_Vis) : pos(fb_Vis.pos()->x(), fb_Vis.pos()->y()),
-		rotation(fb_Vis.rotation()), gid(fb_Vis.gid()) {}
+	Visible(const FlatBuffGenerated::Visible* fb_Vis) : pos(fb_Vis->pos()->x(), fb_Vis->pos()->y()),
+		rotation(fb_Vis->rotation()), gid(fb_Vis->gid()) {}
 	glm::vec2 pos;
 	float rotation;
 	u_int16_t gid;
 };
 
 struct HidingSpot : public Collideable {
+	HidingSpot(const FlatBuffGenerated::HidingSpot*);
 	b2Body* body = nullptr;
-	float radius = 0;
-	virtual bool obstructsSight(Player* p) override {
-		auto distance = b2Distance(body->GetPosition(), p->body->GetPosition());
-		if(distance < body->GetFixtureList()->GetShape()->m_radius) {
-			return false;
-		}
-		return true;
-	}
+	std::set<Player*> playersInside;
+	virtual void handleCollision(Collideable& other) override;
+	virtual bool obstructsSight(Player* p) override;
 };
 
 struct Collision : public Collideable {
+	Collision(const FlatBuffGenerated::Collision*);
 	b2Body* body = nullptr;
 	virtual bool obstructsSight(Player*) override { return true; }
 };
@@ -152,6 +149,7 @@ struct Level {
 	std::vector<std::unique_ptr<HidingSpot>> hidingspots;
 	std::vector<std::unique_ptr<PlayerWall>> playerwalls;
 	std::unordered_map<std::string, std::unique_ptr<NavPoint>> navpoints;
+	std::vector<std::unique_ptr<Tileset>> tilesets;
 	glm::vec2 size;
 };
 

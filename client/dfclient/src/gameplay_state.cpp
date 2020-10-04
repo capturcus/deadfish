@@ -71,8 +71,8 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine:
 void GameplayState::LoadLevel() {
 	auto level = FBUtilGetServerEvent(gameData.levelData, Level);
 
-	for (int i = 0; i < level->stones()->size(); i++) {
-		auto stone = level->stones()->Get(i);
+	for (int i = 0; i < level->collisions()->size(); i++) {
+		auto stone = level->collisions()->Get(i);
 		auto stoneSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures["stone.png"].get(),
 			stone->pos()->x() * METERS2PIXELS, -stone->pos()->y() * METERS2PIXELS);
 		stoneSprite->setRotation(stone->rotation());
