@@ -102,12 +102,15 @@ struct Civilian : public Mob {
 
 // just a data container to be able to send it later to clients
 struct Tileset {
+	Tileset(FlatBuffGenerated::Tileset fb_Ts) : path(fb_Ts.path()->str()), firstgid(fb_Ts.firstgid()) {}
 	std::string path;
 	u_int16_t firstgid;
 };
 
-// same as above
+// just a data container to be able to send it later to clients
 struct Visible {
+	Visible(FlatBuffGenerated::Visible fb_Vis) : pos(fb_Vis.pos()->x(), fb_Vis.pos()->y()),
+		rotation(fb_Vis.rotation()), gid(fb_Vis.gid()) {}
 	glm::vec2 pos;
 	float rotation;
 	u_int16_t gid;

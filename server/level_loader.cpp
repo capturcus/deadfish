@@ -60,6 +60,15 @@ void initHidingSpot(HidingSpot *b, const FlatBuffGenerated::HidingSpot *dfhspot)
 
 flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBufferBuilder &builder)
 {
+	// visible
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::Visible>> visibleOffsets;
+	for (auto &v : gameState.level->visible) {
+		FlatBuffGenerated::Vec2 pos(v->pos.x, v->pos.y);
+		auto offset = FlatBuffGenerated::CreateVisible(builder, &pos, v->rotation, v->gid);
+		visibleOffsets.push_back(offset);
+	}
+	auto visible = builder.CreateVector(visibleOffsets);
+
 	// hiding spots
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::HidingSpot>> hspotOffsets;
 	for (auto &b : gameState.level->hidingspots)
@@ -121,6 +130,14 @@ void loadLevel(std::string &path)
 
 	auto level = flatbuffers::GetRoot<FlatBuffGenerated::Level>(memblock.data());
 
+	//visible
+	for (size_t i = 0; i < level->visible()->size(); i++)
+	{
+		auto visible = level->visible()->Get(i);
+		auto vs = std::make_unique<Visible>(visible);
+		gameState.level->visible.push_back(std::move(vs));
+	}	
+
 	// hiding spots
 	for (size_t i = 0; i < level->hidingspots()->size(); i++)
 	{
@@ -131,9 +148,9 @@ void loadLevel(std::string &path)
 	}
 
 	// collisions
-	for (size_t i = 0; i < level->collisions()->size(); i++)
+	for (size_t i = 0; i < level->collision()->size(); i++)
 	{
-		auto stone = level->collisions()->Get(i);
+		auto stone = level->collision()->Get(i);
 		auto s = std::make_unique<Collision>();
 		initStone(s.get(), stone);
 		gameState.level->collisions.push_back(std::move(s));
