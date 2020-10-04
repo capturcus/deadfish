@@ -18,6 +18,10 @@ table Tileset {
   firstgid: uint16;
 }
 
+table TileArray {
+  tiles: [Tile];
+}
+
 table Visible {
     pos: Vec2;
     rotation: float;

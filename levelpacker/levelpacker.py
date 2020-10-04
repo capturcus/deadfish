@@ -2,7 +2,7 @@
 import configparser, os, json, flatbuffers
 import FlatBuffGenerated.Level, FlatBuffGenerated.Visible, FlatBuffGenerated.HidingSpot, \
     FlatBuffGenerated.Collision, FlatBuffGenerated.Vec2, \
-    FlatBuffGenerated.Tile, FlatBuffGenerated.Tileset, \
+    FlatBuffGenerated.Tile, FlatBuffGenerated.Tileset, FlatBuffGenerated.TileArray, \
     FlatBuffGenerated.NavPoint, FlatBuffGenerated.PlayerWall
 from functools import reduce
 import xml.dom.minidom as minidom
@@ -255,7 +255,38 @@ def process_level(path: str):
 
 
 def process_tileset(path: str):
-    print("processing placeholder for tileset: "+path)
+    dom = minidom.parse(path)
+    tileset_node = dom.firstChild
+    builder = flatbuffers.Builder(1)
+    
+    tiles = []
+    
+    for t in tileset_node.getElementsByTagName("tile"):
+        id = int(t.getAttribute("id"))
+        image = t.getElementsByTagName("image")[0]
+        source = builder.CreateString(image.getAttribute("source"))
+
+        FlatBuffGenerated.Tile.TileStart(builder)
+        FlatBuffGenerated.Tile.TileAddPath(builder, source)
+        size = FlatBuffGenerated.Vec2.CreateVec2(builder, float(image.getAttribute("width")), float(image.getAttribute("height")))
+        FlatBuffGenerated.Tile.TileAddSize(builder, size)
+        FlatBuffGenerated.Tile.TileAddId(builder, id)
+        tiles.append(FlatBuffGenerated.Tile.TileEnd(builder))
+
+    FlatBuffGenerated.TileArray.TileArrayStartTilesVector(builder, len(tiles))
+    for t in tiles:
+        builder.PrependUOffsetTRelative(t)
+    tilesOff = builder.EndVector(len(tiles))
+
+    FlatBuffGenerated.TileArray.TileArrayStart(builder)
+    FlatBuffGenerated.TileArray.TileArrayAddTiles(builder, tilesOff)
+    tileset = FlatBuffGenerated.TileArray.TileArrayEnd(builder)
+    builder.Finish(tileset)
+
+    buf = builder.Output()
+
+    with open(path[:-3]+"tsbin", "wb") as f:
+        f.write(buf)
 
 
 # the actual script beginning
