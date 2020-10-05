@@ -11,8 +11,8 @@
 
 #include "tweeny.h"
 
-const char* TEXTURES_PATH;
-const char* LEVELS_PATH;
+static const char* TEXTURES_PATH = "textures";
+static const char* LEVELS_PATH = "../levels";
 
 struct Resources {
 	std::map<std::string, std::unique_ptr<ncine::Font>> fonts;

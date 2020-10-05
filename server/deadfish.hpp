@@ -104,7 +104,7 @@ struct Civilian : public Mob {
 struct Tileset {
 	Tileset(FlatBuffGenerated::Tileset fb_Ts) : path(fb_Ts.path()->str()), firstgid(fb_Ts.firstgid()) {}
 	std::string path;
-	u_int16_t firstgid;
+	uint16_t firstgid;
 };
 
 // just a data container to be able to send it later to clients
@@ -113,7 +113,7 @@ struct Visible {
 		rotation(fb_Vis->rotation()), gid(fb_Vis->gid()) {}
 	glm::vec2 pos;
 	float rotation;
-	u_int16_t gid;
+	uint16_t gid;
 };
 
 struct HidingSpot : public Collideable {

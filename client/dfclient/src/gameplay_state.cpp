@@ -81,7 +81,7 @@ void GameplayState::LoadLevel() {
 		ncine::Vector2f size;
 	};
 
-	std::map<u_int16_t, Spriteinfo> sprites;
+	std::map<uint16_t, Spriteinfo> sprites;
 
 	auto rootPath = ncine::theApplication().appConfiguration().dataPath();
 	auto folderPath = std::string((rootPath + LEVELS_PATH).data());
@@ -105,7 +105,7 @@ void GameplayState::LoadLevel() {
 			std::string name = tile->path()->str();
 			name = name.substr(name.find_last_of('/')+1);
 			Spriteinfo sinfo(name, tile->size()->x(), tile->size()->y());
-			std::pair<u_int16_t, Spriteinfo> pair(fb_Ts->firstgid()+tile->id(), std::move(sinfo));
+			std::pair<uint16_t, Spriteinfo> pair(fb_Ts->firstgid()+tile->id(), std::move(sinfo));
 			sprites.insert(std::move(pair));
 		}
 	}

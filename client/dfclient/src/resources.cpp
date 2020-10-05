@@ -1,8 +1,5 @@
 #include "resources.hpp"
 
-const char* TEXTURES_PATH = "textures";
-const char* LEVELS_PATH = "../levels";
-
 void Resources::UpdateTweens()
 {
     for (int i = _tweens.size() - 1; i >= 0; i--) {
