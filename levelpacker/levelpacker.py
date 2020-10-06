@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import configparser, os, json, flatbuffers
+import configparser, os, json, flatbuffers, math
 import FlatBuffGenerated.Level, FlatBuffGenerated.Visible, FlatBuffGenerated.HidingSpot, \
     FlatBuffGenerated.Collision, FlatBuffGenerated.Vec2, \
     FlatBuffGenerated.Tile, FlatBuffGenerated.Tileset, FlatBuffGenerated.TileArray, \
@@ -50,9 +50,9 @@ def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuff
 
         if o.getElementsByTagName('ellipse'):
             ellipse = True
-            x += float(o.getAttribute('width')) / 2.0
-            y += float(o.getAttribute('width')) / 2.0
-            radius = float(o.getAttribute('width')) / 2.0 * GLOBAL_SCALE
+            radius = float(o.getAttribute('width')) / 2.0
+            x += math.cos(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2) # trygonometria 100
+            y += math.sin(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2)
         else:
             polyverts = o.getElementsByTagName('polygon')[0].getAttribute('points')
             polyverts = polyverts.split(' ')
@@ -69,7 +69,7 @@ def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuff
         FlatBuffGenerated.Collision.CollisionAddPos(builder, pos)
         FlatBuffGenerated.Collision.CollisionAddRotation(builder, rotation)
         FlatBuffGenerated.Collision.CollisionAddEllipse(builder, ellipse)
-        FlatBuffGenerated.Collision.CollisionAddRadius(builder, radius)
+        FlatBuffGenerated.Collision.CollisionAddRadius(builder, radius * GLOBAL_SCALE)
         FlatBuffGenerated.Collision.CollisionAddPolyverts(builder, poly)
         objs.collision.append(FlatBuffGenerated.Collision.CollisionEnd(builder))
 
