@@ -32,6 +32,7 @@ table Collision {
     pos: Vec2;
     ellipse: bool;
     radius: float;
+    rotation: float;
     polyverts: [Vec2];
 }
 

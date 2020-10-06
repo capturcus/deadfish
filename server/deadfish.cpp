@@ -1,4 +1,5 @@
 #include "deadfish.hpp"
+#include "../common/constants.hpp"
 
 // HidingSpot
 
@@ -51,6 +52,7 @@ Collision::Collision(const FlatBuffGenerated::Collision* fb_Col) {
     b2BodyDef myBodyDef;
 	myBodyDef.type = b2_staticBody;
 	myBodyDef.position.Set(fb_Col->pos()->x(), fb_Col->pos()->y());
+    myBodyDef.angle = fb_Col->rotation() * TO_RADIANS;
 	body = gameState.b2world->CreateBody(&myBodyDef);
 
 	b2FixtureDef fixtureDef;

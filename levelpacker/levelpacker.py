@@ -42,6 +42,7 @@ def handle_visible_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffer
 def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
         x, y = get_pos(o)
+        rotation = float(o.getAttribute('rotation') or 0)
         ellipse = False
         radius = 0
         polyverts = ""
@@ -66,6 +67,7 @@ def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuff
         FlatBuffGenerated.Collision.CollisionStart(builder)
         pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
         FlatBuffGenerated.Collision.CollisionAddPos(builder, pos)
+        FlatBuffGenerated.Collision.CollisionAddRotation(builder, rotation)
         FlatBuffGenerated.Collision.CollisionAddEllipse(builder, ellipse)
         FlatBuffGenerated.Collision.CollisionAddRadius(builder, radius)
         FlatBuffGenerated.Collision.CollisionAddPolyverts(builder, poly)

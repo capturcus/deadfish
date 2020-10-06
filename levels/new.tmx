@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="32" tileheight="32" infinite="1" nextlayerid="6" nextobjectid="81">
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="32" tileheight="32" infinite="1" nextlayerid="6" nextobjectid="87">
  <tileset firstgid="1" source="tilesets/default_tileset.tsx"/>
  <objectgroup id="2" name="visible">
   <object id="17" gid="1" x="-474" y="-34" width="128" height="128"/>
@@ -19,11 +19,14 @@
   <object id="47" gid="2" x="288" y="242.667" width="128" height="128"/>
   <object id="48" gid="2" x="393.334" y="245.333" width="128" height="128"/>
   <object id="49" gid="2" x="392" y="134.667" width="128" height="128"/>
-  <object id="52" gid="2" x="-58.6667" y="-64" width="128" height="128"/>
-  <object id="59" gid="2" x="288" y="-374.667" width="128" height="128"/>
-  <object id="60" gid="2" x="289.333" y="-318.667" width="128" height="128"/>
-  <object id="61" gid="2" x="224" y="-306.667" width="128" height="128"/>
-  <object id="62" gid="2" x="244" y="-348" width="128" height="128"/>
+  <object id="59" gid="2" x="361.333" y="-434.667" width="128" height="128"/>
+  <object id="60" gid="2" x="362.666" y="-378.667" width="128" height="128"/>
+  <object id="61" gid="2" x="297.333" y="-366.667" width="128" height="128"/>
+  <object id="62" gid="2" x="317.333" y="-408" width="128" height="128"/>
+  <object id="81" gid="2" x="265.874" y="-211.626" width="128" height="128" rotation="59.165"/>
+  <object id="82" gid="2" x="285.231" y="-176.597" width="128" height="128" rotation="59.165"/>
+  <object id="83" gid="2" x="303.649" y="-130.136" width="128" height="128" rotation="59.165"/>
+  <object id="84" gid="2" x="327.312" y="-77.4899" width="128" height="128" rotation="59.165"/>
  </objectgroup>
  <objectgroup id="4" name="hidingspots">
   <object id="44" x="-448" y="193.334">
@@ -40,10 +43,7 @@
   <object id="34" x="-562.666" y="-229.333" width="124" height="124">
    <ellipse/>
   </object>
-  <object id="66" x="-58.6668" y="-61.3335" width="120" height="120">
-   <ellipse/>
-  </object>
-  <object id="74" x="256" y="-326.667">
+  <object id="74" x="329.333" y="-386.667">
    <polygon points="0,0 86.6667,-40 121.333,-37.3333 146.667,-9.33333 156,85.3333 88,130.667 22.6667,144 -36,70.6667"/>
   </object>
   <object id="75" x="-134.667" y="-540">
@@ -60,6 +60,9 @@
   </object>
   <object id="79" x="477.333" y="262.667">
    <polygon points="0,0 30.6667,22.6667 18.6667,92 -141.333,106.667 -190.667,28 -144,-9.33333 -81.3333,16"/>
+  </object>
+  <object id="86" x="229.261" y="-181.974" rotation="61.7989">
+   <polygon points="-58.7143,3.69174 28,-43 119,-42 217,-32 255,-5 243,81 53.1106,78.0212 15.2799,61.3287"/>
   </object>
  </objectgroup>
  <objectgroup id="5" name="meta">
