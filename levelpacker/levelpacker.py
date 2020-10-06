@@ -21,12 +21,9 @@ GameObjects = namedtuple('GameObjects', ['visible', 'collision', 'hidingspots', 
 
 
 def get_pos(o: minidom.Node, flip_y: bool = False) -> (float, float):
-    x = float(o.getAttribute('x')) + float(o.getAttribute('width') or 0) / 2.0
+    x = float(o.getAttribute('x'))
     y = float(o.getAttribute('y'))
-    height = float(o.getAttribute('height') or 0) / 2.0
-    y += -height if flip_y else height
     return x, y
-
 
 def handle_visible_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
@@ -48,25 +45,23 @@ def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuff
         ellipse = False
         radius = 0
         polyverts = ""
-        polyvertsOffset = []
+        poly = 0
 
         if o.getElementsByTagName('ellipse'):
             ellipse = True
-            radius = float(o.getAttribute('width')) / 2.0
+            x += float(o.getAttribute('width')) / 2.0
+            y += float(o.getAttribute('width')) / 2.0
+            radius = float(o.getAttribute('width')) / 2.0 * GLOBAL_SCALE
         else:
             polyverts = o.getElementsByTagName('polygon')[0].getAttribute('points')
             polyverts = polyverts.split(' ')
+            FlatBuffGenerated.Collision.CollisionStartPolyvertsVector(builder, len(polyverts))
             for v in polyverts:
                 vert_x, vert_y = v.split(",")
-                vert_x_f = float(vert_x)
-                vert_y_f = float(vert_y)
-                vec = FlatBuffGenerated.Vec2.CreateVec2(builder, vert_x_f, vert_y_f)
-                polyvertsOffset.append(vec)
-        
-        FlatBuffGenerated.Collision.CollisionStartPolyvertsVector(builder, len(polyvertsOffset))
-        for v in polyvertsOffset:
-            builder.PrependUOffsetTRelative(v)
-        poly = builder.EndVector(len(polyvertsOffset))
+                vert_x_f = float(vert_x) * GLOBAL_SCALE
+                vert_y_f = float(vert_y) * GLOBAL_SCALE
+                FlatBuffGenerated.Vec2.CreateVec2(builder, vert_x_f, vert_y_f)                
+            poly = builder.EndVector(len(polyverts))
 
         FlatBuffGenerated.Collision.CollisionStart(builder)
         pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
@@ -74,7 +69,7 @@ def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuff
         FlatBuffGenerated.Collision.CollisionAddEllipse(builder, ellipse)
         FlatBuffGenerated.Collision.CollisionAddRadius(builder, radius)
         FlatBuffGenerated.Collision.CollisionAddPolyverts(builder, poly)
-        objs.hidingspots.append(FlatBuffGenerated.Collision.CollisionEnd(builder))
+        objs.collision.append(FlatBuffGenerated.Collision.CollisionEnd(builder))
 
 
 def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
@@ -83,26 +78,24 @@ def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbu
         ellipse = False
         radius = 0
         polyverts = ""
-        polyvertsOffset = []
+        poly = 0
 
         if o.getElementsByTagName('ellipse'):
             ellipse = True
-            radius = float(o.getAttribute('width')) / 2.0
+            x += float(o.getAttribute('width')) / 2.0
+            y += float(o.getAttribute('width')) / 2.0
+            radius = float(o.getAttribute('width')) / 2.0 * GLOBAL_SCALE
         else:
             polyverts = o.getElementsByTagName('polygon')[0].getAttribute('points')
             polyverts = polyverts.split(' ')
+            FlatBuffGenerated.HidingSpot.HidingSpotStartPolyvertsVector(builder, len(polyverts))
             for v in polyverts:
                 vert_x, vert_y = v.split(",")
-                vert_x_f = float(vert_x)
-                vert_y_f = float(vert_y)
-                vec = FlatBuffGenerated.Vec2.CreateVec2(builder, vert_x_f, vert_y_f)
-                polyvertsOffset.append(vec)
+                vert_x_f = float(vert_x) * GLOBAL_SCALE
+                vert_y_f = float(vert_y) * GLOBAL_SCALE
+                FlatBuffGenerated.Vec2.CreateVec2(builder, vert_x_f, vert_y_f)
+            poly = builder.EndVector(len(polyverts))
         
-        FlatBuffGenerated.HidingSpot.HidingSpotStartPolyvertsVector(builder, len(polyvertsOffset))
-        for v in polyvertsOffset:
-            builder.PrependUOffsetTRelative(v)
-        poly = builder.EndVector(len(polyvertsOffset))
-
         FlatBuffGenerated.HidingSpot.HidingSpotStart(builder)
         pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
         FlatBuffGenerated.HidingSpot.HidingSpotAddPos(builder, pos)

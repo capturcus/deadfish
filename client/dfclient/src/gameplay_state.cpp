@@ -87,7 +87,8 @@ void GameplayState::LoadLevel() {
 	auto folderPath = std::string((rootPath + LEVELS_PATH).data());
 	std::ifstream in;
 	for (auto fb_Ts : *level->tilesets()) {
-		std::string path = folderPath + fb_Ts->path()->c_str();
+		std::string path = folderPath + '/' + fb_Ts->path()->c_str();
+		path = path.substr(0, path.size()-3)+"tsbin";
 		in.open(path, std::ios::in | std::ios::binary | std::ios::ate);
 		if (!in.is_open())
 		{
@@ -115,6 +116,8 @@ void GameplayState::LoadLevel() {
 		Spriteinfo sinfo = sprites[visible->gid()];
 		auto visibleSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[sinfo.name].get(),
 			visible->pos()->x() * METERS2PIXELS, -visible->pos()->y() * METERS2PIXELS);
+		visibleSprite->setAnchorPoint(0, 1);
+		visibleSprite->setRotation(-visible->rotation());
 		this->nodes.push_back(std::move(visibleSprite));
 	}
 }

@@ -102,7 +102,7 @@ struct Civilian : public Mob {
 
 // just a data container to be able to send it later to clients
 struct Tileset {
-	Tileset(FlatBuffGenerated::Tileset fb_Ts) : path(fb_Ts.path()->str()), firstgid(fb_Ts.firstgid()) {}
+	Tileset(const FlatBuffGenerated::Tileset* fb_Ts) : path(fb_Ts->path()->str()), firstgid(fb_Ts->firstgid()) {}
 	std::string path;
 	uint16_t firstgid;
 };

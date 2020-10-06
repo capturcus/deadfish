@@ -61,8 +61,7 @@ Collision::Collision(const FlatBuffGenerated::Collision* fb_Col) {
     } else {
         b2PolygonShape polyShape;
         std::vector<b2Vec2> vertices;
-        auto fb_poly = fb_Col->polyverts();
-        for (auto vert = fb_poly->begin(); vert != fb_poly->end(); ++vert) {
+        for (auto vert : *fb_Col->polyverts()) {
             vertices.push_back(b2Vec2(vert->x(), vert->y()));
         }
         polyShape.Set(vertices.data(), vertices.size());

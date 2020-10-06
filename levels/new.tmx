@@ -1,50 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="32" tileheight="32" infinite="1" nextlayerid="6" nextobjectid="52">
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="32" tileheight="32" infinite="1" nextlayerid="6" nextobjectid="81">
  <tileset firstgid="1" source="tilesets/default_tileset.tsx"/>
  <objectgroup id="2" name="visible">
   <object id="17" gid="1" x="-474" y="-34" width="128" height="128"/>
   <object id="18" gid="2" x="-268" y="98" width="128" height="128" rotation="276.332"/>
-  <object id="19" gid="4" x="23" y="109" width="300" height="300"/>
-  <object id="20" gid="4" x="208" y="-240" width="300" height="300"/>
+  <object id="20" gid="4" x="3.02682" y="-0.856906" width="300" height="300" rotation="26.4951"/>
   <object id="22" gid="1" x="-494" y="70" width="128" height="128"/>
   <object id="23" gid="1" x="-424" y="47" width="128" height="128"/>
   <object id="24" gid="1" x="-378" y="-40" width="128" height="128"/>
   <object id="25" gid="1" x="-576" y="-9" width="128" height="128"/>
   <object id="26" gid="1" x="-534" y="17" width="128" height="128"/>
-  <object id="27" gid="2" x="-273" y="-167" width="128" height="128" rotation="60.0152"/>
-  <object id="21" gid="4" x="-389" y="-269" width="300" height="300"/>
-  <object id="29" gid="2" x="-490" y="-175" width="128" height="128"/>
-  <object id="40" gid="2" x="-85.6683" y="-493.191" width="128" height="128" rotation="89.7628"/>
-  <object id="41" gid="2" x="24.9975" y="-493.65" width="128" height="128" rotation="89.7628"/>
-  <object id="42" gid="2" x="26.8001" y="-380.323" width="128" height="128" rotation="89.7628"/>
-  <object id="47" gid="2" x="289.333" y="88" width="128" height="128"/>
-  <object id="48" gid="2" x="394.667" y="90.6667" width="128" height="128"/>
-  <object id="49" gid="2" x="393.333" y="-20" width="128" height="128"/>
+  <object id="27" gid="2" x="-254.333" y="-257.333" width="128" height="128" rotation="60.0152"/>
+  <object id="21" gid="4" x="-542.333" y="-414.333" width="300" height="300"/>
+  <object id="29" gid="2" x="-559.333" y="-231" width="128" height="128"/>
+  <object id="40" gid="2" x="-23.0016" y="-555.858" width="128" height="128" rotation="89.7628"/>
+  <object id="41" gid="2" x="87.6642" y="-556.317" width="128" height="128" rotation="89.7628"/>
+  <object id="42" gid="2" x="89.4668" y="-442.99" width="128" height="128" rotation="89.7628"/>
+  <object id="47" gid="2" x="288" y="242.667" width="128" height="128"/>
+  <object id="48" gid="2" x="393.334" y="245.333" width="128" height="128"/>
+  <object id="49" gid="2" x="392" y="134.667" width="128" height="128"/>
+  <object id="52" gid="2" x="-58.6667" y="-64" width="128" height="128"/>
+  <object id="59" gid="2" x="288" y="-374.667" width="128" height="128"/>
+  <object id="60" gid="2" x="289.333" y="-318.667" width="128" height="128"/>
+  <object id="61" gid="2" x="224" y="-306.667" width="128" height="128"/>
+  <object id="62" gid="2" x="244" y="-348" width="128" height="128"/>
  </objectgroup>
  <objectgroup id="4" name="hidingspots">
-  <object id="44" x="-516" y="130.667">
+  <object id="44" x="-448" y="193.334">
    <polygon points="0,0 134.667,-60 186.667,-176 140,-232 24,-210.667 -84,-190.667 -121.333,-130.667"/>
   </object>
  </objectgroup>
  <objectgroup id="3" name="collision">
-  <object id="32" x="-326.667" y="42.6667" width="114.667" height="114.667">
+  <object id="32" x="-252" y="-13.3333" width="114.667" height="114.667">
    <ellipse/>
   </object>
-  <object id="33" x="-333.333" y="-221.333" width="114.667" height="114.667">
+  <object id="33" x="-340" y="-228" width="116" height="116">
    <ellipse/>
   </object>
-  <object id="34" x="-553.333" y="-229.333" width="114.667" height="114.667">
+  <object id="34" x="-562.666" y="-229.333" width="124" height="124">
    <ellipse/>
   </object>
-  <object id="50" x="348.363" y="-70.029" rotation="89.842">
-   <polygon points="-0.01103,3.99998 0,-98.6667 216,-97.3333 220,117.333 113.333,120 109.333,5.33333"/>
+  <object id="66" x="-58.6668" y="-61.3335" width="120" height="120">
+   <ellipse/>
   </object>
-  <object id="51" x="-148" y="-557.333">
-   <polygon points="45.3333,0 221.333,0 228,224 124,230.667 124,121.333 32,121.333 -1.33333,64"/>
+  <object id="74" x="256" y="-326.667">
+   <polygon points="0,0 86.6667,-40 121.333,-37.3333 146.667,-9.33333 156,85.3333 88,130.667 22.6667,144 -36,70.6667"/>
+  </object>
+  <object id="75" x="-134.667" y="-540">
+   <polygon points="0,0 53.3333,-20 98.6667,14.6667 100,61.3333 73.3333,98.6667 26.6667,108 -13.3333,45.3333"/>
+  </object>
+  <object id="76" x="-33.3333" y="-517.333">
+   <polygon points="0,0 25.3333,-36 94.6667,-34.6667 112,28 86.6667,73.3333 38.6667,84 0,38.6667"/>
+  </object>
+  <object id="77" x="-2.66667" y="-428">
+   <polygon points="0,0 48,-13.3333 69.3333,1.33333 78.6667,68 56,100 4,109.333 -32,44"/>
+  </object>
+  <object id="78" x="388" y="182.667">
+   <polygon points="0,0 24,-32 96,-40 124,-6.66667 125.333,40 90.6667,72 42.6667,70.6667"/>
+  </object>
+  <object id="79" x="477.333" y="262.667">
+   <polygon points="0,0 30.6667,22.6667 18.6667,92 -141.333,106.667 -190.667,28 -144,-9.33333 -81.3333,16"/>
   </object>
  </objectgroup>
  <objectgroup id="5" name="meta">
-  <object id="36" name="pspawn" type="waypoint" x="-109.333" y="-104" width="132" height="132">
+  <object id="36" name="pspawn" type="waypoint" x="-79.9997" y="-224" width="132" height="132">
    <properties>
     <property name="isplayerspawn" type="bool" value="true"/>
     <property name="wps" value="mspawn1,mspawn2"/>

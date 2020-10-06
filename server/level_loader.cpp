@@ -108,41 +108,42 @@ void loadLevel(std::string &path)
 
 	auto level = flatbuffers::GetRoot<FlatBuffGenerated::Level>(memblock.data());
 
-	//visible
-	for (size_t i = 0; i < level->visible()->size(); i++)
+	// tilesets
+	for (auto tileset : *level->tilesets()) {
+		auto ts = std::make_unique<Tileset>(tileset);
+		gameState.level->tilesets.push_back(std::move(ts));
+	}
+
+	// visible
+	for (auto visible : *level->visible())
 	{
-		auto visible = level->visible()->Get(i);
 		auto vs = std::make_unique<Visible>(visible);
 		gameState.level->visible.push_back(std::move(vs));
 	}	
 
 	// hiding spots
-	for (size_t i = 0; i < level->hidingspots()->size(); i++)
+	for (auto hspot : *level->hidingspots())
 	{
-		auto hspot = level->hidingspots()->Get(i);
 		auto hs = std::make_unique<HidingSpot>(hspot);
 		gameState.level->hidingspots.push_back(std::move(hs));
 	}
 
 	// collisions
-	for (size_t i = 0; i < level->collision()->size(); i++)
+	for (auto collision : *level->collision())
 	{
-		auto stone = level->collision()->Get(i);
-		auto s = std::make_unique<Collision>(stone);
+		auto s = std::make_unique<Collision>(collision);
 		gameState.level->collisions.push_back(std::move(s));
 	}
 
 	// playerwalls
-	for (size_t i = 0; i < level->playerwalls()->size(); i++)
+	for (auto playerwall : *level->playerwalls())
 	{
-		auto playerwall = level->playerwalls()->Get(i);
 		initPlayerwall(playerwall);
 	}
 
 	// navpoints
-	for (size_t i = 0; i < level->navpoints()->size(); i++)
+	for (auto navpoint : *level->navpoints())
 	{
-		auto navpoint = level->navpoints()->Get(i);
 		auto n = std::make_unique<NavPoint>();
 		n->isspawn = navpoint->isspawn();
 		n->isplayerspawn = navpoint->isplayerspawn();
