@@ -111,15 +111,28 @@ void GameplayState::LoadLevel() {
 		}
 	}
 
-	// initialize visible stuff
-	for (auto visible : *level->visible()) {
-		Spriteinfo sinfo = sprites[visible->gid()];
-		auto visibleSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[sinfo.name].get(),
-			visible->pos()->x() * METERS2PIXELS, -visible->pos()->y() * METERS2PIXELS);
-		visibleSprite->setAnchorPoint(0, 1);
-		visibleSprite->setRotation(-visible->rotation());
-		this->nodes.push_back(std::move(visibleSprite));
+	// initialize decoration
+	for (auto decoration : *level->decoration()) {
+		Spriteinfo sinfo = sprites[decoration->gid()];
+		auto decorationSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[sinfo.name].get(),
+			decoration->pos()->x() * METERS2PIXELS, -decoration->pos()->y() * METERS2PIXELS);
+		decorationSprite->setAnchorPoint(0, 1);
+		decorationSprite->setRotation(-decoration->rotation());
+		decorationSprite->setLayer(DECORATION_LAYER);
+		this->nodes.push_back(std::move(decorationSprite));
 	}
+
+	// initialize objects
+	for (auto object : *level->objects()) {
+		Spriteinfo sinfo = sprites[object->gid()];
+		auto objectSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[sinfo.name].get(),
+			object->pos()->x() * METERS2PIXELS, -object->pos()->y() * METERS2PIXELS);
+		objectSprite->setAnchorPoint(0, 1);
+		objectSprite->setRotation(-object->rotation());
+		objectSprite->setLayer(OBJECTS_LAYER);
+		this->nodes.push_back(std::move(objectSprite));
+	}
+
 }
 
 

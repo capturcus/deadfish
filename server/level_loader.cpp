@@ -34,14 +34,23 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 	}
 	auto tilesets = builder.CreateVector(tilesetOffsets);
 
-	// visible
-	std::vector<flatbuffers::Offset<FlatBuffGenerated::Visible>> visibleOffsets;
-	for (auto &v : gameState.level->visible) {
+	// objects
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::Object>> objectOffsets;
+	for (auto &v : gameState.level->objects) {
 		FlatBuffGenerated::Vec2 pos(v->pos.x, v->pos.y);
-		auto offset = FlatBuffGenerated::CreateVisible(builder, &pos, v->rotation, v->gid);
-		visibleOffsets.push_back(offset);
+		auto offset = FlatBuffGenerated::CreateObject(builder, &pos, v->rotation, v->gid);
+		objectOffsets.push_back(offset);
 	}
-	auto visible = builder.CreateVector(visibleOffsets);
+	auto objects = builder.CreateVector(objectOffsets);
+
+	// decoration
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::Decoration>> decorationOffsets;
+	for (auto &v : gameState.level->decoration) {
+		FlatBuffGenerated::Vec2 pos(v->pos.x, v->pos.y);
+		auto offset = FlatBuffGenerated::CreateDecoration(builder, &pos, v->rotation, v->gid);
+		decorationOffsets.push_back(offset);
+	}
+	auto decoration = builder.CreateVector(decorationOffsets);
 
 	// hiding spots
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::HidingSpot>> hspotOffsets;
@@ -72,7 +81,7 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 
 	// final
 	FlatBuffGenerated::Vec2 size(gameState.level->size.x, gameState.level->size.y);
-	auto level = FlatBuffGenerated::CreateLevel(builder, visible, hidingspots, 0, 0, 0, tilesets, &size);
+	auto level = FlatBuffGenerated::CreateLevel(builder, objects, decoration, hidingspots, 0, 0, 0, tilesets, &size);
 	return level;
 }
 
@@ -114,12 +123,19 @@ void loadLevel(std::string &path)
 		gameState.level->tilesets.push_back(std::move(ts));
 	}
 
-	// visible
-	for (auto visible : *level->visible())
+	// objects
+	for (auto object : *level->objects())
 	{
-		auto vs = std::make_unique<Visible>(visible);
-		gameState.level->visible.push_back(std::move(vs));
-	}	
+		auto o = std::make_unique<Object>(object);
+		gameState.level->objects.push_back(std::move(o));
+	}
+
+	// decoration
+	for (auto decoration : *level->decoration())
+	{
+		auto d = std::make_unique<Decoration>(decoration);
+		gameState.level->decoration.push_back(std::move(d));
+	}
 
 	// hiding spots
 	for (auto hspot : *level->hidingspots())

@@ -108,9 +108,18 @@ struct Tileset {
 };
 
 // just a data container to be able to send it later to clients
-struct Visible {
-	Visible(const FlatBuffGenerated::Visible* fb_Vis) : pos(fb_Vis->pos()->x(), fb_Vis->pos()->y()),
-		rotation(fb_Vis->rotation()), gid(fb_Vis->gid()) {}
+struct Object {
+	Object(const FlatBuffGenerated::Object* fb_Obj) : pos(fb_Obj->pos()->x(), fb_Obj->pos()->y()),
+		rotation(fb_Obj->rotation()), gid(fb_Obj->gid()) {}
+	glm::vec2 pos;
+	float rotation;
+	uint16_t gid;
+};
+
+// just a data container to be able to send it later to clients
+struct Decoration {
+	Decoration(const FlatBuffGenerated::Decoration* fb_Dec) : pos(fb_Dec->pos()->x(), fb_Dec->pos()->y()),
+		rotation(fb_Dec->rotation()), gid(fb_Dec->gid()) {}
 	glm::vec2 pos;
 	float rotation;
 	uint16_t gid;
@@ -144,7 +153,8 @@ struct NavPoint {
 };
 
 struct Level {
-	std::vector<std::unique_ptr<Visible>> visible;
+	std::vector<std::unique_ptr<Object>> objects;
+	std::vector<std::unique_ptr<Decoration>> decoration;
 	std::vector<std::unique_ptr<Collision>> collisions;
 	std::vector<std::unique_ptr<HidingSpot>> hidingspots;
 	std::vector<std::unique_ptr<PlayerWall>> playerwalls;

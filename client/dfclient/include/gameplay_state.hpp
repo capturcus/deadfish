@@ -22,8 +22,10 @@ namespace nc = ncine;
 
 const float PIXELS2METERS = 0.01f;
 const float METERS2PIXELS = 100.f;
-const int MOBS_LAYER = 16384;
-const int HIDING_SPOTS_LAYER = 24576;
+const unsigned short DECORATION_LAYER = 8192;
+const unsigned short MOBS_LAYER = 16384;
+const unsigned short OBJECTS_LAYER = 20480;
+const unsigned short HIDING_SPOTS_LAYER = 24576;
 
 struct Mob {
 	std::unique_ptr<ncine::AnimatedSprite> sprite;

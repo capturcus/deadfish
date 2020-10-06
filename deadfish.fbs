@@ -22,7 +22,13 @@ table TileArray {
   tiles: [Tile];
 }
 
-table Visible {
+table Object {
+    pos: Vec2;
+    rotation: float;
+    gid: uint16;
+}
+
+table Decoration {
     pos: Vec2;
     rotation: float;
     gid: uint16;
@@ -58,13 +64,14 @@ table PlayerWall {
 }
 
 table Level {
-  visible: [Visible];
-  hidingspots:[HidingSpot];
-  collision:[Collision];
-  navpoints:[NavPoint];
-  playerwalls:[PlayerWall];
-  tilesets:[Tileset];
-  size:Vec2;
+  objects: [Object];
+  decoration: [Decoration];
+  hidingspots: [HidingSpot];
+  collision: [Collision];
+  navpoints: [NavPoint];
+  playerwalls: [PlayerWall];
+  tilesets: [Tileset];
+  size: Vec2;
 }
 
 // client

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import configparser, os, json, flatbuffers, math
-import FlatBuffGenerated.Level, FlatBuffGenerated.Visible, FlatBuffGenerated.HidingSpot, \
-    FlatBuffGenerated.Collision, FlatBuffGenerated.Vec2, \
+import FlatBuffGenerated.Level, FlatBuffGenerated.Object, FlatBuffGenerated.HidingSpot, \
+    FlatBuffGenerated.Collision, FlatBuffGenerated.Decoration, FlatBuffGenerated.Vec2, \
     FlatBuffGenerated.Tile, FlatBuffGenerated.Tileset, FlatBuffGenerated.TileArray, \
     FlatBuffGenerated.NavPoint, FlatBuffGenerated.PlayerWall
 from functools import reduce
@@ -17,32 +17,42 @@ config.read("levelpacker.ini")
 
 levels_dir = config['default']['levels_dir']
 
-GameObjects = namedtuple('GameObjects', ['visible', 'collision', 'hidingspots', 'navpoints', 'playerwalls', 'tilesets'])
+GameObjects = namedtuple('GameObjects', ['objects', 'decoration', 'collision', 'hidingspots', 'navpoints', 'playerwalls', 'tilesets'])
 
 
-def get_pos(o: minidom.Node, flip_y: bool = False) -> (float, float):
+def get_pos(o: minidom.Node) -> (float, float, float):
     x = float(o.getAttribute('x'))
     y = float(o.getAttribute('y'))
-    return x, y
+    rotation = float(o.getAttribute('rotation') or 0)
+    return x, y, rotation
 
-def handle_visible_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
+def handle_objects_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
-        x, y = get_pos(o, flip_y=True)
-        # radius = float(o.getAttribute('width')) / 2.0
-        rot = float(o.getAttribute('rotation') or 0)
+        x, y, rot = get_pos(o)
         gid = int(o.getAttribute('gid'))
 
-        FlatBuffGenerated.Visible.VisibleStart(builder)
+        FlatBuffGenerated.Object.ObjectStart(builder)
         pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
-        FlatBuffGenerated.Visible.VisibleAddPos(builder, pos)
-        FlatBuffGenerated.Visible.VisibleAddRotation(builder, rot)
-        FlatBuffGenerated.Visible.VisibleAddGid(builder, gid)
-        objs.visible.append(FlatBuffGenerated.Visible.VisibleEnd(builder))
+        FlatBuffGenerated.Object.ObjectAddPos(builder, pos)
+        FlatBuffGenerated.Object.ObjectAddRotation(builder, rot)
+        FlatBuffGenerated.Object.ObjectAddGid(builder, gid)
+        objs.objects.append(FlatBuffGenerated.Object.ObjectEnd(builder))
+
+def handle_decoration_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
+    for o in g.getElementsByTagName('object'):
+        x, y, rot = get_pos(o)
+        gid = int(o.getAttribute('gid'))
+
+        FlatBuffGenerated.Decoration.DecorationStart(builder)
+        pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
+        FlatBuffGenerated.Decoration.DecorationAddPos(builder, pos)
+        FlatBuffGenerated.Decoration.DecorationAddRotation(builder, rot)
+        FlatBuffGenerated.Decoration.DecorationAddGid(builder, gid)
+        objs.decoration.append(FlatBuffGenerated.Decoration.DecorationEnd(builder))
 
 def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
-        x, y = get_pos(o)
-        rotation = float(o.getAttribute('rotation') or 0)
+        x, y, rotation = get_pos(o)
         ellipse = False
         radius = 0
         polyverts = ""
@@ -76,7 +86,7 @@ def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuff
 
 def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
-        x, y = get_pos(o)
+        x, y, rotation = get_pos(o)
         ellipse = False
         radius = 0
         polyverts = ""
@@ -84,9 +94,9 @@ def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbu
 
         if o.getElementsByTagName('ellipse'):
             ellipse = True
-            x += float(o.getAttribute('width')) / 2.0
-            y += float(o.getAttribute('width')) / 2.0
-            radius = float(o.getAttribute('width')) / 2.0 * GLOBAL_SCALE
+            radius = float(o.getAttribute('width')) / 2.0
+            x += math.cos(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2)
+            y += math.sin(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2)
         else:
             polyverts = o.getElementsByTagName('polygon')[0].getAttribute('points')
             polyverts = polyverts.split(' ')
@@ -102,14 +112,14 @@ def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbu
         pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
         FlatBuffGenerated.HidingSpot.HidingSpotAddPos(builder, pos)
         FlatBuffGenerated.HidingSpot.HidingSpotAddEllipse(builder, ellipse)
-        FlatBuffGenerated.HidingSpot.HidingSpotAddRadius(builder, radius)
+        FlatBuffGenerated.HidingSpot.HidingSpotAddRadius(builder, radius * GLOBAL_SCALE)
         FlatBuffGenerated.HidingSpot.HidingSpotAddPolyverts(builder, poly)
         objs.hidingspots.append(FlatBuffGenerated.HidingSpot.HidingSpotEnd(builder))
 
 
 def handle_meta_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
-        x, y = get_pos(o)
+        x, y, rotation = get_pos(o)
 
         typ = o.getAttribute('type')
 
@@ -180,7 +190,7 @@ def handle_tileset(ts: minidom.Node, objs: GameObjects, builder: flatbuffers.Bui
 def process_level(path: str):
     dom = minidom.parse(path)
     map_node = dom.firstChild
-    objs = GameObjects([], [], [], [], [], [])
+    objs = GameObjects([], [], [], [], [], [], [])
     builder = flatbuffers.Builder(1)
 
     for ts in map_node.getElementsByTagName('tileset'):
@@ -188,8 +198,10 @@ def process_level(path: str):
 
     for g in map_node.getElementsByTagName('objectgroup'):
         group_name = g.getAttribute('name')
-        if group_name == 'visible':
-            handle_visible_layer(g, objs, builder)
+        if group_name == 'objects':
+            handle_objects_layer(g, objs, builder)
+        elif group_name == 'decoration':
+            handle_decoration_layer(g, objs, builder)
         elif group_name == 'collision':
             handle_collision_layer(g, objs, builder)
         elif group_name == 'hidingspots':
@@ -199,10 +211,15 @@ def process_level(path: str):
         else:
             print("WARNING: Unknown group {}".format(group_name))
     
-    FlatBuffGenerated.Level.LevelStartVisibleVector(builder, len(objs.visible))
-    for v in objs.visible:
-        builder.PrependUOffsetTRelative(v)
-    visibleOff = builder.EndVector(len(objs.visible))
+    FlatBuffGenerated.Level.LevelStartObjectsVector(builder, len(objs.objects))
+    for o in objs.objects:
+        builder.PrependUOffsetTRelative(o)
+    objectsOff = builder.EndVector(len(objs.objects))
+
+    FlatBuffGenerated.Level.LevelStartDecorationVector(builder, len(objs.decoration))
+    for d in objs.decoration:
+        builder.PrependUOffsetTRelative(d)
+    decorationOff = builder.EndVector(len(objs.decoration))
 
     FlatBuffGenerated.Level.LevelStartCollisionVector(builder, len(objs.collision))
     for c in objs.collision:
@@ -230,7 +247,8 @@ def process_level(path: str):
     tilesetsOff = builder.EndVector(len(objs.tilesets))
 
     FlatBuffGenerated.Level.LevelStart(builder)
-    FlatBuffGenerated.Level.LevelAddVisible(builder, visibleOff)
+    FlatBuffGenerated.Level.LevelAddObjects(builder, objectsOff)
+    FlatBuffGenerated.Level.LevelAddDecoration(builder, decorationOff)
     FlatBuffGenerated.Level.LevelAddCollision(builder, collisionOff)
     FlatBuffGenerated.Level.LevelAddHidingspots(builder, hspotsOff)
     FlatBuffGenerated.Level.LevelAddNavpoints(builder, navpointsOff)
