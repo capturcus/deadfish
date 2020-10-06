@@ -26,7 +26,7 @@ HidingSpot::HidingSpot(const FlatBuffGenerated::HidingSpot* fb_Hs) {
         fixtureDef.shape = &polyShape;
     }
 	fixtureDef.filter.categoryBits = 0x0010;    // "i be bush"
-    fixtureDef.filter.maskBits = 3;             // "i collide with player"
+    fixtureDef.filter.maskBits = 0x0002;        // "i collide with player"
 	body->CreateFixture(&fixtureDef);
 	body->SetUserData(this);
 }
@@ -35,6 +35,7 @@ void HidingSpot::handleCollision(Collideable& other) {
     try {
         auto &player = dynamic_cast<Player &>(other);
         playersInside.insert(&player);
+        std::cout << "player entered the hiding spot" << std::endl;
     }
     catch (...) {
         std::cout << "non-player collision with bush detected!" << std::endl;

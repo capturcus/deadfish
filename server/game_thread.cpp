@@ -253,8 +253,10 @@ class TestContactListener : public b2ContactListener
 		{
 			if (auto hidingSpot = dynamic_cast<HidingSpot*>(collideableA)) {
 				hidingSpot->playersInside.erase(dynamic_cast<Player*>(collideableB));
+				std::cout << "player left the hiding spot" << std::endl;
 			} else if ((hidingSpot = dynamic_cast<HidingSpot*>(collideableB))) {
 				hidingSpot->playersInside.erase(dynamic_cast<Player*>(collideableA));
+				std::cout << "player left the hiding spot" << std::endl;
 			}
 		}
 	}
