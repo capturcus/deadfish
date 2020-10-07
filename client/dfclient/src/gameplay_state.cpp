@@ -158,7 +158,7 @@ void GameplayState::LoadLevel() {
 		}
 
 	}
-
+}
 
 // this whole thing should probably be refactored
 void GameplayState::ProcessDeathReport(const FlatBuffGenerated::DeathReport* deathReport) {
