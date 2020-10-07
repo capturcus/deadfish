@@ -71,8 +71,9 @@ private:
 
 	void updateRemainingText(uint64_t remainingFrames);
 
-	std::vector<std::unique_ptr<ncine::DrawableNode>> nodes;
-	std::vector<std::unique_ptr<ncine::DrawableNode>> hiding_spots;
+	typedef std::vector<std::unique_ptr<ncine::DrawableNode>> DrawableNodeVector;
+	DrawableNodeVector nodes;
+	std::map<std::string, DrawableNodeVector> hiding_spots;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
 	std::map<uint16_t, Mob> mobs;
 	ncine::Sprite* mySprite = nullptr;
@@ -82,6 +83,7 @@ private:
 	bool gameEnded = false;
 	std::vector<nc::DrawableNode*> indicators;
 	ncine::TextNode* timeLeftNode = nullptr;
+	std::string currentHidingSpot = "";
 
 	ncine::TimeStamp lastMessageReceivedTime;
 

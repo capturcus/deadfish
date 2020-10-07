@@ -36,18 +36,19 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 
 	// objects
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::Object>> objectOffsets;
-	for (auto &v : gameState.level->objects) {
-		FlatBuffGenerated::Vec2 pos(v->pos.x, v->pos.y);
-		auto offset = FlatBuffGenerated::CreateObject(builder, &pos, v->rotation, v->gid);
+	for (auto &o : gameState.level->objects) {
+		FlatBuffGenerated::Vec2 pos(o->pos.x, o->pos.y);
+		auto hspotname = builder.CreateString(o->hspotname);
+		auto offset = FlatBuffGenerated::CreateObject(builder, &pos, o->rotation, o->gid, o->hspot, hspotname);
 		objectOffsets.push_back(offset);
 	}
 	auto objects = builder.CreateVector(objectOffsets);
 
 	// decoration
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::Decoration>> decorationOffsets;
-	for (auto &v : gameState.level->decoration) {
-		FlatBuffGenerated::Vec2 pos(v->pos.x, v->pos.y);
-		auto offset = FlatBuffGenerated::CreateDecoration(builder, &pos, v->rotation, v->gid);
+	for (auto &d : gameState.level->decoration) {
+		FlatBuffGenerated::Vec2 pos(d->pos.x, d->pos.y);
+		auto offset = FlatBuffGenerated::CreateDecoration(builder, &pos, d->rotation, d->gid);
 		decorationOffsets.push_back(offset);
 	}
 	auto decoration = builder.CreateVector(decorationOffsets);
@@ -74,7 +75,8 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 			}
 			polyverts = builder.CreateVector(temppolyverts);
 		}
-		auto off = FlatBuffGenerated::CreateHidingSpot(builder, &pos, ellipse, radius, polyverts);
+		auto name = builder.CreateString(hs->name);
+		auto off = FlatBuffGenerated::CreateHidingSpot(builder, &pos, ellipse, radius, polyverts, name);
 		hspotOffsets.push_back(off);
 	}
 	auto hidingspots = builder.CreateVector(hspotOffsets);
@@ -167,8 +169,8 @@ void loadLevel(std::string &path)
 		n->radius = navpoint->radius();
 		for (size_t j = 0; j < navpoint->neighbors()->size(); j++)
 		{
-			n->neighbors.push_back(navpoint->neighbors()->Get(j)->c_str());
+			n->neighbors.push_back(navpoint->neighbors()->Get(j)->str());
 		}
-		gameState.level->navpoints[navpoint->name()->c_str()] = std::move(n);
+		gameState.level->navpoints[navpoint->name()->str()] = std::move(n);
 	}
 }

@@ -30,12 +30,22 @@ def handle_objects_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffer
     for o in g.getElementsByTagName('object'):
         x, y, rot = get_pos(o)
         gid = int(o.getAttribute('gid'))
+        hspot = (o.getAttribute('type') == "hidingspot")
+        hspotname = ""
+        
+        if hspot:
+            for prop in o.getElementsByTagName("property"):
+                if prop.getAttribute("name") == "hspotName":
+                    hspotname = prop.getAttribute("value")
+        hspotNameFb = builder.CreateString(hspotname)
 
         FlatBuffGenerated.Object.ObjectStart(builder)
         pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
         FlatBuffGenerated.Object.ObjectAddPos(builder, pos)
         FlatBuffGenerated.Object.ObjectAddRotation(builder, rot)
         FlatBuffGenerated.Object.ObjectAddGid(builder, gid)
+        FlatBuffGenerated.Object.ObjectAddHspot(builder, hspot)
+        FlatBuffGenerated.Object.ObjectAddHspotname(builder, hspotNameFb)
         objs.objects.append(FlatBuffGenerated.Object.ObjectEnd(builder))
 
 def handle_decoration_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
@@ -108,12 +118,15 @@ def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbu
                 FlatBuffGenerated.Vec2.CreateVec2(builder, vert_x_f, vert_y_f)
             poly = builder.EndVector(len(polyverts))
         
+        name = builder.CreateString(o.getAttribute('name'))
+
         FlatBuffGenerated.HidingSpot.HidingSpotStart(builder)
         pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
         FlatBuffGenerated.HidingSpot.HidingSpotAddPos(builder, pos)
         FlatBuffGenerated.HidingSpot.HidingSpotAddEllipse(builder, ellipse)
         FlatBuffGenerated.HidingSpot.HidingSpotAddRadius(builder, radius * GLOBAL_SCALE)
         FlatBuffGenerated.HidingSpot.HidingSpotAddPolyverts(builder, poly)
+        FlatBuffGenerated.HidingSpot.HidingSpotAddName(builder, name)
         objs.hidingspots.append(FlatBuffGenerated.HidingSpot.HidingSpotEnd(builder))
 
 

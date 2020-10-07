@@ -220,10 +220,18 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 		auto mob = createFBMob(builder, player, p.get());
 		mobs.push_back(mob);
 	}
+	std::string hspotname = ""; // name of the hidingspot that the layer is in
+	for(auto &hspot : gameState.level->hidingspots) {
+		auto playerInHspot = hspot->playersInside.find(&player);
+		if(playerInHspot != hspot->playersInside.end()) {
+			hspotname = hspot->name;
+		}
+	}
 	auto mobsOffset = builder.CreateVector(mobs);
 	auto indicatorsOffset = builder.CreateVector(indicators);
+	auto hidingspot = builder.CreateString(hspotname);
 
-	auto worldState = FlatBuffGenerated::CreateWorldState(builder, mobsOffset, indicatorsOffset, framesRemaining);
+	auto worldState = FlatBuffGenerated::CreateWorldState(builder, mobsOffset, indicatorsOffset, framesRemaining, hidingspot);
 
 	return worldState.Union();
 }
@@ -253,10 +261,8 @@ class TestContactListener : public b2ContactListener
 		{
 			if (auto hidingSpot = dynamic_cast<HidingSpot*>(collideableA)) {
 				hidingSpot->playersInside.erase(dynamic_cast<Player*>(collideableB));
-				std::cout << "player left the hiding spot" << std::endl;
 			} else if ((hidingSpot = dynamic_cast<HidingSpot*>(collideableB))) {
 				hidingSpot->playersInside.erase(dynamic_cast<Player*>(collideableA));
-				std::cout << "player left the hiding spot" << std::endl;
 			}
 		}
 	}

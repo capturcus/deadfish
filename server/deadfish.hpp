@@ -110,10 +110,12 @@ struct Tileset {
 // just a data container to be able to send it later to clients
 struct Object {
 	Object(const FlatBuffGenerated::Object* fb_Obj) : pos(fb_Obj->pos()->x(), fb_Obj->pos()->y()),
-		rotation(fb_Obj->rotation()), gid(fb_Obj->gid()) {}
+		rotation(fb_Obj->rotation()), gid(fb_Obj->gid()), hspot(fb_Obj->hspot()), hspotname(fb_Obj->hspotname()->str()) {}
 	glm::vec2 pos;
 	float rotation;
 	uint16_t gid;
+	bool hspot;
+	std::string hspotname;
 };
 
 // just a data container to be able to send it later to clients
@@ -127,6 +129,7 @@ struct Decoration {
 
 struct HidingSpot : public Collideable {
 	HidingSpot(const FlatBuffGenerated::HidingSpot*);
+	std::string name;
 	b2Body* body = nullptr;
 	std::set<Player*> playersInside;
 	virtual void handleCollision(Collideable& other) override;

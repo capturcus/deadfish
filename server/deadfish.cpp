@@ -4,6 +4,7 @@
 // HidingSpot
 
 HidingSpot::HidingSpot(const FlatBuffGenerated::HidingSpot* fb_Hs) {
+    this->name = fb_Hs->name()->str();
     b2BodyDef myBodyDef;
 	myBodyDef.type = b2_staticBody;
 	myBodyDef.position.Set(fb_Hs->pos()->x(), fb_Hs->pos()->y());
@@ -35,7 +36,6 @@ void HidingSpot::handleCollision(Collideable& other) {
     try {
         auto &player = dynamic_cast<Player &>(other);
         playersInside.insert(&player);
-        std::cout << "player entered the hiding spot" << std::endl;
     }
     catch (...) {
         std::cout << "non-player collision with bush detected!" << std::endl;

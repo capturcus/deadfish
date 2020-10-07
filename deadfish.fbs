@@ -26,6 +26,8 @@ table Object {
     pos: Vec2;
     rotation: float;
     gid: uint16;
+    hspot: bool;
+    hspotname: string;
 }
 
 table Decoration {
@@ -47,6 +49,7 @@ table HidingSpot {
     ellipse: bool;
     radius: float;
     polyverts: [Vec2];
+    name: string;
 }
 
 table NavPoint {
@@ -141,6 +144,7 @@ table WorldState {
   mobs:[Mob];
   indicators:[Indicator];
   stepsRemaining:uint64;
+  hidingspot:string;
 }
 
 table HighscoreEntry {
