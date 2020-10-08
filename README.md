@@ -75,7 +75,7 @@ The entry point is gameThread, and that's where the game loop is. The box2d worl
 
 ### Overview
 
-Levels are created in [Tiled](https://www.mapeditor.org/). However, contrary to the editor name, the maps are not tile based and all interactive objects are placed freely. The maps contain visible objects: _obstacles_ (stones) and _hiding spots_ (bushes), as well as invisible, related to the game mechanics: _playerwalls_ and _waypoints_.
+Levels are created in [Tiled](https://www.mapeditor.org/). However, contrary to the editor name, the maps are not tile based and all interactive objects are placed freely. The maps contain visible objects: _obstacles_ (e.g. stones), _decorations_ (e.g. sand patterns) and _hiding spot_ visual representation (e.g. bushes), as well as invisible, related to the game mechanics: _collision_ objects, _hiding spot_ mechanical objects, _playerwalls_ and _waypoints_.
 
 It is __very__ important to use Tiled __version 1.4.0 or higher__ (otherwise there will be positioning problems with every rotated object.) The newest versions are available on `snap` or on Tiled [website](https://www.mapeditor.org/) (the newest version available via `apt` is below 1.4.0).
 
@@ -88,9 +88,15 @@ The levels are created in Tiled and saved in the __.tlx__ format (Tiled XML). Th
 Because of the aforementioned processing flow, the level's internal structure is very strict. Everything must be correct to the letter, or server won't be able to load the level.
 
 Tiled uses **tilesets** to group object "classes" and **layers** to group object instances in the map. `levelpacker.py` recognizes the layers by name.
-There should be two layers:
+The levels contain five basic layers:
  - `objects`
-     - This layer contains visible stuff, namely bushes and stones.
+     - This layer contains all main visible stuff, like bushes, stones etc. Everything from this layer will be rendered **over** the player.
+ - `decoration`
+     - The second visible layer, containing (surprise, surprise) decorations. Everything on this layer will be rendered **under** the player.
+ - `collision`
+     - This layer contains objects representing collision bodies. They are invisible.
+ - `hidingspots`
+     - As the name suggests, this layer defines bodies that are hiding spots
  - `meta`
      - This is the layer for the mechanics. Here go the waypoints and playerwalls.
 
