@@ -9,6 +9,7 @@ from collections import namedtuple
 
 
 GLOBAL_SCALE = 0.01
+MAX_POLYGON_VERTICES = 8
 
 
 config = configparser.ConfigParser()
@@ -68,13 +69,21 @@ def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuff
         poly = 0
 
         if o.getElementsByTagName('ellipse'):
+            width = float(o.getAttribute('width'))
+            height = float(o.getAttribute('height'))
+            if width != height:
+                print("collision object of id", o.getAttribute('id'), "is an ellipse, not a circle, with width:", width, "height:", height)
+                exit(1)
             ellipse = True
-            radius = float(o.getAttribute('width')) / 2.0
+            radius = width / 2.0
             x += math.cos(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2) # trygonometria 100
             y += math.sin(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2)
         else:
             polyverts = o.getElementsByTagName('polygon')[0].getAttribute('points')
             polyverts = polyverts.split(' ')
+            if len(polyverts) > MAX_POLYGON_VERTICES:
+                print("collision object of id", o.getAttribute('id'), "has", len(polyverts), "vertices, wich is more than max (" + str(MAX_POLYGON_VERTICES) + ")")
+                exit(1)
             FlatBuffGenerated.Collision.CollisionStartPolyvertsVector(builder, len(polyverts))
             for v in polyverts:
                 vert_x, vert_y = v.split(",")
@@ -102,13 +111,21 @@ def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbu
         poly = 0
 
         if o.getElementsByTagName('ellipse'):
+            width = float(o.getAttribute('width'))
+            height = float(o.getAttribute('height'))
+            if width != height:
+                print("hidingspot", o.getAttribute('name'), "is an ellipse, not a circle, with width:", width, "height:", height)
+                exit(1)
             ellipse = True
-            radius = float(o.getAttribute('width')) / 2.0
+            radius = width / 2.0
             x += math.cos(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2)
             y += math.sin(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2)
         else:
             polyverts = o.getElementsByTagName('polygon')[0].getAttribute('points')
             polyverts = polyverts.split(' ')
+            if len(polyverts) > MAX_POLYGON_VERTICES:
+                print("collision object of id", o.getAttribute('id'), "has", len(polyverts), "vertices, wich is more than max (" + str(MAX_POLYGON_VERTICES) + ")")
+                exit(1)
             FlatBuffGenerated.HidingSpot.HidingSpotStartPolyvertsVector(builder, len(polyverts))
             for v in polyverts:
                 vert_x, vert_y = v.split(",")
