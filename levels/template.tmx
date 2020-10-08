@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="32" tileheight="32" infinite="1" nextlayerid="7" nextobjectid="114">
+ <tileset firstgid="1" name="default_tileset" tilewidth="1200" tileheight="5760" tilecount="4" columns="0" objectalignment="topleft">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="../data/textures/bush.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="../data/textures/stone.png"/>
+  </tile>
+  <tile id="3">
+   <image width="300" height="300" source="../data/textures/square.png"/>
+  </tile>
+  <tile id="4">
+   <image width="1200" height="5760" source="../data/textures/fish.png"/>
+  </tile>
+ </tileset>
+ <objectgroup id="6" name="decoration"/>
+ <objectgroup id="2" name="objects"/>
+ <objectgroup id="3" name="collision"/>
+ <objectgroup id="4" name="hidingspots"/>
+ <objectgroup id="5" name="meta"/>
+</map>
