@@ -86,47 +86,16 @@ void GameplayState::LoadLevel() {
 	auto level = FBUtilGetServerEvent(gameData.levelData, Level);
 
 	// build (guid->sprite) map
-	struct Spriteinfo {
-		Spriteinfo() {}
-		Spriteinfo(std::string aName, float x, float y) : name(aName), size(x, y) {}
-		std::string name;
-		ncine::Vector2f size;
-	};
+	std::map<uint16_t, std::string> spritemap;
 
-	std::map<uint16_t, Spriteinfo> sprites;
-
-	auto rootPath = ncine::theApplication().appConfiguration().dataPath();
-	auto folderPath = std::string((rootPath + LEVELS_PATH).data());
-	std::ifstream in;
-	for (auto fb_Ts : *level->tilesets()) {
-		std::string path = folderPath + '/' + fb_Ts->path()->str();
-		path = path.substr(0, path.size()-3)+"tsbin";
-		in.open(path, std::ios::in | std::ios::binary | std::ios::ate);
-		if (!in.is_open())
-		{
-			std::cout << "failed to open tileset file " << path << "\n";
-			exit(1);
-		}
-		auto size = in.tellg();
-		std::vector<char> memblock(size);
-		in.seekg(0, std::ios::beg);
-		in.read(memblock.data(), memblock.size());
-		in.close();
-
-		auto tileset = flatbuffers::GetRoot<FlatBuffGenerated::TileArray>(memblock.data());
-		for (auto tile : *tileset->tiles()) {
-			std::string name = tile->path()->str();
-			name = name.substr(name.find_last_of('/')+1);
-			Spriteinfo sinfo(name, tile->size()->x(), tile->size()->y());
-			std::pair<uint16_t, Spriteinfo> pair(fb_Ts->firstgid()+tile->id(), std::move(sinfo));
-			sprites.insert(std::move(pair));
-		}
+	for (auto fb_Ti : *level->tileinfo()) {
+		spritemap.insert(std::pair<uint16_t, std::string>(fb_Ti->gid(), fb_Ti->name()->str()));
 	}
 
 	// initialize decoration
 	for (auto decoration : *level->decoration()) {
-		Spriteinfo sinfo = sprites[decoration->gid()];
-		auto decorationSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[sinfo.name].get(),
+		std::string spritename = spritemap[decoration->gid()];
+		auto decorationSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[spritename].get(),
 			decoration->pos()->x() * METERS2PIXELS, -decoration->pos()->y() * METERS2PIXELS);
 		decorationSprite->setAnchorPoint(0, 1);
 		decorationSprite->setRotation(-decoration->rotation());
@@ -136,8 +105,8 @@ void GameplayState::LoadLevel() {
 
 	// initialize objects
 	for (auto object : *level->objects()) {
-		Spriteinfo sinfo = sprites[object->gid()];
-		auto objectSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[sinfo.name].get(),
+		std::string spritename = spritemap[object->gid()];
+		auto objectSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[spritename].get(),
 			object->pos()->x() * METERS2PIXELS, -object->pos()->y() * METERS2PIXELS);
 		objectSprite->setAnchorPoint(0, 1);
 		objectSprite->setRotation(-object->rotation());

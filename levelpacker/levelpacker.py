@@ -2,8 +2,7 @@
 import configparser, os, json, flatbuffers, math
 import FlatBuffGenerated.Level, FlatBuffGenerated.Object, FlatBuffGenerated.HidingSpot, \
     FlatBuffGenerated.Collision, FlatBuffGenerated.Decoration, FlatBuffGenerated.Vec2, \
-    FlatBuffGenerated.Tile, FlatBuffGenerated.Tileset, FlatBuffGenerated.TileArray, \
-    FlatBuffGenerated.NavPoint, FlatBuffGenerated.PlayerWall
+    FlatBuffGenerated.Tileinfo, FlatBuffGenerated.NavPoint, FlatBuffGenerated.PlayerWall
 from functools import reduce
 import xml.dom.minidom as minidom
 from collections import namedtuple
@@ -17,7 +16,7 @@ config.read("levelpacker.ini")
 
 levels_dir = config['default']['levels_dir']
 
-GameObjects = namedtuple('GameObjects', ['objects', 'decoration', 'collision', 'hidingspots', 'navpoints', 'playerwalls', 'tilesets'])
+GameObjects = namedtuple('GameObjects', ['objects', 'decoration', 'collision', 'hidingspots', 'navpoints', 'playerwalls', 'tileinfo'])
 
 
 def get_pos(o: minidom.Node) -> (float, float, float):
@@ -192,12 +191,15 @@ def handle_meta_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.B
 
 
 def handle_tileset(ts: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
-    path = builder.CreateString(ts.getAttribute('source'))
     firstgid = int(ts.getAttribute('firstgid'))
-    FlatBuffGenerated.Tileset.TilesetStart(builder)
-    FlatBuffGenerated.Tileset.TilesetAddPath(builder, path)
-    FlatBuffGenerated.Tileset.TilesetAddFirstgid(builder, firstgid)
-    objs.tilesets.append(FlatBuffGenerated.Tileset.TilesetEnd(builder))
+    for t in ts.getElementsByTagName('tile'):
+        gid = int(t.getAttribute('id')) + firstgid
+        name = os.path.basename(t.getElementsByTagName('image')[0].getAttribute('source'))
+        fbname = builder.CreateString(name)
+        FlatBuffGenerated.Tileinfo.TileinfoStart(builder)
+        FlatBuffGenerated.Tileinfo.TileinfoAddName(builder, fbname)
+        FlatBuffGenerated.Tileinfo.TileinfoAddGid(builder, gid)
+        objs.tileinfo.append(FlatBuffGenerated.Tileinfo.TileinfoEnd(builder))
 
 
 def process_level(path: str):
@@ -254,10 +256,10 @@ def process_level(path: str):
         builder.PrependUOffsetTRelative(b)
     playerwallsOff = builder.EndVector(len(objs.playerwalls))
 
-    FlatBuffGenerated.Level.LevelStartTilesetsVector(builder, len(objs.tilesets))
-    for t in objs.tilesets:
+    FlatBuffGenerated.Level.LevelStartTileinfoVector(builder, len(objs.tileinfo))
+    for t in objs.tileinfo:
         builder.PrependUOffsetTRelative(t)
-    tilesetsOff = builder.EndVector(len(objs.tilesets))
+    tileinfoOff = builder.EndVector(len(objs.tileinfo))
 
     FlatBuffGenerated.Level.LevelStart(builder)
     FlatBuffGenerated.Level.LevelAddObjects(builder, objectsOff)
@@ -270,7 +272,7 @@ def process_level(path: str):
         float(map_node.getAttribute("width")) * float(map_node.getAttribute("tilewidth")) * GLOBAL_SCALE,
         float(map_node.getAttribute("height")) * float(map_node.getAttribute("tileheight")) * GLOBAL_SCALE)
     FlatBuffGenerated.Level.LevelAddSize(builder, size)
-    FlatBuffGenerated.Level.LevelAddTilesets(builder, tilesetsOff)
+    FlatBuffGenerated.Level.LevelAddTileinfo(builder, tileinfoOff)
     level = FlatBuffGenerated.Level.LevelEnd(builder)
     builder.Finish(level)
 
@@ -279,48 +281,10 @@ def process_level(path: str):
     with open(path[:-3]+"bin", "wb") as f:
         f.write(buf)
 
-
-def process_tileset(path: str):
-    dom = minidom.parse(path)
-    tileset_node = dom.firstChild
-    builder = flatbuffers.Builder(1)
-    
-    tiles = []
-    
-    for t in tileset_node.getElementsByTagName("tile"):
-        id = int(t.getAttribute("id"))
-        image = t.getElementsByTagName("image")[0]
-        source = builder.CreateString(image.getAttribute("source"))
-
-        FlatBuffGenerated.Tile.TileStart(builder)
-        FlatBuffGenerated.Tile.TileAddPath(builder, source)
-        size = FlatBuffGenerated.Vec2.CreateVec2(builder, float(image.getAttribute("width")), float(image.getAttribute("height")))
-        FlatBuffGenerated.Tile.TileAddSize(builder, size)
-        FlatBuffGenerated.Tile.TileAddId(builder, id)
-        tiles.append(FlatBuffGenerated.Tile.TileEnd(builder))
-
-    FlatBuffGenerated.TileArray.TileArrayStartTilesVector(builder, len(tiles))
-    for t in tiles:
-        builder.PrependUOffsetTRelative(t)
-    tilesOff = builder.EndVector(len(tiles))
-
-    FlatBuffGenerated.TileArray.TileArrayStart(builder)
-    FlatBuffGenerated.TileArray.TileArrayAddTiles(builder, tilesOff)
-    tileset = FlatBuffGenerated.TileArray.TileArrayEnd(builder)
-    builder.Finish(tileset)
-
-    buf = builder.Output()
-
-    with open(path[:-3]+"tsbin", "wb") as f:
-        f.write(buf)
-
-
 # the actual script beginning
 for i in os.listdir(levels_dir):
     if i.endswith(".tmx"):
         # level file
+        print("Processing level " + i + "...")
         process_level(levels_dir+i)
-for ts in os.listdir(levels_dir+"tilesets"):
-    if ts.endswith(".tsx"):
-        # tileset file
-        process_tileset(levels_dir+"tilesets/"+ts)
+print("Levelpacker done.")

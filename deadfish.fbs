@@ -7,19 +7,9 @@ struct Vec2 {
   y:float;
 }
 
-table Tile {
-  path: string;
-  size: Vec2;
-  id: uint16;
-}
-
-table Tileset {
-  path: string;
-  firstgid: uint16;
-}
-
-table TileArray {
-  tiles: [Tile];
+table Tileinfo {
+  gid: uint16;
+  name: string;
 }
 
 table Object {
@@ -73,7 +63,7 @@ table Level {
   collision: [Collision];
   navpoints: [NavPoint];
   playerwalls: [PlayerWall];
-  tilesets: [Tileset];
+  tileinfo: [Tileinfo];
   size: Vec2;
 }
 

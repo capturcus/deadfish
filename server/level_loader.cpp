@@ -25,14 +25,14 @@ void initPlayerwall(const FlatBuffGenerated::PlayerWall *pw)
 
 flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBufferBuilder &builder)
 {
-	//tilesets
-	std::vector<flatbuffers::Offset<FlatBuffGenerated::Tileset>> tilesetOffsets;
-	for (auto &ts : gameState.level->tilesets) {
-		auto path = builder.CreateString(ts->path);
-		auto offset = FlatBuffGenerated::CreateTileset(builder, path, ts->firstgid);
-		tilesetOffsets.push_back(offset);
+	//tileinfo
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::Tileinfo>> tileinfoOffsets;
+	for (auto &ts : gameState.level->tileinfo) {
+		auto name = builder.CreateString(ts->name);
+		auto offset = FlatBuffGenerated::CreateTileinfo(builder, ts->gid, name);
+		tileinfoOffsets.push_back(offset);
 	}
-	auto tilesets = builder.CreateVector(tilesetOffsets);
+	auto tilesets = builder.CreateVector(tileinfoOffsets);
 
 	// objects
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::Object>> objectOffsets;
@@ -120,9 +120,9 @@ void loadLevel(std::string &path)
 	auto level = flatbuffers::GetRoot<FlatBuffGenerated::Level>(memblock.data());
 
 	// tilesets
-	for (auto tileset : *level->tilesets()) {
-		auto ts = std::make_unique<Tileset>(tileset);
-		gameState.level->tilesets.push_back(std::move(ts));
+	for (auto tileinfo : *level->tileinfo()) {
+		auto ti = std::make_unique<Tileinfo>(tileinfo);
+		gameState.level->tileinfo.push_back(std::move(ti));
 	}
 
 	// objects

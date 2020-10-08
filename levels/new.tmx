@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="32" tileheight="32" infinite="1" nextlayerid="7" nextobjectid="114">
- <tileset firstgid="1" source="tilesets/default_tileset.tsx"/>
+ <tileset firstgid="1" name="default_tileset" tilewidth="1200" tileheight="5760" tilecount="4" columns="0" objectalignment="topleft">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="../data/textures/bush.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="../data/textures/stone.png"/>
+  </tile>
+  <tile id="3">
+   <image width="300" height="300" source="../data/textures/square.png"/>
+  </tile>
+  <tile id="4">
+   <image width="1200" height="5760" source="../data/textures/fish.png"/>
+  </tile>
+ </tileset>
  <objectgroup id="6" name="decoration">
   <object id="20" gid="4" x="-476.973" y="-46.8569" width="300" height="300" rotation="26.4951"/>
   <object id="21" gid="4" x="-600.333" y="-408.333" width="300" height="300"/>
@@ -96,12 +110,12 @@
    </properties>
   </object>
  </objectgroup>
- <objectgroup id="4" name="hidingspots" visible="0">
+ <objectgroup id="4" name="hidingspots">
   <object id="44" name="hidingspot1" x="-447" y="197.334">
    <polygon points="-149.333,21.3333 78.9848,44.551 165.334,1.33333 201.334,-108 150.667,-224 -84,-190.667 -184,-109.334"/>
   </object>
  </objectgroup>
- <objectgroup id="3" name="collision" visible="0">
+ <objectgroup id="3" name="collision">
   <object id="33" x="-346.671" y="-351.751" width="116" height="116" rotation="318.565">
    <ellipse/>
   </object>
@@ -133,7 +147,7 @@
    <ellipse/>
   </object>
  </objectgroup>
- <objectgroup id="5" name="meta" visible="0">
+ <objectgroup id="5" name="meta">
   <object id="36" name="pspawn" type="waypoint" x="46.0003" y="-239" width="132" height="132">
    <properties>
     <property name="isplayerspawn" type="bool" value="true"/>

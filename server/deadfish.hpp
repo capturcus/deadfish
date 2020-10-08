@@ -101,10 +101,10 @@ struct Civilian : public Mob {
 };
 
 // just a data container to be able to send it later to clients
-struct Tileset {
-	Tileset(const FlatBuffGenerated::Tileset* fb_Ts) : path(fb_Ts->path()->str()), firstgid(fb_Ts->firstgid()) {}
-	std::string path;
-	uint16_t firstgid;
+struct Tileinfo {
+	Tileinfo(const FlatBuffGenerated::Tileinfo* fb_Ti) : name(fb_Ti->name()->str()), gid(fb_Ti->gid()) {}
+	std::string name;
+	uint16_t gid;
 };
 
 // just a data container to be able to send it later to clients
@@ -162,7 +162,7 @@ struct Level {
 	std::vector<std::unique_ptr<HidingSpot>> hidingspots;
 	std::vector<std::unique_ptr<PlayerWall>> playerwalls;
 	std::unordered_map<std::string, std::unique_ptr<NavPoint>> navpoints;
-	std::vector<std::unique_ptr<Tileset>> tilesets;
+	std::vector<std::unique_ptr<Tileinfo>> tileinfo;
 	glm::vec2 size;
 };
 
