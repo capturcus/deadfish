@@ -139,6 +139,9 @@ def handle_meta_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.B
             width = float(o.getAttribute('width')) / 2.0
             height = float(o.getAttribute('height')) / 2.0
 
+            x += width
+            y += height
+
             FlatBuffGenerated.PlayerWall.PlayerWallStart(builder)
             pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
             FlatBuffGenerated.PlayerWall.PlayerWallAddPosition(builder, pos)
