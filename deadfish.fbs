@@ -16,7 +16,6 @@ table Object {
     pos: Vec2;
     rotation: float;
     gid: uint16;
-    hspot: bool;
     hspotname: string;
 }
 

@@ -102,7 +102,7 @@ void GameplayState::LoadLevel() {
 		decorationSprite->setLayer(DECORATION_LAYER);
 		this->nodes.push_back(std::move(decorationSprite));
 	}
-
+	
 	// initialize objects
 	for (auto object : *level->objects()) {
 		std::string spritename = spritemap[object->gid()];
@@ -110,15 +110,15 @@ void GameplayState::LoadLevel() {
 			object->pos()->x() * METERS2PIXELS, -object->pos()->y() * METERS2PIXELS);
 		objectSprite->setAnchorPoint(0, 1);
 		objectSprite->setRotation(-object->rotation());
-		if(!object->hspot()){
+		if(object->hspotname()->str().empty()){
 			objectSprite->setLayer(OBJECTS_LAYER);
 			this->nodes.push_back(std::move(objectSprite));
 		} else {
 			objectSprite->setLayer(HIDING_SPOTS_LAYER);
 			auto hspotgroup = this->hiding_spots.find(object->hspotname()->str());
-			if (hspotgroup != this->hiding_spots.end()) {
+			if (hspotgroup != this->hiding_spots.end()) { // if found group, add to group
 				hspotgroup->second.push_back(std::move(objectSprite));
-			} else {
+			} else {	// if no group, create group
 				DrawableNodeVector vector;
 				vector.push_back(std::move(objectSprite));
 				std::pair<std::string, DrawableNodeVector> pair(object->hspotname()->str(), std::move(vector));

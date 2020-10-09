@@ -39,7 +39,7 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 	for (auto &o : gameState.level->objects) {
 		FlatBuffGenerated::Vec2 pos(o->pos.x, o->pos.y);
 		auto hspotname = builder.CreateString(o->hspotname);
-		auto offset = FlatBuffGenerated::CreateObject(builder, &pos, o->rotation, o->gid, o->hspot, hspotname);
+		auto offset = FlatBuffGenerated::CreateObject(builder, &pos, o->rotation, o->gid, hspotname);
 		objectOffsets.push_back(offset);
 	}
 	auto objects = builder.CreateVector(objectOffsets);

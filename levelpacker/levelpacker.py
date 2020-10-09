@@ -30,13 +30,11 @@ def handle_objects_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffer
     for o in g.getElementsByTagName('object'):
         x, y, rot = get_pos(o)
         gid = int(o.getAttribute('gid'))
-        hspot = (o.getAttribute('type') == "hidingspot")
         hspotname = ""
         
-        if hspot:
-            for prop in o.getElementsByTagName("property"):
-                if prop.getAttribute("name") == "hspotName":
-                    hspotname = prop.getAttribute("value")
+        for prop in o.getElementsByTagName("property"):
+            if prop.getAttribute("name") == "hspotName":
+                hspotname = prop.getAttribute("value")
         hspotNameFb = builder.CreateString(hspotname)
 
         FlatBuffGenerated.Object.ObjectStart(builder)
@@ -44,7 +42,6 @@ def handle_objects_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffer
         FlatBuffGenerated.Object.ObjectAddPos(builder, pos)
         FlatBuffGenerated.Object.ObjectAddRotation(builder, rot)
         FlatBuffGenerated.Object.ObjectAddGid(builder, gid)
-        FlatBuffGenerated.Object.ObjectAddHspot(builder, hspot)
         FlatBuffGenerated.Object.ObjectAddHspotname(builder, hspotNameFb)
         objs.objects.append(FlatBuffGenerated.Object.ObjectEnd(builder))
 
