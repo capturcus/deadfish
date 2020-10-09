@@ -53,30 +53,21 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 	}
 	auto decoration = builder.CreateVector(decorationOffsets);
 
-	// hiding spots
+	// hiding spots 
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::HidingSpot>> hspotOffsets;
 	for (auto &hs : gameState.level->hidingspots)
 	{
 		FlatBuffGenerated::Vec2 pos(hs->body->GetPosition().x, hs->body->GetPosition().y);
 		bool ellipse = false;
 		float radius = 0;
-		flatbuffers::Offset<flatbuffers::Vector<const FlatBuffGenerated::Vec2 *>> polyverts = 0;
 
 		auto f = hs->body->GetFixtureList();
 		if (auto circleShape = dynamic_cast<b2CircleShape*>(f->GetShape())) {
 			ellipse = true;
 			radius = circleShape->m_radius;
-		} else {
-			auto polyShape = dynamic_cast<b2PolygonShape*>(f->GetShape());
-			std::vector<const FlatBuffGenerated::Vec2* > temppolyverts;
-			for (auto vertex : polyShape->m_vertices) {
-				const auto v = std::make_unique<FlatBuffGenerated::Vec2>(vertex.x, vertex.y);
-				temppolyverts.push_back(std::move(v.get()));
-			}
-			polyverts = builder.CreateVector(temppolyverts);
 		}
 		auto name = builder.CreateString(hs->name);
-		auto off = FlatBuffGenerated::CreateHidingSpot(builder, &pos, ellipse, radius, polyverts, name);
+		auto off = FlatBuffGenerated::CreateHidingSpot(builder, &pos, ellipse, radius, 0, name);
 		hspotOffsets.push_back(off);
 	}
 	auto hidingspots = builder.CreateVector(hspotOffsets);
