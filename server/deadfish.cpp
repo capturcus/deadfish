@@ -8,11 +8,12 @@ HidingSpot::HidingSpot(const FlatBuffGenerated::HidingSpot* fb_Hs) {
     b2BodyDef myBodyDef;
 	myBodyDef.type = b2_staticBody;
 	myBodyDef.position.Set(fb_Hs->pos()->x(), fb_Hs->pos()->y());
+    myBodyDef.angle = fb_Hs->rotation() * TO_RADIANS;
 	body = gameState.b2world->CreateBody(&myBodyDef);
 
 	b2FixtureDef fixtureDef;
     fixtureDef.isSensor = true; // makes hiding spot detect collision but allow movement
-    if (fb_Hs->ellipse()) {
+    if (!fb_Hs->polyverts()) {
         b2CircleShape circleShape;
         circleShape.m_radius = fb_Hs->radius();
         fixtureDef.shape = &circleShape;
@@ -57,7 +58,7 @@ CollisionMask::CollisionMask(const FlatBuffGenerated::CollisionMask* fb_Col) {
 	body = gameState.b2world->CreateBody(&myBodyDef);
 
 	b2FixtureDef fixtureDef;
-    if (fb_Col->ellipse()) {
+    if (!fb_Col->polyverts()) {
         b2CircleShape circleShape;
         circleShape.m_radius = fb_Col->radius();
         fixtureDef.shape = &circleShape;

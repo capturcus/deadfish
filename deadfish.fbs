@@ -27,7 +27,6 @@ table Decoration {
 
 table CollisionMask {
     pos: Vec2;
-    ellipse: bool;
     radius: float;
     rotation: float;
     polyverts: [Vec2];
@@ -35,8 +34,8 @@ table CollisionMask {
 
 table HidingSpot {
     pos: Vec2;
-    ellipse: bool;
     radius: float;
+    rotation: float;
     polyverts: [Vec2];
     name: string;
 }

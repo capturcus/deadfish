@@ -21,32 +21,32 @@
   <object id="102" gid="5" x="345.697" y="-3106.91" width="1200" height="5760"/>
  </objectgroup>
  <objectgroup id="2" name="objects">
-  <object id="17" type="hidingspot" gid="1" x="-474" y="-34" width="128" height="128">
+  <object id="17" type="hidingspot" gid="1" x="-399.344" y="253.31" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
    </properties>
   </object>
-  <object id="22" type="hidingspot" gid="1" x="-494" y="70" width="128" height="128">
+  <object id="22" type="hidingspot" gid="1" x="-381.27" y="148.958" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
    </properties>
   </object>
-  <object id="23" type="hidingspot" gid="1" x="-424" y="47" width="128" height="128">
+  <object id="23" type="hidingspot" gid="1" x="-450.833" y="173.248" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
    </properties>
   </object>
-  <object id="24" type="hidingspot" gid="1" x="-378" y="-40" width="128" height="128">
+  <object id="24" type="hidingspot" gid="1" x="-495.217" y="261.084" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
    </properties>
   </object>
-  <object id="25" type="hidingspot" gid="1" x="-576" y="-9" width="128" height="128">
+  <object id="25" type="hidingspot" gid="1" x="-297.824" y="226.428" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
    </properties>
   </object>
-  <object id="26" type="hidingspot" gid="1" x="-534" y="17" width="128" height="128">
+  <object id="26" type="hidingspot" gid="1" x="-340.297" y="201.209" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
    </properties>
@@ -64,42 +64,42 @@
   <object id="61" gid="2" x="413.333" y="-466.667" width="128" height="128"/>
   <object id="62" gid="2" x="433.333" y="-508" width="128" height="128"/>
   <object id="87" gid="2" x="-274.667" y="156" width="128" height="128"/>
-  <object id="104" type="hidingspot" gid="1" x="-570" y="72" width="128" height="128">
+  <object id="104" type="hidingspot" gid="1" x="-305.32" y="145.553" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
    </properties>
   </object>
-  <object id="105" type="hidingspot" gid="1" x="-644" y="36" width="128" height="128">
+  <object id="105" type="hidingspot" gid="1" x="-230.667" y="180.179" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
    </properties>
   </object>
-  <object id="106" type="hidingspot" gid="1" x="-550.667" y="118.667" width="128" height="128">
+  <object id="106" type="hidingspot" gid="1" x="-325.512" y="99.2515" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
    </properties>
   </object>
-  <object id="107" type="hidingspot" gid="1" x="-444" y="130" width="128" height="128">
+  <object id="107" type="hidingspot" gid="1" x="-432.371" y="89.8925" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
    </properties>
   </object>
-  <object id="108" type="hidingspot" gid="1" x="-360" y="34" width="128" height="128">
+  <object id="108" type="hidingspot" gid="1" x="-514.582" y="187.429" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
    </properties>
   </object>
-  <object id="109" type="hidingspot" gid="1" x="-382" y="96" width="128" height="128">
+  <object id="109" type="hidingspot" gid="1" x="-493.732" y="125.033" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
    </properties>
   </object>
-  <object id="111" type="hidingspot" gid="1" x="-622" y="104" width="128" height="128">
+  <object id="111" type="hidingspot" gid="1" x="-253.921" y="112.597" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
    </properties>
   </object>
-  <object id="112" type="hidingspot" gid="1" x="-493.333" y="132" width="128" height="128">
+  <object id="112" type="hidingspot" gid="1" x="-383.083" y="86.9808" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
    </properties>
@@ -110,7 +110,7 @@
   <object id="119" gid="2" x="68" y="18.6667" width="128" height="128"/>
   <object id="120" gid="2" x="66.6667" y="-44" width="128" height="128"/>
   <object id="121" gid="2" x="61.3333" y="-98.6667" width="128" height="128"/>
-  <object id="162" type="hidingspot" gid="1" x="-460" y="8" width="128" height="128">
+  <object id="162" type="hidingspot" gid="1" x="-414.118" y="211.576" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
    </properties>
@@ -288,7 +288,7 @@
   </object>
  </objectgroup>
  <objectgroup id="4" name="hidingSpots">
-  <object id="44" name="hidingspot1" x="-447" y="197.334">
+  <object id="44" name="hidingspot1" x="-430.616" y="22.5145" rotation="178.941">
    <polygon points="-149.333,21.3333 78.9848,44.551 165.334,1.33333 201.334,-108 150.667,-224 -84,-190.667 -184,-109.334"/>
   </object>
   <object id="163" name="cockpit" x="100" y="-153.333">

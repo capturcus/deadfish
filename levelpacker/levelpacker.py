@@ -19,11 +19,10 @@ levels_dir = config['default']['levels_dir']
 
 GameObjects = namedtuple('GameObjects', ['objects', 'decoration', 'collision', 'hidingspots', 'navpoints', 'playerwalls', 'tileinfo'])
 
-def assertCircleness(o) -> bool:
+def assertCircleness(o):
     if float(o.getAttribute('width')) != float(o.getAttribute('height')):
         print("collision object of id", o.getAttribute('id'), "is an ellipse, not a circle, with width:", o.getAttribute('width'), "height:", o.getAttribute('height'))
         exit(1)
-    return True
 
 def getPolygonVertices(o) -> list:
     polyverts = o.getElementsByTagName('polygon')[0].getAttribute('points')
@@ -74,12 +73,11 @@ def handle_decoration_layer(g: minidom.Node, objs: GameObjects, builder: flatbuf
 def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
         x, y, rotation = get_pos(o)
-        ellipse = False
         radius = 0
         poly = 0
 
         if o.getElementsByTagName('ellipse'):
-            ellipse = assertCircleness(o)
+            assertCircleness(o)
             radius = float(o.getAttribute('width')) / 2.0
             x += math.cos(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2) # trygonometria 100
             y += math.sin(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2)
@@ -97,7 +95,6 @@ def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuff
         pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
         FlatBuffGenerated.CollisionMask.CollisionMaskAddPos(builder, pos)
         FlatBuffGenerated.CollisionMask.CollisionMaskAddRotation(builder, rotation)
-        FlatBuffGenerated.CollisionMask.CollisionMaskAddEllipse(builder, ellipse)
         FlatBuffGenerated.CollisionMask.CollisionMaskAddRadius(builder, radius * GLOBAL_SCALE)
         FlatBuffGenerated.CollisionMask.CollisionMaskAddPolyverts(builder, poly)
         objs.collision.append(FlatBuffGenerated.CollisionMask.CollisionMaskEnd(builder))
@@ -106,12 +103,11 @@ def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuff
 def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
         x, y, rotation = get_pos(o)
-        ellipse = False
         radius = 0
         poly = 0
 
         if o.getElementsByTagName('ellipse'):
-            ellipse = assertCircleness(o)
+            assertCircleness(o)
             radius = float(o.getAttribute('width')) / 2.0
             x += math.cos(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2)
             y += math.sin(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2)
@@ -130,7 +126,7 @@ def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbu
         FlatBuffGenerated.HidingSpot.HidingSpotStart(builder)
         pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
         FlatBuffGenerated.HidingSpot.HidingSpotAddPos(builder, pos)
-        FlatBuffGenerated.HidingSpot.HidingSpotAddEllipse(builder, ellipse)
+        FlatBuffGenerated.HidingSpot.HidingSpotAddRotation(builder, rotation)
         FlatBuffGenerated.HidingSpot.HidingSpotAddRadius(builder, radius * GLOBAL_SCALE)
         FlatBuffGenerated.HidingSpot.HidingSpotAddPolyverts(builder, poly)
         FlatBuffGenerated.HidingSpot.HidingSpotAddName(builder, name)
