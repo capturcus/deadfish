@@ -47,9 +47,9 @@ bool HidingSpot::obstructsSight(Player* p) {
     return playersInside.find(p) == playersInside.end();
 }
 
-// Collision
+// CollisionMask
 
-Collision::Collision(const FlatBuffGenerated::Collision* fb_Col) {
+CollisionMask::CollisionMask(const FlatBuffGenerated::CollisionMask* fb_Col) {
     b2BodyDef myBodyDef;
 	myBodyDef.type = b2_staticBody;
 	myBodyDef.position.Set(fb_Col->pos()->x(), fb_Col->pos()->y());

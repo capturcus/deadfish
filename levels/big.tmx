@@ -676,7 +676,7 @@
   <object id="1281" gid="2" x="2369.27" y="1592.62" width="128" height="128"/>
   <object id="1282" gid="2" x="1711.44" y="1974.92" width="128" height="128"/>
  </objectgroup>
- <objectgroup id="4" name="collision">
+ <objectgroup id="4" name="collisionMasks">
   <object id="1163" x="869.919" y="356.299" width="117.952" height="117.952">
    <ellipse/>
   </object>
@@ -1011,7 +1011,7 @@
    <ellipse/>
   </object>
  </objectgroup>
- <objectgroup id="3" name="hidingspots">
+ <objectgroup id="3" name="hidingSpots">
   <object id="1145" name="main_left" x="644.083" y="1195.5">
    <polygon points="0,0 89.6248,-45.5719 195.959,-10.6334 291.66,60.7626 328.118,194.44 208.112,423.819 65.3198,350.904 -10.6334,129.12"/>
   </object>

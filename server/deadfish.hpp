@@ -136,8 +136,8 @@ struct HidingSpot : public Collideable {
 	virtual bool obstructsSight(Player* p) override;
 };
 
-struct Collision : public Collideable {
-	Collision(const FlatBuffGenerated::Collision*);
+struct CollisionMask : public Collideable {
+	CollisionMask(const FlatBuffGenerated::CollisionMask*);
 	b2Body* body = nullptr;
 	virtual bool obstructsSight(Player*) override { return true; }
 };
@@ -158,7 +158,7 @@ struct NavPoint {
 struct Level {
 	std::vector<std::unique_ptr<Object>> objects;
 	std::vector<std::unique_ptr<Decoration>> decoration;
-	std::vector<std::unique_ptr<Collision>> collisions;
+	std::vector<std::unique_ptr<CollisionMask>> collisionMasks;
 	std::vector<std::unique_ptr<HidingSpot>> hidingspots;
 	std::vector<std::unique_ptr<PlayerWall>> playerwalls;
 	std::unordered_map<std::string, std::unique_ptr<NavPoint>> navpoints;

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import configparser, os, json, flatbuffers, math
 import FlatBuffGenerated.Level, FlatBuffGenerated.Object, FlatBuffGenerated.HidingSpot, \
-    FlatBuffGenerated.Collision, FlatBuffGenerated.Decoration, FlatBuffGenerated.Vec2, \
+    FlatBuffGenerated.CollisionMask, FlatBuffGenerated.Decoration, FlatBuffGenerated.Vec2, \
     FlatBuffGenerated.Tileinfo, FlatBuffGenerated.NavPoint, FlatBuffGenerated.PlayerWall
 from functools import reduce
 import xml.dom.minidom as minidom
@@ -84,7 +84,7 @@ def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuff
             if len(polyverts) > MAX_POLYGON_VERTICES:
                 print("collision object of id", o.getAttribute('id'), "has", len(polyverts), "vertices, wich is more than max (" + str(MAX_POLYGON_VERTICES) + ")")
                 exit(1)
-            FlatBuffGenerated.Collision.CollisionStartPolyvertsVector(builder, len(polyverts))
+            FlatBuffGenerated.CollisionMask.CollisionMaskStartPolyvertsVector(builder, len(polyverts))
             for v in polyverts:
                 vert_x, vert_y = v.split(",")
                 vert_x_f = float(vert_x) * GLOBAL_SCALE
@@ -92,14 +92,14 @@ def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuff
                 FlatBuffGenerated.Vec2.CreateVec2(builder, vert_x_f, vert_y_f)                
             poly = builder.EndVector(len(polyverts))
 
-        FlatBuffGenerated.Collision.CollisionStart(builder)
+        FlatBuffGenerated.CollisionMask.CollisionMaskStart(builder)
         pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
-        FlatBuffGenerated.Collision.CollisionAddPos(builder, pos)
-        FlatBuffGenerated.Collision.CollisionAddRotation(builder, rotation)
-        FlatBuffGenerated.Collision.CollisionAddEllipse(builder, ellipse)
-        FlatBuffGenerated.Collision.CollisionAddRadius(builder, radius * GLOBAL_SCALE)
-        FlatBuffGenerated.Collision.CollisionAddPolyverts(builder, poly)
-        objs.collision.append(FlatBuffGenerated.Collision.CollisionEnd(builder))
+        FlatBuffGenerated.CollisionMask.CollisionMaskAddPos(builder, pos)
+        FlatBuffGenerated.CollisionMask.CollisionMaskAddRotation(builder, rotation)
+        FlatBuffGenerated.CollisionMask.CollisionMaskAddEllipse(builder, ellipse)
+        FlatBuffGenerated.CollisionMask.CollisionMaskAddRadius(builder, radius * GLOBAL_SCALE)
+        FlatBuffGenerated.CollisionMask.CollisionMaskAddPolyverts(builder, poly)
+        objs.collision.append(FlatBuffGenerated.CollisionMask.CollisionMaskEnd(builder))
 
 
 def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
@@ -239,9 +239,9 @@ def process_level(path: str):
             handle_objects_layer(g, objs, builder)
         elif group_name == 'decoration':
             handle_decoration_layer(g, objs, builder)
-        elif group_name == 'collision':
+        elif group_name == 'collisionMasks':
             handle_collision_layer(g, objs, builder)
-        elif group_name == 'hidingspots':
+        elif group_name == 'hidingSpots':
             handle_hidingspots_layer(g, objs, builder)
         elif group_name == 'meta':
             handle_meta_layer(g, objs, builder)
@@ -258,7 +258,7 @@ def process_level(path: str):
         builder.PrependUOffsetTRelative(d)
     decorationOff = builder.EndVector(len(objs.decoration))
 
-    FlatBuffGenerated.Level.LevelStartCollisionVector(builder, len(objs.collision))
+    FlatBuffGenerated.Level.LevelStartCollisionMasksVector(builder, len(objs.collision))
     for c in objs.collision:
         builder.PrependUOffsetTRelative(c)
     collisionOff = builder.EndVector(len(objs.collision))
@@ -286,7 +286,7 @@ def process_level(path: str):
     FlatBuffGenerated.Level.LevelStart(builder)
     FlatBuffGenerated.Level.LevelAddObjects(builder, objectsOff)
     FlatBuffGenerated.Level.LevelAddDecoration(builder, decorationOff)
-    FlatBuffGenerated.Level.LevelAddCollision(builder, collisionOff)
+    FlatBuffGenerated.Level.LevelAddCollisionMasks(builder, collisionOff)
     FlatBuffGenerated.Level.LevelAddHidingspots(builder, hspotsOff)
     FlatBuffGenerated.Level.LevelAddNavpoints(builder, navpointsOff)
     FlatBuffGenerated.Level.LevelAddPlayerwalls(builder, playerwallsOff)

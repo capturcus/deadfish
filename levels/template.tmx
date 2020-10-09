@@ -17,7 +17,7 @@
  </tileset>
  <objectgroup id="6" name="decoration"/>
  <objectgroup id="2" name="objects"/>
- <objectgroup id="3" name="collision"/>
- <objectgroup id="4" name="hidingspots"/>
+ <objectgroup id="3" name="collisionMasks"/>
+ <objectgroup id="4" name="hidingSpots"/>
  <objectgroup id="5" name="meta"/>
 </map>

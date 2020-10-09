@@ -146,11 +146,11 @@ void loadLevel(std::string &path)
 		gameState.level->hidingspots.push_back(std::move(hs));
 	}
 
-	// collisions
-	for (auto collision : *level->collision())
+	// collisionMasks
+	for (auto cmask : *level->collisionMasks())
 	{
-		auto s = std::make_unique<Collision>(collision);
-		gameState.level->collisions.push_back(std::move(s));
+		auto s = std::make_unique<CollisionMask>(cmask);
+		gameState.level->collisionMasks.push_back(std::move(s));
 	}
 
 	// playerwalls

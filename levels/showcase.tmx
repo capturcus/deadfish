@@ -246,15 +246,7 @@
    </properties>
   </object>
  </objectgroup>
- <objectgroup id="4" name="hidingspots" visible="0">
-  <object id="44" name="hidingspot1" x="-447" y="197.334">
-   <polygon points="-149.333,21.3333 78.9848,44.551 165.334,1.33333 201.334,-108 150.667,-224 -84,-190.667 -184,-109.334"/>
-  </object>
-  <object id="163" name="cockpit" x="100" y="-153.333">
-   <polygon points="0,0 -177.333,184 -146.667,372 -38.6667,436 130.667,464 230.667,330.667 268,212 154.667,20"/>
-  </object>
- </objectgroup>
- <objectgroup id="3" name="collision" visible="0">
+ <objectgroup id="3" name="collisionMasks">
   <object id="33" x="-346.671" y="-351.751" width="116" height="116" rotation="318.565">
    <ellipse/>
   </object>
@@ -293,6 +285,14 @@
   </object>
   <object id="124" x="193.333" y="109.333">
    <polygon points="0,0 37.3333,-2.66667 66.6667,22.6667 72,69.3333 48,102.667 8,118.667 -36,90.6667 -53.3333,30.6667"/>
+  </object>
+ </objectgroup>
+ <objectgroup id="4" name="hidingSpots">
+  <object id="44" name="hidingspot1" x="-447" y="197.334">
+   <polygon points="-149.333,21.3333 78.9848,44.551 165.334,1.33333 201.334,-108 150.667,-224 -84,-190.667 -184,-109.334"/>
+  </object>
+  <object id="163" name="cockpit" x="100" y="-153.333">
+   <polygon points="0,0 -177.333,184 -146.667,372 -38.6667,436 130.667,464 230.667,330.667 268,212 154.667,20"/>
   </object>
  </objectgroup>
  <objectgroup id="5" name="meta">

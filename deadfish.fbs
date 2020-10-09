@@ -26,7 +26,7 @@ table Decoration {
     gid: uint16;
 }
 
-table Collision {
+table CollisionMask {
     pos: Vec2;
     ellipse: bool;
     radius: float;
@@ -60,7 +60,7 @@ table Level {
   objects: [Object];
   decoration: [Decoration];
   hidingspots: [HidingSpot];
-  collision: [Collision];
+  collisionMasks: [CollisionMask];
   navpoints: [NavPoint];
   playerwalls: [PlayerWall];
   tileinfo: [Tileinfo];
