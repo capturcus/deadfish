@@ -53,28 +53,9 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 	}
 	auto decoration = builder.CreateVector(decorationOffsets);
 
-	// hiding spots 
-	std::vector<flatbuffers::Offset<FlatBuffGenerated::HidingSpot>> hspotOffsets;
-	for (auto &hs : gameState.level->hidingspots)
-	{
-		FlatBuffGenerated::Vec2 pos(hs->body->GetPosition().x, hs->body->GetPosition().y);
-		bool ellipse = false;
-		float radius = 0;
-
-		auto f = hs->body->GetFixtureList();
-		if (auto circleShape = dynamic_cast<b2CircleShape*>(f->GetShape())) {
-			ellipse = true;
-			radius = circleShape->m_radius;
-		}
-		auto name = builder.CreateString(hs->name);
-		auto off = FlatBuffGenerated::CreateHidingSpot(builder, &pos, ellipse, radius, 0, name);
-		hspotOffsets.push_back(off);
-	}
-	auto hidingspots = builder.CreateVector(hspotOffsets);
-
 	// final
 	FlatBuffGenerated::Vec2 size(gameState.level->size.x, gameState.level->size.y);
-	auto level = FlatBuffGenerated::CreateLevel(builder, objects, decoration, hidingspots, 0, 0, 0, tilesets, &size);
+	auto level = FlatBuffGenerated::CreateLevel(builder, objects, decoration, 0, 0, 0, 0, tilesets, &size);
 	return level;
 }
 
