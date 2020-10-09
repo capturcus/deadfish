@@ -309,8 +309,8 @@ void GameplayState::OnMessage(const std::string& data) {
 	updateRemainingText(worldState->stepsRemaining());
 
 	// make current hidingspot transparent
-	if(worldState->hidingspot()->str() != "") {
-		auto &hspotSprites = this->hiding_spots[worldState->hidingspot()->str()];
+	if(worldState->currentHidingSpot()->str() != "") {
+		auto &hspotSprites = this->hiding_spots[worldState->currentHidingSpot()->str()];
 		if (!hspotSprites.empty() && hspotSprites[0]->alpha() == MAX_HIDING_SPOT_OPACITY) {
 			for (auto &hsSprite : hspotSprites) {
 				auto tween = CreateHidingSpotTween(hsSprite.get(), MAX_HIDING_SPOT_OPACITY, MIN_HIDING_SPOT_OPACITY, 10);
@@ -318,14 +318,14 @@ void GameplayState::OnMessage(const std::string& data) {
 			}
 		}
 	}
-	if (worldState->hidingspot()->str() != this->currentHidingSpot) {
+	if (worldState->currentHidingSpot()->str() != this->currentHidingSpot) {
 		auto &hspotSprites = this->hiding_spots[this->currentHidingSpot];
 		for (auto &hsSprite : hspotSprites) {
 			auto tween = CreateHidingSpotTween(hsSprite.get(), MIN_HIDING_SPOT_OPACITY, MAX_HIDING_SPOT_OPACITY, 20);
 			_resources._tweens.push_back(tween);
 		}
 	}
-	this->currentHidingSpot = worldState->hidingspot()->str();
+	this->currentHidingSpot = worldState->currentHidingSpot()->str();
 }
 
 void Mob::setupLocRot(const FlatBuffGenerated::Mob& msg, bool firstUpdate) {

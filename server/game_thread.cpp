@@ -220,11 +220,12 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 		auto mob = createFBMob(builder, player, p.get());
 		mobs.push_back(mob);
 	}
-	std::string hspotname = ""; // name of the hidingspot that the layer is in
+	std::string hspotname = ""; // name of the hidingspot that the player is in
 	for(auto &hspot : gameState.level->hidingspots) {
 		auto playerInHspot = hspot->playersInside.find(&player);
 		if(playerInHspot != hspot->playersInside.end()) {
 			hspotname = hspot->name;
+			break;
 		}
 	}
 	auto mobsOffset = builder.CreateVector(mobs);

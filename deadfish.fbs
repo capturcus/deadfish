@@ -134,7 +134,7 @@ table WorldState {
   mobs:[Mob];
   indicators:[Indicator];
   stepsRemaining:uint64;
-  hidingspot:string;
+  currentHidingSpot:string;
 }
 
 table HighscoreEntry {
