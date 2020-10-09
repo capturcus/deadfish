@@ -116,6 +116,8 @@ Polygons created in Tiled are later processed by box2d, so objects created from 
 
 "Physical" objects, that are supposed to collide with players and mobs, need to have their visual and collision parts constructed separately - place a sprite (or a few) on the `objects` layer and then create a collision mask on `collision` layer with a circle or polygon shape. This may seem like unnecessary work, but it gives much more freedom and it's not that tedious if you consider [Tips & Tricks](#tips-&-tricks).
 
+Using this layer you can also create "overlaying decorations" - just add an object without a collision mask.
+
 #### Hiding spots
 
 Hiding spots need to be created in two parts, visible and "mechanical", similarly to collisions. Sprites of a group that makes a hiding spot are linked to the hidingspot object by its name. Create a shape on `hidingspots` layer and give it a `name` property. Then set the type property of all sprites that make the hiding spot to `hidingspot` and add a custom property `hspotName` with the value equal to the aforementioned name. [Tips & Tricks](#tips-&-tricks) might help with easy creation.
