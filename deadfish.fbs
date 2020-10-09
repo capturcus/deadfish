@@ -54,6 +54,12 @@ table PlayerWall {
   size: Vec2;
 }
 
+table Tilelayer {
+  width: int;
+  height: int;
+  data: string;
+}
+
 table Level {
   objects: [Object];
   decoration: [Decoration];
@@ -62,6 +68,7 @@ table Level {
   navpoints: [NavPoint];
   playerwalls: [PlayerWall];
   tileinfo: [Tileinfo];
+  tilelayer: Tilelayer;
   size: Vec2;
 }
 

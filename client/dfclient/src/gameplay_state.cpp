@@ -25,6 +25,9 @@ const int FISH_FRAME_HEIGHT = 120;
 const int IMGS_PER_ROW = 10;
 const int IMGS_PER_SPECIES = 80;
 
+const int TILE_WIDTH = 128;
+const int TILE_HEIGHT = 128;
+
 const int MAX_HIDING_SPOT_OPACITY = 255;
 const int MIN_HIDING_SPOT_OPACITY = 128;
 
@@ -90,6 +93,40 @@ void GameplayState::LoadLevel() {
 
 	for (auto fb_Ti : *level->tileinfo()) {
 		spritemap.insert(std::pair<uint16_t, std::string>(fb_Ti->gid(), fb_Ti->name()->str()));
+	}
+
+	// initialize tile layer
+	if (level->tilelayer()) {
+		auto width = level->tilelayer()->width();
+		auto height = level->tilelayer()->height();
+		std::vector<std::string> rows;
+		
+		std::stringstream ss(level->tilelayer()->data()->str());
+		std::string row;
+		while (std::getline(ss, row, '\n')) {
+			if(row.empty()) continue; // first row is empty
+			rows.push_back(row);
+		}
+
+		for (int i=0; i<height; ++i) {
+			std::vector<std::string> ids;
+
+			std::stringstream ss2(rows[i]);
+			std::string id;
+			while (std::getline(ss2, id, ',')) {
+				ids.push_back(id);
+			}
+
+			for (int j=0; j<width; ++j) {
+				auto spritename = spritemap[std::stoi(ids[j])];
+				if (spritename.empty()) continue;
+				auto tileSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[spritename].get(),
+					j * TILE_WIDTH, -i * TILE_HEIGHT);
+				tileSprite->setAnchorPoint(0, 1);
+				tileSprite->setLayer(TILE_LAYER);
+				this->nodes.push_back(std::move(tileSprite));
+			}
+		}
 	}
 
 	// initialize decoration

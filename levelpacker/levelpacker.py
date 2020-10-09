@@ -2,7 +2,8 @@
 import configparser, os, json, flatbuffers, math
 import FlatBuffGenerated.Level, FlatBuffGenerated.Object, FlatBuffGenerated.HidingSpot, \
     FlatBuffGenerated.CollisionMask, FlatBuffGenerated.Decoration, FlatBuffGenerated.Vec2, \
-    FlatBuffGenerated.Tileinfo, FlatBuffGenerated.NavPoint, FlatBuffGenerated.PlayerWall
+    FlatBuffGenerated.Tileinfo, FlatBuffGenerated.NavPoint, FlatBuffGenerated.PlayerWall, \
+    FlatBuffGenerated.Tilelayer
 from functools import reduce
 import xml.dom.minidom as minidom
 from collections import namedtuple
@@ -210,15 +211,30 @@ def handle_tileset(ts: minidom.Node, objs: GameObjects, builder: flatbuffers.Bui
         FlatBuffGenerated.Tileinfo.TileinfoAddGid(builder, gid)
         objs.tileinfo.append(FlatBuffGenerated.Tileinfo.TileinfoEnd(builder))
 
+def handle_tile_layer(layer: minidom.Node, builder: flatbuffers.Builder) -> str:
+    width = int(layer.getAttribute('width'))
+    height = int(layer.getAttribute('height'))
+    data = layer.getElementsByTagName('data')[0].firstChild.nodeValue
+    fbdata = builder.CreateString(data)
+
+    FlatBuffGenerated.Tilelayer.TilelayerStart(builder)
+    FlatBuffGenerated.Tilelayer.TilelayerAddWidth(builder, width)
+    FlatBuffGenerated.Tilelayer.TilelayerAddHeight(builder, height)
+    FlatBuffGenerated.Tilelayer.TilelayerAddData(builder, fbdata)
+    return FlatBuffGenerated.Tilelayer.TilelayerEnd(builder)
+
 
 def process_level(path: str):
     dom = minidom.parse(path)
     map_node = dom.firstChild
     objs = GameObjects([], [], [], [], [], [], [])
+    tilelayer = 0
     builder = flatbuffers.Builder(1)
 
     for ts in map_node.getElementsByTagName('tileset'):
         handle_tileset(ts, objs, builder)
+    if map_node.getElementsByTagName('layer'):
+        tilelayer = handle_tile_layer(map_node.getElementsByTagName('layer')[0], builder)
 
     for g in map_node.getElementsByTagName('objectgroup'):
         group_name = g.getAttribute('name')
@@ -282,6 +298,7 @@ def process_level(path: str):
         float(map_node.getAttribute("height")) * float(map_node.getAttribute("tileheight")) * GLOBAL_SCALE)
     FlatBuffGenerated.Level.LevelAddSize(builder, size)
     FlatBuffGenerated.Level.LevelAddTileinfo(builder, tileinfoOff)
+    FlatBuffGenerated.Level.LevelAddTilelayer(builder, tilelayer)
     level = FlatBuffGenerated.Level.LevelEnd(builder)
     builder.Finish(level)
 
