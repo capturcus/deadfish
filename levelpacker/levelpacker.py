@@ -179,6 +179,8 @@ def handle_meta_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.B
             if width != height:
                 print("waypoint", name, "is an ellipse, not a circle, width:", width, "height:", height)
                 exit(1)
+            x += width / 2.0
+            y += height / 2.0
             radius = (width / 2.0) * GLOBAL_SCALE
 
             for prop in o.getElementsByTagName('property'):

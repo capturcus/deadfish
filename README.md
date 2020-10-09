@@ -120,6 +120,8 @@ Polygons created in Tiled are later processed by box2d, so objects created from 
 
 Hiding spots need to be created in two parts, visible and "mechanical", similarly to collisions. Sprites of a group that makes a hiding spot are linked to the hidingspot object by its name. Create a shape on `hidingspots` layer and give it a `name` property. Then set the type property of all sprites that make the hiding spot to `hidingspot` and add a custom property `hspotName` with the value equal to the aforementioned name. [Tips & Tricks](#tips-&-tricks) might help with easy creation.
 
+Hiding spot sprites are rendered over decorations and regular objects, so you can create hidden obstacles in large hiding spots, for example.
+
 #### "Meta" layer 
 
 The objects here are simple shapes, not from a tileset, but created in Tiled on the go. Waypoints are circles, playerwalls are rectangles. They are recognized by their `type` object property, that being `playerwall` and `waypoint` respectively.

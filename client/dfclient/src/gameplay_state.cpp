@@ -311,7 +311,7 @@ void GameplayState::OnMessage(const std::string& data) {
 	// make current hidingspot transparent
 	if(worldState->hidingspot()->str() != "") {
 		auto &hspotSprites = this->hiding_spots[worldState->hidingspot()->str()];
-		if (hspotSprites[0]->alpha() == MAX_HIDING_SPOT_OPACITY) {
+		if (!hspotSprites.empty() && hspotSprites[0]->alpha() == MAX_HIDING_SPOT_OPACITY) {
 			for (auto &hsSprite : hspotSprites) {
 				auto tween = CreateHidingSpotTween(hsSprite.get(), MAX_HIDING_SPOT_OPACITY, MIN_HIDING_SPOT_OPACITY, 10);
 				_resources._tweens.push_back(tween);
