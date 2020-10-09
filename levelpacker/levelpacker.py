@@ -19,6 +19,20 @@ levels_dir = config['default']['levels_dir']
 
 GameObjects = namedtuple('GameObjects', ['objects', 'decoration', 'collision', 'hidingspots', 'navpoints', 'playerwalls', 'tileinfo'])
 
+def assertCircleness(o) -> bool:
+    if float(o.getAttribute('width')) != float(o.getAttribute('height')):
+        print("collision object of id", o.getAttribute('id'), "is an ellipse, not a circle, with width:", o.getAttribute('width'), "height:", o.getAttribute('height'))
+        exit(1)
+    return True
+
+def getPolygonVertices(o) -> list:
+    polyverts = o.getElementsByTagName('polygon')[0].getAttribute('points')
+    polyverts = polyverts.split(' ')
+    if len(polyverts) > MAX_POLYGON_VERTICES:
+        print("collision object of id", o.getAttribute('id'), "has", len(polyverts), "vertices, wich is more than max (" + str(MAX_POLYGON_VERTICES) + ")")
+        exit(1)
+    return polyverts
+
 
 def get_pos(o: minidom.Node) -> (float, float, float):
     x = float(o.getAttribute('x'))
@@ -62,25 +76,15 @@ def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuff
         x, y, rotation = get_pos(o)
         ellipse = False
         radius = 0
-        polyverts = ""
         poly = 0
 
         if o.getElementsByTagName('ellipse'):
-            width = float(o.getAttribute('width'))
-            height = float(o.getAttribute('height'))
-            if width != height:
-                print("collision object of id", o.getAttribute('id'), "is an ellipse, not a circle, with width:", width, "height:", height)
-                exit(1)
-            ellipse = True
-            radius = width / 2.0
+            ellipse = assertCircleness(o)
+            radius = float(o.getAttribute('width')) / 2.0
             x += math.cos(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2) # trygonometria 100
             y += math.sin(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2)
         else:
-            polyverts = o.getElementsByTagName('polygon')[0].getAttribute('points')
-            polyverts = polyverts.split(' ')
-            if len(polyverts) > MAX_POLYGON_VERTICES:
-                print("collision object of id", o.getAttribute('id'), "has", len(polyverts), "vertices, wich is more than max (" + str(MAX_POLYGON_VERTICES) + ")")
-                exit(1)
+            polyverts = getPolygonVertices(o)
             FlatBuffGenerated.CollisionMask.CollisionMaskStartPolyvertsVector(builder, len(polyverts))
             for v in polyverts:
                 vert_x, vert_y = v.split(",")
@@ -104,25 +108,15 @@ def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbu
         x, y, rotation = get_pos(o)
         ellipse = False
         radius = 0
-        polyverts = ""
         poly = 0
 
         if o.getElementsByTagName('ellipse'):
-            width = float(o.getAttribute('width'))
-            height = float(o.getAttribute('height'))
-            if width != height:
-                print("hidingspot", o.getAttribute('name'), "is an ellipse, not a circle, with width:", width, "height:", height)
-                exit(1)
-            ellipse = True
-            radius = width / 2.0
+            ellipse = assertCircleness(o)
+            radius = float(o.getAttribute('width')) / 2.0
             x += math.cos(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2)
             y += math.sin(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2)
         else:
-            polyverts = o.getElementsByTagName('polygon')[0].getAttribute('points')
-            polyverts = polyverts.split(' ')
-            if len(polyverts) > MAX_POLYGON_VERTICES:
-                print("collision object of id", o.getAttribute('id'), "has", len(polyverts), "vertices, wich is more than max (" + str(MAX_POLYGON_VERTICES) + ")")
-                exit(1)
+            polyverts = getPolygonVertices(o)
             FlatBuffGenerated.HidingSpot.HidingSpotStartPolyvertsVector(builder, len(polyverts))
             for v in polyverts:
                 vert_x, vert_y = v.split(",")
