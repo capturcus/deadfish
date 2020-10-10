@@ -558,7 +558,10 @@ void gameThread()
 		if (!gameState.options["ghosttown"].as<bool>() && civilianTimer == 0 && gameState.civilians.size() < MAX_CIVILIANS)
 		{
 			spawnCivilian();
-			civilianTimer = CIVILIAN_TIME;
+			if (gameState.civilians.size() < 30)
+				civilianTimer = CIVILIAN_TIME / 2;
+			else
+				civilianTimer = CIVILIAN_TIME;
 		}
 		else
 			civilianTimer = std::max(0, civilianTimer - 1);

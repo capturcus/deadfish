@@ -193,6 +193,11 @@ def handle_meta_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.B
                 else:
                     print("WARNING: Unknown property {}".format(prop_name))
 
+            neighbors = list(filter(lambda x: x.strip() != "", neighbors))
+
+            if len(neighbors) < 2 and not isplayerspawn and not isspawn:
+                print("WARNING: waypoint {} has < 2 neighbors".format(name))
+
             name = builder.CreateString(name)
             neighOff = [builder.CreateString(x) for x in neighbors]
             FlatBuffGenerated.NavPoint.NavPointStartNeighborsVector(builder, len(neighOff))
