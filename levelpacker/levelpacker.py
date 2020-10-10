@@ -39,9 +39,15 @@ def get_pos(o: minidom.Node) -> (float, float, float):
     rotation = float(o.getAttribute('rotation') or 0)
     return x, y, rotation
 
+def get_dim(o: minidom.Node) -> (float, float):
+    w = float(o.getAttribute('width'))
+    h = float(o.getAttribute('height'))
+    return w, h
+
 def handle_objects_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
         x, y, rot = get_pos(o)
+        width, height = get_dim(o)
         gid = int(o.getAttribute('gid'))
         hspotname = ""
         
@@ -55,18 +61,23 @@ def handle_objects_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffer
         FlatBuffGenerated.Object.ObjectAddPos(builder, pos)
         FlatBuffGenerated.Object.ObjectAddRotation(builder, rot)
         FlatBuffGenerated.Object.ObjectAddGid(builder, gid)
+        FlatBuffGenerated.Object.ObjectAddWidth(builder, width)
+        FlatBuffGenerated.Object.ObjectAddHeight(builder, height)
         FlatBuffGenerated.Object.ObjectAddHspotname(builder, hspotNameFb)
         objs.objects.append(FlatBuffGenerated.Object.ObjectEnd(builder))
 
 def handle_decoration_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
         x, y, rot = get_pos(o)
+        width, height = get_dim(o)
         gid = int(o.getAttribute('gid'))
 
         FlatBuffGenerated.Decoration.DecorationStart(builder)
         pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
         FlatBuffGenerated.Decoration.DecorationAddPos(builder, pos)
         FlatBuffGenerated.Decoration.DecorationAddRotation(builder, rot)
+        FlatBuffGenerated.Decoration.DecorationAddWidth(builder, width)
+        FlatBuffGenerated.Decoration.DecorationAddHeight(builder, height)
         FlatBuffGenerated.Decoration.DecorationAddGid(builder, gid)
         objs.decoration.append(FlatBuffGenerated.Decoration.DecorationEnd(builder))
 
