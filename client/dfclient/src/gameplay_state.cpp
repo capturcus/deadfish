@@ -96,7 +96,7 @@ void GameplayState::LoadLevel() {
 	}
 
 	// initialize tile layer
-	if (level->tilelayer()) {
+	if (level->tilelayer() && level->tilelayer()->data() && level->tilelayer()->data()->str() != "\n") {
 		auto width = level->tilelayer()->width();
 		auto height = level->tilelayer()->height();
 		std::vector<std::string> rows;

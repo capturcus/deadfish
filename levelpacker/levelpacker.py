@@ -214,8 +214,12 @@ def handle_tileset(ts: minidom.Node, objs: GameObjects, builder: flatbuffers.Bui
 def handle_tile_layer(layer: minidom.Node, builder: flatbuffers.Builder) -> str:
     width = int(layer.getAttribute('width'))
     height = int(layer.getAttribute('height'))
-    data = layer.getElementsByTagName('data')[0].firstChild.nodeValue
-    fbdata = builder.CreateString(data)
+    data = layer.getElementsByTagName('data')[0]
+    
+    if data.firstChild is None:
+        return
+        
+    fbdata = builder.CreateString(data.firstChild.nodeValue)
 
     FlatBuffGenerated.Tilelayer.TilelayerStart(builder)
     FlatBuffGenerated.Tilelayer.TilelayerAddWidth(builder, width)
@@ -298,7 +302,8 @@ def process_level(path: str):
         float(map_node.getAttribute("height")) * float(map_node.getAttribute("tileheight")) * GLOBAL_SCALE)
     FlatBuffGenerated.Level.LevelAddSize(builder, size)
     FlatBuffGenerated.Level.LevelAddTileinfo(builder, tileinfoOff)
-    FlatBuffGenerated.Level.LevelAddTilelayer(builder, tilelayer)
+    if tilelayer is not None:
+        FlatBuffGenerated.Level.LevelAddTilelayer(builder, tilelayer)
     level = FlatBuffGenerated.Level.LevelEnd(builder)
     builder.Finish(level)
 
