@@ -40,8 +40,9 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::Object>> objectOffsets;
 	for (auto &o : gameState.level->objects) {
 		FlatBuffGenerated::Vec2 pos(o->pos.x, o->pos.y);
+		FlatBuffGenerated::Vec2 size(o->size.x, o->size.y);
 		auto hspotname = builder.CreateString(o->hspotname);
-		auto offset = FlatBuffGenerated::CreateObject(builder, &pos, o->rotation, o->width, o->height, o->gid, hspotname);
+		auto offset = FlatBuffGenerated::CreateObject(builder, &pos, o->rotation, &size, o->gid, hspotname);
 		objectOffsets.push_back(offset);
 	}
 	auto objects = builder.CreateVector(objectOffsets);
@@ -50,7 +51,8 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::Decoration>> decorationOffsets;
 	for (auto &d : gameState.level->decoration) {
 		FlatBuffGenerated::Vec2 pos(d->pos.x, d->pos.y);
-		auto offset = FlatBuffGenerated::CreateDecoration(builder, &pos, d->rotation, d->width, d->height, d->gid);
+		FlatBuffGenerated::Vec2 size(d->size.x, d->size.y);
+		auto offset = FlatBuffGenerated::CreateDecoration(builder, &pos, d->rotation, &size, d->gid);
 		decorationOffsets.push_back(offset);
 	}
 	auto decoration = builder.CreateVector(decorationOffsets);

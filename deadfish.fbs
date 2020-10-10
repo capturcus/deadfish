@@ -15,8 +15,7 @@ table Tileinfo {
 table Object {
     pos: Vec2;
     rotation: float;
-    width: float;
-    height: float;
+    size: Vec2;
     gid: uint16;
     hspotname: string;
 }
@@ -24,22 +23,23 @@ table Object {
 table Decoration {
     pos: Vec2;
     rotation: float;
-    width: float;
-    height: float;
+    size: Vec2;
     gid: uint16;
 }
 
 table CollisionMask {
     pos: Vec2;
-    radius: float;
+    size: Vec2;
     rotation: float;
+    isCircle: bool;
     polyverts: [Vec2];
 }
 
 table HidingSpot {
     pos: Vec2;
-    radius: float;
+    size: Vec2;
     rotation: float;
+    isCircle: bool;
     polyverts: [Vec2];
     name: string;
 }
