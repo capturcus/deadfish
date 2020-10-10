@@ -63,7 +63,7 @@
   <object id="60" gid="2" x="478.666" y="-478.667" width="128" height="128"/>
   <object id="61" gid="2" x="413.333" y="-466.667" width="128" height="128"/>
   <object id="62" gid="2" x="433.333" y="-508" width="128" height="128"/>
-  <object id="87" gid="2" x="-274.667" y="156" width="128" height="128"/>
+  <object id="87" gid="2" x="-533.608" y="558.776" width="128" height="128" rotation="323.423"/>
   <object id="104" type="hidingspot" gid="1" x="-305.32" y="145.553" width="128" height="128" rotation="178.941">
    <properties>
     <property name="hspotName" value="hidingspot1"/>
@@ -104,7 +104,7 @@
     <property name="hspotName" value="hidingspot1"/>
    </properties>
   </object>
-  <object id="114" gid="2" x="-272.667" y="473.333" width="128" height="128"/>
+  <object id="114" gid="2" x="-342.902" y="812.421" width="128" height="128" rotation="323.423"/>
   <object id="117" gid="2" x="142.667" y="98.6667" width="128" height="128"/>
   <object id="118" gid="2" x="-2.66667" y="97.3333" width="128" height="128"/>
   <object id="119" gid="2" x="68" y="18.6667" width="128" height="128"/>
@@ -274,10 +274,10 @@
   <object id="79" x="471.333" y="254.667">
    <polygon points="0,0 30.6667,22.6667 18.6667,92 -141.333,106.667 -190.667,28 -144,-9.33333 -81.3333,16"/>
   </object>
-  <object id="88" x="-278.667" y="160.667" width="123" height="123">
+  <object id="88" x="-534.04" y="564.909" width="123" height="123" rotation="323.423">
    <ellipse/>
   </object>
-  <object id="115" x="-276.667" y="478" width="123" height="123">
+  <object id="115" x="-343.334" y="818.553" width="123" height="123" rotation="323.423">
    <ellipse/>
   </object>
   <object id="122" x="64" y="224">
@@ -347,7 +347,7 @@
   </object>
  </objectgroup>
  <objectgroup id="5" name="meta">
-  <object id="36" name="pspawn" type="waypoint" x="-110" y="-307" width="132" height="132">
+  <object id="36" name="pspawn" type="waypoint" x="-236.667" y="498.333" width="132" height="132">
    <properties>
     <property name="isplayerspawn" type="bool" value="true"/>
     <property name="wps" value="mspawn1,mspawn2"/>
@@ -368,6 +368,6 @@
    </properties>
    <ellipse/>
   </object>
-  <object id="116" type="playerwall" x="-266.667" y="225.333" width="110.667" height="342.667"/>
+  <object id="116" type="playerwall" x="-493.046" y="599.616" width="110.667" height="342.667" rotation="323.58"/>
  </objectgroup>
 </map>

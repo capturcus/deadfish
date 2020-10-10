@@ -56,6 +56,7 @@ table NavPoint {
 table PlayerWall {
   position: Vec2;
   size: Vec2;
+  rotation: float;
 }
 
 table Level {

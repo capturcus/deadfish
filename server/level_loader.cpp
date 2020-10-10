@@ -2,6 +2,7 @@
 #include <flatbuffers/flatbuffers.h>
 #include "deadfish.hpp"
 #include "level_loader.hpp"
+#include "../common/constants.hpp"
 
 void initPlayerwall(const FlatBuffGenerated::PlayerWall *pw)
 {
@@ -9,6 +10,7 @@ void initPlayerwall(const FlatBuffGenerated::PlayerWall *pw)
 	b2BodyDef myBodyDef;
 	myBodyDef.type = b2_staticBody;
 	myBodyDef.position.Set(pw->position()->x(), pw->position()->y());
+    myBodyDef.angle = pw->rotation() * TO_RADIANS;
 	b2Body *staticBody = gameState.b2world->CreateBody(&myBodyDef); //add body to world
 	b2PolygonShape boxShape;
 	boxShape.SetAsBox(pw->size()->x(), pw->size()->y());

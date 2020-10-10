@@ -151,17 +151,18 @@ def handle_meta_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.B
         typ = o.getAttribute('type')
 
         if typ == 'playerwall':
-            width = float(o.getAttribute('width')) / 2.0
-            height = float(o.getAttribute('height')) / 2.0
+            width = float(o.getAttribute('width'))
+            height = float(o.getAttribute('height'))
 
-            x += width
-            y += height
+            x += (math.cos(math.radians(rotation)) * width/2.0  - math.sin(math.radians(rotation)) * height/2.0)
+            y += (math.cos(math.radians(rotation)) * height/2.0 + math.sin(math.radians(rotation)) * width/2.0)
 
             FlatBuffGenerated.PlayerWall.PlayerWallStart(builder)
             pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
             FlatBuffGenerated.PlayerWall.PlayerWallAddPosition(builder, pos)
-            size = FlatBuffGenerated.Vec2.CreateVec2(builder, width * GLOBAL_SCALE, height * GLOBAL_SCALE)
+            size = FlatBuffGenerated.Vec2.CreateVec2(builder, width/2.0 * GLOBAL_SCALE, height/2.0 * GLOBAL_SCALE)
             FlatBuffGenerated.PlayerWall.PlayerWallAddSize(builder, size)
+            FlatBuffGenerated.PlayerWall.PlayerWallAddRotation(builder, rotation)
             pwall = FlatBuffGenerated.PlayerWall.PlayerWallEnd(builder)
             objs.playerwalls.append(pwall)
 
