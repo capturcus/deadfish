@@ -26,9 +26,7 @@ const int IMGS_PER_ROW = 10;
 const int IMGS_PER_SPECIES = 80;
 
 const int MAX_HIDING_SPOT_OPACITY = 255;
-const int MIN_HIDING_SPOT_OPACITY = 100;
-
-static const auto TINT = ncine::Color(34, 193, 160, 255);
+const int MIN_HIDING_SPOT_OPACITY = 128;
 
 enum FISH_ANIMATIONS {
 	WALK = 0,
@@ -157,15 +155,6 @@ void GameplayState::LoadLevel() {
 		}
 
 	}
-
-	for (auto& node : this->nodes) {
-		node->setColor(TINT);
-	}
-	for (auto& hspot : this->hiding_spots) {
-		for(auto& sprite : hspot.second) {
-			sprite->setColor(TINT);
-		}
-	}
 }
 
 // this whole thing should probably be refactored
@@ -284,7 +273,6 @@ void GameplayState::OnMessage(const std::string& data) {
 			// this is the first time we see this mob, create it
 			Mob newMob;
 			newMob.sprite = CreateNewAnimSprite(this->cameraNode.get(), mobData->species());
-			newMob.sprite->setColor(TINT);
 			this->mobs[mobData->mobID()] = std::move(newMob);
 			mobItr = this->mobs.find(mobData->mobID());
 			firstUpdate = true;
