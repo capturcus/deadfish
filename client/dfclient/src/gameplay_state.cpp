@@ -136,6 +136,7 @@ void GameplayState::LoadLevel() {
 			decoration->pos()->x() * METERS2PIXELS, -decoration->pos()->y() * METERS2PIXELS);
 		decorationSprite->setAnchorPoint(0, 1);
 		decorationSprite->setRotation(-decoration->rotation());
+		decorationSprite->setSize(decoration->size()->x(), decoration->size()->y());
 		decorationSprite->setLayer(DECORATION_LAYER);
 		this->nodes.push_back(std::move(decorationSprite));
 	}
@@ -147,6 +148,7 @@ void GameplayState::LoadLevel() {
 			object->pos()->x() * METERS2PIXELS, -object->pos()->y() * METERS2PIXELS);
 		objectSprite->setAnchorPoint(0, 1);
 		objectSprite->setRotation(-object->rotation());
+		objectSprite->setSize(object->size()->x(), object->size()->y());
 		if(object->hspotname()->str().empty()){
 			objectSprite->setLayer(OBJECTS_LAYER);
 			this->nodes.push_back(std::move(objectSprite));

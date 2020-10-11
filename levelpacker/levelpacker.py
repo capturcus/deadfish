@@ -40,9 +40,15 @@ def get_pos(o: minidom.Node) -> (float, float, float):
     rotation = float(o.getAttribute('rotation') or 0)
     return x, y, rotation
 
+def get_dim(o: minidom.Node) -> (float, float):
+    w = float(o.getAttribute('width') or 0)
+    h = float(o.getAttribute('height') or 0)
+    return w, h
+
 def handle_objects_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
         x, y, rot = get_pos(o)
+        width, height = get_dim(o)
         gid = int(o.getAttribute('gid'))
         hspotname = ""
         
@@ -56,32 +62,41 @@ def handle_objects_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffer
         FlatBuffGenerated.Object.ObjectAddPos(builder, pos)
         FlatBuffGenerated.Object.ObjectAddRotation(builder, rot)
         FlatBuffGenerated.Object.ObjectAddGid(builder, gid)
+        size = FlatBuffGenerated.Vec2.CreateVec2(builder, width, height)
+        FlatBuffGenerated.Object.ObjectAddSize(builder, size)
         FlatBuffGenerated.Object.ObjectAddHspotname(builder, hspotNameFb)
         objs.objects.append(FlatBuffGenerated.Object.ObjectEnd(builder))
 
 def handle_decoration_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
         x, y, rot = get_pos(o)
+        width, height = get_dim(o)
         gid = int(o.getAttribute('gid'))
 
         FlatBuffGenerated.Decoration.DecorationStart(builder)
         pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
         FlatBuffGenerated.Decoration.DecorationAddPos(builder, pos)
         FlatBuffGenerated.Decoration.DecorationAddRotation(builder, rot)
+        size = FlatBuffGenerated.Vec2.CreateVec2(builder, width, height)
+        FlatBuffGenerated.Decoration.DecorationAddSize(builder, size)
         FlatBuffGenerated.Decoration.DecorationAddGid(builder, gid)
         objs.decoration.append(FlatBuffGenerated.Decoration.DecorationEnd(builder))
 
 def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
         x, y, rotation = get_pos(o)
-        radius = 0
         poly = 0
+        width = 0
+        height = 0
+        isCircle = False
 
-        if o.getElementsByTagName('ellipse'):
-            assertCircleness(o)
-            radius = float(o.getAttribute('width')) / 2.0
-            x += math.cos(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2) # trygonometria 100
-            y += math.sin(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2)
+        if not o.getElementsByTagName('polygon'):
+            width, height = get_dim(o)
+            x += (math.cos(math.radians(rotation)) * width/2.0  - math.sin(math.radians(rotation)) * height/2.0)
+            y += (math.cos(math.radians(rotation)) * height/2.0 + math.sin(math.radians(rotation)) * width/2.0)
+            if o.getElementsByTagName('ellipse'):
+                assertCircleness(o)
+                isCircle = True
         else:
             polyverts = getPolygonVertices(o)
             FlatBuffGenerated.CollisionMask.CollisionMaskStartPolyvertsVector(builder, len(polyverts))
@@ -96,7 +111,9 @@ def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuff
         pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
         FlatBuffGenerated.CollisionMask.CollisionMaskAddPos(builder, pos)
         FlatBuffGenerated.CollisionMask.CollisionMaskAddRotation(builder, rotation)
-        FlatBuffGenerated.CollisionMask.CollisionMaskAddRadius(builder, radius * GLOBAL_SCALE)
+        size = FlatBuffGenerated.Vec2.CreateVec2(builder, width * GLOBAL_SCALE, height * GLOBAL_SCALE)
+        FlatBuffGenerated.CollisionMask.CollisionMaskAddSize(builder, size)
+        FlatBuffGenerated.CollisionMask.CollisionMaskAddIsCircle(builder, isCircle)
         FlatBuffGenerated.CollisionMask.CollisionMaskAddPolyverts(builder, poly)
         objs.collision.append(FlatBuffGenerated.CollisionMask.CollisionMaskEnd(builder))
 
@@ -104,14 +121,18 @@ def handle_collision_layer(g: minidom.Node, objs: GameObjects, builder: flatbuff
 def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
         x, y, rotation = get_pos(o)
-        radius = 0
         poly = 0
+        width = 0
+        height = 0
+        isCircle = False
 
-        if o.getElementsByTagName('ellipse'):
-            assertCircleness(o)
-            radius = float(o.getAttribute('width')) / 2.0
-            x += math.cos(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2)
-            y += math.sin(math.radians(rotation) + math.radians(45)) * radius * math.sqrt(2)
+        if not o.getElementsByTagName('polygon'):
+            width, height = get_dim(o)
+            x += (math.cos(math.radians(rotation)) * width/2.0  - math.sin(math.radians(rotation)) * height/2.0)
+            y += (math.cos(math.radians(rotation)) * height/2.0 + math.sin(math.radians(rotation)) * width/2.0)
+            if o.getElementsByTagName('ellipse'):
+                assertCircleness(o)
+                isCircle = True
         else:
             polyverts = getPolygonVertices(o)
             FlatBuffGenerated.HidingSpot.HidingSpotStartPolyvertsVector(builder, len(polyverts))
@@ -128,7 +149,9 @@ def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbu
         pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
         FlatBuffGenerated.HidingSpot.HidingSpotAddPos(builder, pos)
         FlatBuffGenerated.HidingSpot.HidingSpotAddRotation(builder, rotation)
-        FlatBuffGenerated.HidingSpot.HidingSpotAddRadius(builder, radius * GLOBAL_SCALE)
+        size = FlatBuffGenerated.Vec2.CreateVec2(builder, width * GLOBAL_SCALE, height * GLOBAL_SCALE)
+        FlatBuffGenerated.HidingSpot.HidingSpotAddSize(builder, size)
+        FlatBuffGenerated.HidingSpot.HidingSpotAddIsCircle(builder, isCircle)
         FlatBuffGenerated.HidingSpot.HidingSpotAddPolyverts(builder, poly)
         FlatBuffGenerated.HidingSpot.HidingSpotAddName(builder, name)
         objs.hidingspots.append(FlatBuffGenerated.HidingSpot.HidingSpotEnd(builder))
@@ -137,21 +160,20 @@ def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbu
 def handle_meta_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
         x, y, rotation = get_pos(o)
+        width, height = get_dim(o)
 
         typ = o.getAttribute('type')
 
         if typ == 'playerwall':
-            width = float(o.getAttribute('width')) / 2.0
-            height = float(o.getAttribute('height')) / 2.0
-
-            x += width
-            y += height
+            x += (math.cos(math.radians(rotation)) * width/2.0  - math.sin(math.radians(rotation)) * height/2.0)
+            y += (math.cos(math.radians(rotation)) * height/2.0 + math.sin(math.radians(rotation)) * width/2.0)
 
             FlatBuffGenerated.PlayerWall.PlayerWallStart(builder)
             pos = FlatBuffGenerated.Vec2.CreateVec2(builder, x * GLOBAL_SCALE, y * GLOBAL_SCALE)
             FlatBuffGenerated.PlayerWall.PlayerWallAddPosition(builder, pos)
-            size = FlatBuffGenerated.Vec2.CreateVec2(builder, width * GLOBAL_SCALE, height * GLOBAL_SCALE)
+            size = FlatBuffGenerated.Vec2.CreateVec2(builder, width/2.0 * GLOBAL_SCALE, height/2.0 * GLOBAL_SCALE)
             FlatBuffGenerated.PlayerWall.PlayerWallAddSize(builder, size)
+            FlatBuffGenerated.PlayerWall.PlayerWallAddRotation(builder, rotation)
             pwall = FlatBuffGenerated.PlayerWall.PlayerWallEnd(builder)
             objs.playerwalls.append(pwall)
 
@@ -162,13 +184,9 @@ def handle_meta_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.B
             isspawn = False
             isplayerspawn = False
 
-            width = float(o.getAttribute('width'))
-            height = float(o.getAttribute('height'))
-            if width != height:
-                print("waypoint", name, "is an ellipse, not a circle, width:", width, "height:", height)
-                exit(1)
-            x += width / 2.0
-            y += height / 2.0
+            assertCircleness(o)
+            x += (math.cos(math.radians(rotation)) * width/2.0  - math.sin(math.radians(rotation)) * height/2.0)
+            y += (math.cos(math.radians(rotation)) * height/2.0 + math.sin(math.radians(rotation)) * width/2.0)
             radius = (width / 2.0) * GLOBAL_SCALE
 
             for prop in o.getElementsByTagName('property'):
