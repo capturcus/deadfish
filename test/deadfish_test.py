@@ -22,7 +22,11 @@ def test_levelpacker():
 
 def test_simple_connect():
     pyautogui.moveTo(100, 100)
-    server = subprocess.Popen("./run_server.sh", cwd="../server/build")
+    deadfish_path = os.path.abspath("..")
+    server_build_path = deadfish_path + "/server/build"
+    my_env = os.environ.copy()
+    my_env["LD_LIBRARY_PATH"] = server_build_path
+    server = subprocess.Popen(["./deadfishserver", "-p", "63987", "-l", "../../levels/big.bin"], cwd="../server/build", env=my_env)
     client = subprocess.Popen("./deadfishclient", cwd="../client/dfclient-native")
     infinite_retry_click("connect.png")
     mouseX, mouseY = pyautogui.position()
@@ -36,6 +40,7 @@ def test_simple_connect():
     server.kill()
     client.kill()
 
+@mark.skip
 def test_two_clients_kill():
     pyautogui.moveTo(100, 100)
     deadfish_path = os.path.abspath("..")
