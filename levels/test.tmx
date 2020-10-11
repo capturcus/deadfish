@@ -123,7 +123,7 @@
    </properties>
    <ellipse/>
   </object>
-  <object id="1150" name="pspawn1" type="waypoint" x="1564.91" y="932.697" width="176" height="176">
+  <object id="1150" name="pspawn1" type="waypoint" x="1531.08" y="995.266" width="176" height="176" rotation="326.791">
    <properties>
     <property name="isplayerspawn" type="bool" value="true"/>
    </properties>

@@ -159,13 +159,11 @@ def handle_hidingspots_layer(g: minidom.Node, objs: GameObjects, builder: flatbu
 def handle_meta_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.Builder):
     for o in g.getElementsByTagName('object'):
         x, y, rotation = get_pos(o)
+        width, height = get_dim(o)
 
         typ = o.getAttribute('type')
 
         if typ == 'playerwall':
-            width = float(o.getAttribute('width'))
-            height = float(o.getAttribute('height'))
-
             x += (math.cos(math.radians(rotation)) * width/2.0  - math.sin(math.radians(rotation)) * height/2.0)
             y += (math.cos(math.radians(rotation)) * height/2.0 + math.sin(math.radians(rotation)) * width/2.0)
 
@@ -185,13 +183,9 @@ def handle_meta_layer(g: minidom.Node, objs: GameObjects, builder: flatbuffers.B
             isspawn = False
             isplayerspawn = False
 
-            width = float(o.getAttribute('width'))
-            height = float(o.getAttribute('height'))
-            if width != height:
-                print("waypoint", name, "is an ellipse, not a circle, width:", width, "height:", height)
-                exit(1)
-            x += width / 2.0
-            y += height / 2.0
+            assertCircleness(o)
+            x += (math.cos(math.radians(rotation)) * width/2.0  - math.sin(math.radians(rotation)) * height/2.0)
+            y += (math.cos(math.radians(rotation)) * height/2.0 + math.sin(math.radians(rotation)) * width/2.0)
             radius = (width / 2.0) * GLOBAL_SCALE
 
             for prop in o.getElementsByTagName('property'):
