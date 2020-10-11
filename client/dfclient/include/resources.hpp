@@ -1,4 +1,6 @@
 #pragma once
+#ifndef __RESOURCES_HPP__
+#define __RESOURCES_HPP__
 
 #include <map>
 #include <memory>
@@ -8,6 +10,9 @@
 #include <ncine/AudioBufferPlayer.h>
 
 #include "tweeny.h"
+
+static const char* TEXTURES_PATH = "textures";
+static const char* LEVELS_PATH = "../levels";
 
 struct Resources {
 	std::map<std::string, std::unique_ptr<ncine::Font>> fonts;
@@ -20,3 +25,5 @@ struct Resources {
 
 	void UpdateTweens();
 };
+
+#endif

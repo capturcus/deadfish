@@ -4,14 +4,13 @@
 #include <ncine/Texture.h>
 #include <ncine/Application.h>
 
+#include "resources.hpp"
 #include "menu_state.hpp"
 #include "lobby_state.hpp"
 #include "gameplay_state.hpp"
 
 #include "state_manager.hpp"
 #include "websocket.hpp"
-
-const char* TEXTURES_PATH = "textures";
 
 StateManager::StateManager() {
 	auto rootPath = ncine::theApplication().appConfiguration().dataPath();

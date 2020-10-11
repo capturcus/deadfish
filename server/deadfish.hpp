@@ -100,19 +100,43 @@ struct Civilian : public Mob {
 	void collisionResolution();
 };
 
-struct HidingSpot : public Collideable {
-	b2Body* body = nullptr;
-	float radius = 0;
-	virtual bool obstructsSight(Player* p) override {
-		auto distance = b2Distance(body->GetPosition(), p->body->GetPosition());
-		if(distance < body->GetFixtureList()->GetShape()->m_radius) {
-			return false;
-		}
-		return true;
-	}
+// just a data container to be able to send it later to clients
+struct Tileinfo {
+	Tileinfo(const FlatBuffGenerated::Tileinfo* fb_Ti) : name(fb_Ti->name()->str()), gid(fb_Ti->gid()) {}
+	std::string name;
+	uint16_t gid;
 };
 
-struct Stone : public Collideable {
+// just a data container to be able to send it later to clients
+struct Object {
+	Object(const FlatBuffGenerated::Object* fb_Obj) : pos(fb_Obj->pos()->x(), fb_Obj->pos()->y()),
+		rotation(fb_Obj->rotation()), gid(fb_Obj->gid()), hspotname(fb_Obj->hspotname()->str()) {}
+	glm::vec2 pos;
+	float rotation;
+	uint16_t gid;
+	std::string hspotname;
+};
+
+// just a data container to be able to send it later to clients
+struct Decoration {
+	Decoration(const FlatBuffGenerated::Decoration* fb_Dec) : pos(fb_Dec->pos()->x(), fb_Dec->pos()->y()),
+		rotation(fb_Dec->rotation()), gid(fb_Dec->gid()) {}
+	glm::vec2 pos;
+	float rotation;
+	uint16_t gid;
+};
+
+struct HidingSpot : public Collideable {
+	HidingSpot(const FlatBuffGenerated::HidingSpot*);
+	std::string name;
+	b2Body* body = nullptr;
+	std::set<Player*> playersInside;
+	virtual void handleCollision(Collideable& other) override;
+	virtual bool obstructsSight(Player* p) override;
+};
+
+struct CollisionMask : public Collideable {
+	CollisionMask(const FlatBuffGenerated::CollisionMask*);
 	b2Body* body = nullptr;
 	virtual bool obstructsSight(Player*) override { return true; }
 };
@@ -131,10 +155,13 @@ struct NavPoint {
 };
 
 struct Level {
+	std::vector<std::unique_ptr<Object>> objects;
+	std::vector<std::unique_ptr<Decoration>> decoration;
+	std::vector<std::unique_ptr<CollisionMask>> collisionMasks;
 	std::vector<std::unique_ptr<HidingSpot>> hidingspots;
-	std::vector<std::unique_ptr<Stone>> stones;
 	std::vector<std::unique_ptr<PlayerWall>> playerwalls;
 	std::unordered_map<std::string, std::unique_ptr<NavPoint>> navpoints;
+	std::vector<std::unique_ptr<Tileinfo>> tileinfo;
 	glm::vec2 size;
 };
 

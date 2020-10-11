@@ -112,6 +112,12 @@ then
     exit 0
 fi
 
+if [ "$1" == "generate" ]
+then
+    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish && ./generate.sh'
+    exit 0
+fi
+
 echo """
 This is the control script for deadfish development.
 First you have to install it: sudo ./dfctl install. This will put the script in /usr/bin
@@ -134,4 +140,5 @@ Available options:
     debs - start server debugging
     debc - start client debugging
     levelpacker - run the levelpacker inside the container
+    generate - regenerate flatbuffer code from the .fbs file
 """

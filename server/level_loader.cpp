@@ -23,69 +23,39 @@ void initPlayerwall(const FlatBuffGenerated::PlayerWall *pw)
 	gameState.level->playerwalls.back()->body = staticBody;
 }
 
-void initStone(Stone *s, const FlatBuffGenerated::Stone *dfstone)
-{
-	b2BodyDef myBodyDef;
-	myBodyDef.type = b2_staticBody;
-	myBodyDef.position.Set(dfstone->pos()->x(), dfstone->pos()->y());
-	myBodyDef.angle = -dfstone->rotation();
-	s->body = gameState.b2world->CreateBody(&myBodyDef);
-	b2CircleShape circleShape;
-	circleShape.m_radius = dfstone->radius();
-
-	b2FixtureDef fixtureDef;
-	fixtureDef.shape = &circleShape;
-	fixtureDef.density = 1;
-	s->body->CreateFixture(&fixtureDef);
-	s->body->SetUserData(s);
-}
-
-void initHidingSpot(HidingSpot *b, const FlatBuffGenerated::HidingSpot *dfhspot)
-{
-	b2BodyDef myBodyDef;
-	myBodyDef.type = b2_staticBody;
-	myBodyDef.position.Set(dfhspot->pos()->x(), dfhspot->pos()->y());
-	myBodyDef.angle = -dfhspot->rotation();
-	b->body = gameState.b2world->CreateBody(&myBodyDef);
-	b2CircleShape circleShape;
-	circleShape.m_radius = dfhspot->radius();
-
-	b2FixtureDef fixtureDef;
-	fixtureDef.shape = &circleShape;
-	fixtureDef.density = 1;
-	fixtureDef.filter.categoryBits = 0x0002;
-	b->body->CreateFixture(&fixtureDef);
-	b->body->SetUserData(b);
-}
-
 flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBufferBuilder &builder)
 {
-	// hiding spots
-	std::vector<flatbuffers::Offset<FlatBuffGenerated::HidingSpot>> hspotOffsets;
-	for (auto &b : gameState.level->hidingspots)
-	{
-		FlatBuffGenerated::Vec2 pos(b->body->GetPosition().x, b->body->GetPosition().y);
-		auto f = b->body->GetFixtureList();
-		auto c = (b2CircleShape *)f->GetShape();
-		auto off = FlatBuffGenerated::CreateHidingSpot(builder, c->m_radius, b->body->GetAngle(), &pos);
-		hspotOffsets.push_back(off);
+	//tileinfo
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::Tileinfo>> tileinfoOffsets;
+	for (auto &ts : gameState.level->tileinfo) {
+		auto name = builder.CreateString(ts->name);
+		auto offset = FlatBuffGenerated::CreateTileinfo(builder, ts->gid, name);
+		tileinfoOffsets.push_back(offset);
 	}
-	auto hidingspots = builder.CreateVector(hspotOffsets);
+	auto tilesets = builder.CreateVector(tileinfoOffsets);
 
-	// stones
-	std::vector<flatbuffers::Offset<FlatBuffGenerated::Stone>> stoneOffsets;
-	for (auto &s : gameState.level->stones)
-	{
-		FlatBuffGenerated::Vec2 pos(s->body->GetPosition().x, s->body->GetPosition().y);
-		auto f = s->body->GetFixtureList();
-		auto c = (b2CircleShape *)f->GetShape();
-		auto off = FlatBuffGenerated::CreateStone(builder, c->m_radius, s->body->GetAngle(), &pos);
-		stoneOffsets.push_back(off);
+	// objects
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::Object>> objectOffsets;
+	for (auto &o : gameState.level->objects) {
+		FlatBuffGenerated::Vec2 pos(o->pos.x, o->pos.y);
+		auto hspotname = builder.CreateString(o->hspotname);
+		auto offset = FlatBuffGenerated::CreateObject(builder, &pos, o->rotation, o->gid, hspotname);
+		objectOffsets.push_back(offset);
 	}
-	auto stones = builder.CreateVector(stoneOffsets);
+	auto objects = builder.CreateVector(objectOffsets);
 
+	// decoration
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::Decoration>> decorationOffsets;
+	for (auto &d : gameState.level->decoration) {
+		FlatBuffGenerated::Vec2 pos(d->pos.x, d->pos.y);
+		auto offset = FlatBuffGenerated::CreateDecoration(builder, &pos, d->rotation, d->gid);
+		decorationOffsets.push_back(offset);
+	}
+	auto decoration = builder.CreateVector(decorationOffsets);
+
+	// final
 	FlatBuffGenerated::Vec2 size(gameState.level->size.x, gameState.level->size.y);
-	auto level = FlatBuffGenerated::CreateLevel(builder, hidingspots, stones, 0, 0, &size);
+	auto level = FlatBuffGenerated::CreateLevel(builder, objects, decoration, 0, 0, 0, 0, tilesets, &size);
 	return level;
 }
 
@@ -121,35 +91,49 @@ void loadLevel(std::string &path)
 
 	auto level = flatbuffers::GetRoot<FlatBuffGenerated::Level>(memblock.data());
 
-	// hiding spots
-	for (size_t i = 0; i < level->hidingspots()->size(); i++)
+	// tilesets
+	for (auto tileinfo : *level->tileinfo()) {
+		auto ti = std::make_unique<Tileinfo>(tileinfo);
+		gameState.level->tileinfo.push_back(std::move(ti));
+	}
+
+	// objects
+	for (auto object : *level->objects())
 	{
-		auto hspot = level->hidingspots()->Get(i);
-		auto hs = std::make_unique<HidingSpot>();
-		initHidingSpot(hs.get(), hspot);
+		auto o = std::make_unique<Object>(object);
+		gameState.level->objects.push_back(std::move(o));
+	}
+
+	// decoration
+	for (auto decoration : *level->decoration())
+	{
+		auto d = std::make_unique<Decoration>(decoration);
+		gameState.level->decoration.push_back(std::move(d));
+	}
+
+	// hiding spots
+	for (auto hspot : *level->hidingspots())
+	{
+		auto hs = std::make_unique<HidingSpot>(hspot);
 		gameState.level->hidingspots.push_back(std::move(hs));
 	}
 
-	// stones
-	for (size_t i = 0; i < level->stones()->size(); i++)
+	// collisionMasks
+	for (auto cmask : *level->collisionMasks())
 	{
-		auto stone = level->stones()->Get(i);
-		auto s = std::make_unique<Stone>();
-		initStone(s.get(), stone);
-		gameState.level->stones.push_back(std::move(s));
+		auto s = std::make_unique<CollisionMask>(cmask);
+		gameState.level->collisionMasks.push_back(std::move(s));
 	}
 
 	// playerwalls
-	for (size_t i = 0; i < level->playerwalls()->size(); i++)
+	for (auto playerwall : *level->playerwalls())
 	{
-		auto playerwall = level->playerwalls()->Get(i);
 		initPlayerwall(playerwall);
 	}
 
 	// navpoints
-	for (size_t i = 0; i < level->navpoints()->size(); i++)
+	for (auto navpoint : *level->navpoints())
 	{
-		auto navpoint = level->navpoints()->Get(i);
 		auto n = std::make_unique<NavPoint>();
 		n->isspawn = navpoint->isspawn();
 		n->isplayerspawn = navpoint->isplayerspawn();
@@ -157,8 +141,8 @@ void loadLevel(std::string &path)
 		n->radius = navpoint->radius();
 		for (size_t j = 0; j < navpoint->neighbors()->size(); j++)
 		{
-			n->neighbors.push_back(navpoint->neighbors()->Get(j)->c_str());
+			n->neighbors.push_back(navpoint->neighbors()->Get(j)->str());
 		}
-		gameState.level->navpoints[navpoint->name()->c_str()] = std::move(n);
+		gameState.level->navpoints[navpoint->name()->str()] = std::move(n);
 	}
 }

@@ -1,4 +1,5 @@
 #include "resources.hpp"
+
 void Resources::UpdateTweens()
 {
     for (int i = _tweens.size() - 1; i >= 0; i--) {

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.1" orientation="orthogonal" renderorder="right-down" width="40" height="32" tilewidth="64" tileheight="64" infinite="0" nextlayerid="3" nextobjectid="1139">
- <tileset firstgid="1" name="tiless" tilewidth="128" tileheight="128" tilecount="2" columns="0" objectalignment="center">
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="40" height="32" tilewidth="64" tileheight="64" infinite="0" nextlayerid="6" nextobjectid="1283">
+ <tileset firstgid="1" name="tiless" tilewidth="128" tileheight="128" tilecount="2" columns="0" objectalignment="topleft">
   <grid orientation="orthogonal" width="1" height="1"/>
   <tile id="0">
    <image width="128" height="128" source="../assets/bush.png"/>
@@ -9,7 +9,7 @@
    <image width="128" height="128" source="../assets/stone.png"/>
   </tile>
  </tileset>
- <tileset firstgid="3" source="../assets/testtileset.tsx"/>
+ <objectgroup id="5" name="decoration"/>
  <objectgroup id="1" name="objects">
   <object id="418" gid="2" x="342" y="122" width="128" height="128"/>
   <object id="419" gid="2" x="412" y="128" width="128" height="128"/>
@@ -114,17 +114,17 @@
   <object id="709" gid="2" x="88" y="1668" width="128" height="128"/>
   <object id="710" gid="2" x="132" y="1816" width="128" height="128"/>
   <object id="711" gid="2" x="256" y="1892" width="128" height="128"/>
-  <object id="712" gid="2" x="482" y="1942" width="128" height="128"/>
+  <object id="712" gid="2" x="480.481" y="1973.9" width="128" height="128"/>
   <object id="713" gid="2" x="604" y="2026" width="128" height="128"/>
   <object id="714" gid="2" x="708" y="2054" width="128" height="128"/>
   <object id="715" gid="2" x="350" y="1858" width="128" height="128"/>
   <object id="716" gid="2" x="364" y="1928" width="128" height="128"/>
   <object id="717" gid="2" x="228" y="1768" width="128" height="128"/>
   <object id="718" gid="2" x="168" y="1722" width="128" height="128"/>
-  <object id="719" gid="2" x="180" y="1634" width="128" height="128"/>
-  <object id="720" gid="2" x="124" y="1532" width="128" height="128"/>
-  <object id="721" gid="2" x="78" y="1384" width="128" height="128"/>
-  <object id="722" gid="2" x="62" y="1234" width="128" height="128"/>
+  <object id="719" gid="2" x="173.924" y="1637.04" width="128" height="128"/>
+  <object id="720" gid="2" x="96.6568" y="1542.63" width="128" height="128"/>
+  <object id="721" gid="2" x="73.4428" y="1412.86" width="128" height="128"/>
+  <object id="722" gid="2" x="27.0615" y="1218.81" width="128" height="128"/>
   <object id="723" gid="2" x="-4" y="1118" width="128" height="128"/>
   <object id="724" gid="2" x="300" y="1802" width="128" height="128"/>
   <object id="725" gid="2" x="1674" y="168" width="128" height="128"/>
@@ -197,28 +197,27 @@
   <object id="799" gid="2" x="798" y="236" width="128" height="128"/>
   <object id="800" gid="2" x="752" y="308" width="128" height="128"/>
   <object id="801" gid="2" x="818" y="2112" width="128" height="128"/>
-  <object id="802" gid="2" x="752" y="668" width="128" height="128" rotation="33"/>
-  <object id="803" gid="2" x="700" y="730" width="128" height="128" rotation="33"/>
-  <object id="804" gid="2" x="640" y="808" width="128" height="128" rotation="72"/>
-  <object id="805" gid="2" x="574" y="948" width="128" height="128" rotation="33"/>
-  <object id="806" gid="2" x="540" y="1096" width="128" height="128" rotation="72"/>
+  <object id="802" gid="2" x="742.886" y="651.29" width="128" height="128" rotation="33"/>
+  <object id="803" gid="2" x="678.733" y="713.29" width="128" height="128" rotation="33"/>
+  <object id="804" gid="2" x="702.282" y="798.886" width="128" height="128" rotation="72"/>
+  <object id="805" gid="2" x="589.191" y="955.595" width="128" height="128" rotation="33"/>
+  <object id="806" gid="2" x="632.663" y="1100.56" width="128" height="128" rotation="72"/>
   <object id="807" gid="2" x="582" y="1246" width="128" height="128" rotation="33"/>
   <object id="808" gid="2" x="546" y="1042" width="128" height="128"/>
-  <object id="809" gid="2" x="604" y="870" width="128" height="128"/>
-  <object id="810" gid="2" x="558" y="1190" width="128" height="128"/>
-  <object id="811" gid="2" x="620" y="1338" width="128" height="128" rotation="33"/>
+  <object id="809" gid="2" x="566.023" y="892.786" width="128" height="128"/>
+  <object id="810" gid="2" x="532.176" y="1190" width="128" height="128"/>
+  <object id="811" gid="2" x="601.771" y="1344.08" width="128" height="128" rotation="33"/>
   <object id="812" gid="2" x="1836" y="1652" width="128" height="128" rotation="11"/>
-  <object id="813" gid="2" x="1836" y="1522" width="128" height="128" rotation="11"/>
-  <object id="814" gid="2" x="1880" y="1440" width="128" height="128"/>
-  <object id="815" gid="2" x="1914" y="1356" width="128" height="128" rotation="267.202"/>
-  <object id="816" gid="2" x="1932" y="1246" width="128" height="128" rotation="325.892"/>
-  <object id="817" gid="2" x="1930" y="1178" width="128" height="128" rotation="109.522"/>
+  <object id="813" gid="2" x="1863.34" y="1532.63" width="128" height="128" rotation="11"/>
+  <object id="814" gid="2" x="1886.08" y="1389.87" width="128" height="128"/>
+  <object id="815" gid="2" x="1898.81" y="1356" width="128" height="128" rotation="267.202"/>
+  <object id="816" gid="2" x="1880.35" y="1211.06" width="128" height="128" rotation="325.892"/>
+  <object id="817" gid="2" x="2007.47" y="1048.88" width="128" height="128" rotation="109.522"/>
   <object id="818" gid="2" x="1904" y="1086" width="128" height="128" rotation="11"/>
-  <object id="819" gid="2" x="1860" y="1002" width="128" height="128" rotation="60.5506"/>
+  <object id="819" gid="2" x="1928.36" y="948.833" width="128" height="128" rotation="60.5506"/>
   <object id="820" gid="2" x="1814" y="924" width="128" height="128" rotation="11.3236"/>
-  <object id="821" gid="2" x="1700" y="822" width="128" height="128" rotation="20.4137"/>
+  <object id="821" gid="2" x="1713.67" y="828.076" width="128" height="128" rotation="20.4137"/>
   <object id="822" gid="2" x="1760" y="874" width="128" height="128"/>
-  <object id="823" gid="2" x="1636" y="786" width="128" height="128"/>
   <object id="827" gid="2" x="852" y="2062" width="128" height="128"/>
   <object id="828" gid="2" x="1022" y="2048" width="128" height="128"/>
   <object id="829" gid="2" x="872" y="2054" width="128" height="128"/>
@@ -232,59 +231,214 @@
   <object id="838" gid="2" x="1568" y="2048" width="128" height="128"/>
   <object id="839" gid="2" x="776" y="2024" width="128" height="128"/>
   <object id="840" gid="2" x="1116" y="2074" width="128" height="128"/>
-  <object id="842" gid="2" x="644" y="1410" width="128" height="128"/>
+  <object id="842" gid="2" x="589.314" y="1452.53" width="128" height="128"/>
   <object id="843" gid="2" x="682" y="1488" width="128" height="128" rotation="33"/>
-  <object id="844" gid="2" x="728" y="1582" width="128" height="128"/>
-  <object id="845" gid="2" x="1840" y="1584" width="128" height="128" rotation="298.252"/>
+  <object id="844" gid="2" x="698" y="1567" width="128" height="128"/>
+  <object id="845" gid="2" x="1836.96" y="1539.95" width="128" height="128" rotation="298.252"/>
   <object id="846" gid="2" x="1912" y="1292" width="128" height="128" rotation="11"/>
-  <object id="847" gid="2" x="1604" y="820" width="128" height="128" rotation="326.404"/>
-  <object id="848" gid="2" x="1528" y="902" width="128" height="128"/>
+  <object id="847" gid="2" x="1590.33" y="894.434" width="128" height="128" rotation="326.404"/>
+  <object id="848" gid="2" x="1544.71" y="873.138" width="128" height="128"/>
   <object id="849" gid="2" x="1460" y="954" width="128" height="128"/>
   <object id="850" gid="2" x="796" y="1590" width="128" height="128"/>
-  <object id="851" gid="2" x="896" y="1508" width="128" height="128" rotation="24.0263"/>
-  <object id="852" gid="2" x="946" y="1448" width="128" height="128" rotation="33"/>
-  <object id="853" gid="2" x="1032" y="1390" width="128" height="128" rotation="87.266"/>
-  <object id="854" gid="2" x="1452" y="974" width="128" height="128" rotation="262.197"/>
-  <object id="859" gid="1" x="1516" y="1112" width="128" height="128" rotation="275.152"/>
-  <object id="860" gid="1" x="1600" y="1202" width="128" height="128"/>
-  <object id="861" gid="1" x="1674" y="1286" width="128" height="128" rotation="258.687"/>
-  <object id="862" gid="1" x="1744" y="1354" width="128" height="128" rotation="54.4889"/>
-  <object id="867" gid="1" x="936" y="1302" width="128" height="128" rotation="328.089"/>
-  <object id="868" gid="1" x="840" y="1224" width="128" height="128"/>
-  <object id="869" gid="1" x="754" y="1142" width="128" height="128"/>
-  <object id="870" gid="1" x="686" y="1084" width="128" height="128"/>
-  <object id="871" gid="1" x="690" y="1214" width="128" height="128"/>
-  <object id="872" gid="1" x="756" y="1300" width="128" height="128"/>
-  <object id="873" gid="1" x="832" y="1362" width="128" height="128" rotation="33"/>
-  <object id="874" gid="1" x="766" y="1454" width="128" height="128"/>
-  <object id="875" gid="1" x="1630" y="1102" width="128" height="128"/>
-  <object id="876" gid="1" x="1710" y="1196" width="128" height="128"/>
-  <object id="877" gid="1" x="1798" y="1278" width="128" height="128"/>
-  <object id="878" gid="1" x="1756" y="1098" width="128" height="128"/>
-  <object id="879" gid="1" x="1802" y="1184" width="128" height="128" rotation="297.692"/>
-  <object id="880" gid="1" x="1684" y="960" width="128" height="128"/>
-  <object id="881" gid="1" x="1700" y="1026" width="128" height="128"/>
-  <object id="882" gid="1" x="1578" y="1000" width="128" height="128"/>
-  <object id="883" gid="1" x="750" y="1354" width="128" height="128"/>
-  <object id="884" gid="1" x="772" y="1248" width="128" height="128"/>
-  <object id="885" gid="1" x="872" y="1308" width="128" height="128"/>
-  <object id="886" gid="1" x="1722" y="1114" width="128" height="128"/>
-  <object id="887" gid="1" x="1676" y="1244" width="128" height="128"/>
-  <object id="888" gid="1" x="1538" y="1082" width="128" height="128"/>
-  <object id="889" gid="1" x="1616" y="1018" width="128" height="128" rotation="308.035"/>
-  <object id="890" gid="1" x="1748" y="1298" width="128" height="128"/>
-  <object id="891" gid="1" x="656" y="1134" width="128" height="128" rotation="33"/>
-  <object id="892" gid="1" x="756" y="456" width="128" height="128"/>
-  <object id="893" gid="1" x="712" y="532" width="128" height="128"/>
-  <object id="894" gid="1" x="788" y="590" width="128" height="128"/>
-  <object id="895" gid="1" x="782" y="536" width="128" height="128"/>
-  <object id="896" gid="1" x="830" y="470" width="128" height="128"/>
-  <object id="897" gid="1" x="1822" y="1744" width="128" height="128"/>
-  <object id="900" gid="1" x="1802" y="1792" width="128" height="128"/>
-  <object id="901" gid="1" x="1778" y="1854" width="128" height="128"/>
-  <object id="902" gid="1" x="1896" y="1832" width="128" height="128"/>
-  <object id="903" gid="1" x="1860" y="1754" width="128" height="128"/>
-  <object id="904" gid="1" x="1852" y="1862" width="128" height="128"/>
+  <object id="851" gid="2" x="876.252" y="1536.86" width="128" height="128" rotation="24.0263"/>
+  <object id="852" gid="2" x="924.733" y="1481.42" width="128" height="128" rotation="33"/>
+  <object id="853" gid="2" x="1018.33" y="1447.72" width="128" height="128" rotation="87.266"/>
+  <object id="854" gid="2" x="1494.53" y="1037.8" width="128" height="128" rotation="262.197"/>
+  <object id="859" type="hidingspot" gid="1" x="1555.5" y="1080.1" width="128" height="128" rotation="275.152">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="860" type="hidingspot" gid="1" x="1600" y="1202" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="861" type="hidingspot" gid="1" x="1674" y="1286" width="128" height="128" rotation="258.687">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="862" type="hidingspot" gid="1" x="1815.4" y="1267.41" width="128" height="128" rotation="54.4889">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="867" type="hidingspot" gid="1" x="793.208" y="1368.84" width="128" height="128" rotation="328.089">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="868" type="hidingspot" gid="1" x="809.619" y="1192.1" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="869" type="hidingspot" gid="1" x="747.924" y="1157.19" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="870" type="hidingspot" gid="1" x="664.733" y="1143.24" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="871" type="hidingspot" gid="1" x="691.519" y="1230.71" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="872" type="hidingspot" gid="1" x="740.809" y="1304.56" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="873" type="hidingspot" gid="1" x="832" y="1362" width="128" height="128" rotation="33">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="874" type="hidingspot" gid="1" x="766" y="1454" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="875" type="hidingspot" gid="1" x="1620.89" y="1092.89" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="876" type="hidingspot" gid="1" x="1738.86" y="1189.92" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="877" type="hidingspot" gid="1" x="1807.11" y="1104.83" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="878" type="hidingspot" gid="1" x="1756" y="1098" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="879" type="hidingspot" gid="1" x="1745.79" y="1117.16" width="128" height="128" rotation="297.692">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="880" type="hidingspot" gid="1" x="1714.38" y="953.924" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="881" type="hidingspot" gid="1" x="1683.29" y="1030.56" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="882" type="hidingspot" gid="1" x="1609.9" y="1025.82" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="883" type="hidingspot" gid="1" x="725.695" y="1372.23" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="884" type="hidingspot" gid="1" x="772" y="1248" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="885" type="hidingspot" gid="1" x="870.481" y="1347.5" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="886" type="hidingspot" gid="1" x="1722" y="1114" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="887" type="hidingspot" gid="1" x="1676" y="1244" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="888" type="hidingspot" gid="1" x="1522.81" y="1044.02" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="889" type="hidingspot" gid="1" x="1616" y="1018" width="128" height="128" rotation="308.035">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="890" type="hidingspot" gid="1" x="1804.21" y="1273.69" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="891" type="hidingspot" gid="1" x="706.129" y="1389.2" width="128" height="128" rotation="33">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="892" type="hidingspot" gid="1" x="743.847" y="463.595" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="leftPassage"/>
+   </properties>
+  </object>
+  <object id="894" type="hidingspot" gid="1" x="801.672" y="585.443" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="leftPassage"/>
+   </properties>
+  </object>
+  <object id="895" type="hidingspot" gid="1" x="782" y="536" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="leftPassage"/>
+   </properties>
+  </object>
+  <object id="896" type="hidingspot" gid="1" x="834.557" y="495.824" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="leftPassage"/>
+   </properties>
+  </object>
+  <object id="897" type="hidingspot" gid="1" x="1822" y="1744" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="rightPassage"/>
+   </properties>
+  </object>
+  <object id="900" type="hidingspot" gid="1" x="1802" y="1792" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="rightPassage"/>
+   </properties>
+  </object>
+  <object id="901" type="hidingspot" gid="1" x="1778" y="1854" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="rightPassage"/>
+   </properties>
+  </object>
+  <object id="902" type="hidingspot" gid="1" x="1896" y="1832" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="rightPassage"/>
+   </properties>
+  </object>
+  <object id="903" type="hidingspot" gid="1" x="1860" y="1754" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="rightPassage"/>
+   </properties>
+  </object>
+  <object id="904" type="hidingspot" gid="1" x="1852" y="1862" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="rightPassage"/>
+   </properties>
+  </object>
   <object id="906" gid="2" x="10" y="1750" width="128" height="128"/>
   <object id="907" gid="2" x="124" y="1990" width="128" height="128"/>
   <object id="908" gid="2" x="218" y="2064" width="128" height="128"/>
@@ -389,7 +543,7 @@
   <object id="1007" gid="2" x="-222" y="558" width="128" height="128"/>
   <object id="1008" gid="2" x="-136" y="454" width="128" height="128"/>
   <object id="1009" gid="2" x="-276" y="324" width="128" height="128"/>
-  <object id="1010" gid="2" x="-42" y="250" width="128" height="128"/>
+  <object id="1010" gid="2" x="-70.8622" y="269.748" width="128" height="128"/>
   <object id="1011" gid="2" x="-156" y="30" width="128" height="128"/>
   <object id="1012" gid="2" x="-392" y="-76" width="128" height="128"/>
   <object id="1013" gid="2" x="-536" y="466" width="128" height="128"/>
@@ -453,14 +607,430 @@
   <object id="1073" gid="2" x="3378" y="2344" width="128" height="128"/>
   <object id="1074" gid="2" x="3534" y="-556" width="128" height="128"/>
   <object id="1075" gid="2" x="3984" y="194" width="128" height="128"/>
-  <object id="1138" gid="6" x="1195.3" y="1124.34" width="128" height="128"/>
+  <object id="1147" gid="2" x="1842.43" y="1597.86" width="128" height="128" rotation="11"/>
+  <object id="1139" type="hidingspot" gid="1" x="663.632" y="1315.31" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="1140" type="hidingspot" gid="1" x="613.503" y="1271.26" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="1141" type="hidingspot" gid="1" x="605.907" y="1172.52" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="1142" type="hidingspot" gid="1" x="725.913" y="1465.7" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="1143" type="hidingspot" gid="1" x="826.172" y="1417.09" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="1144" type="hidingspot" gid="1" x="774.523" y="1488.48" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="1148" type="hidingspot" gid="1" x="1805.97" y="1184.67" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="1149" type="hidingspot" gid="1" x="1555.32" y="1128.47" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_right"/>
+   </properties>
+  </object>
+  <object id="1151" type="hidingspot" gid="1" x="861.11" y="1266.7" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="main_left"/>
+   </properties>
+  </object>
+  <object id="1153" type="hidingspot" gid="1" x="807.943" y="428.177" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="leftPassage"/>
+   </properties>
+  </object>
+  <object id="1154" type="hidingspot" gid="1" x="773.004" y="637.808" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="leftPassage"/>
+   </properties>
+  </object>
+  <object id="1155" type="hidingspot" gid="1" x="704.647" y="589.198" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="leftPassage"/>
+   </properties>
+  </object>
+  <object id="1156" type="hidingspot" gid="1" x="687.937" y="514.763" width="128" height="128">
+   <properties>
+    <property name="hspotName" value="leftPassage"/>
+   </properties>
+  </object>
+  <object id="1281" gid="2" x="2369.27" y="1592.62" width="128" height="128"/>
+  <object id="1282" gid="2" x="1711.44" y="1974.92" width="128" height="128"/>
+ </objectgroup>
+ <objectgroup id="4" name="collisionMasks">
+  <object id="1163" x="869.919" y="356.299" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1165" x="968.892" y="290.992" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1166" x="1088.14" y="252.106" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1167" x="1158.13" y="213.221" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1168" x="1275.44" y="242.385">
+   <polygon points="0,0 60.9203,11.6656 106.286,-6.48088 108.879,-84.2515 76.4744,-108.879 -45.3662,-102.398 -59.6241,-36.2929"/>
+  </object>
+  <object id="1169" x="1383.02" y="237.2">
+   <polygon points="0,0 41.4776,22.035 151.653,-16.8503 174.984,-71.2897 123.137,-119.248 0,-81.6591"/>
+  </object>
+  <object id="1172" x="1677.9" y="175.632" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1173" x="1812.7" y="209.332" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1174" x="1894.36" y="213.221" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1175" x="1979.91" y="257.291" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1176" x="2065.46" y="292.288" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1177" x="2140.64" y="395.982" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1178" x="2215.17" y="513.286">
+   <polygon points="0,0 68.6973,141.283 110.175,165.911 174.984,120.544 57.0318,-50.5509"/>
+  </object>
+  <object id="1179" x="2318.86" y="674.012">
+   <polygon points="0,0 0,31.1082 55.7356,88.14 133.506,23.3312 73.882,-32.4044"/>
+  </object>
+  <object id="1180" x="2371.35" y="736.876" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1181" x="2408.94" y="860.013" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1182" x="2421.91" y="963.707" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1183" x="2506.16" y="1037.59" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1184" x="2521.71" y="1125.73" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1185" x="2504.86" y="1189.24" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1186" x="2428.39" y="1270.9" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1187" x="2371.35" y="1348.67" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1188" x="2335.06" y="1451.07" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1189" x="2314.32" y="1528.84" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1190" x="2357.1" y="1667.53" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1191" x="2445.24" y="1794.56" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1192" x="2127.67" y="2053.79" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1193" x="1947.5" y="1941.02" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1194" x="2030.46" y="2035.64" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1195" x="1839.92" y="1947.5" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1196" x="1758.26" y="1947.5" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1197" x="1826.96" y="1661.05" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1199" x="1839.27" y="1679.84">
+   <polygon points="0,0 -11.6656,-23.3312 16.8503,-63.5126 99.8056,-34.9968 104.99,14.2579"/>
+  </object>
+  <object id="1200" x="1875.57" y="1559.3">
+   <polygon points="0,0 -22.035,25.9235 -18.1465,59.6241 66.105,89.4362 88.14,86.8438 92.0285,32.4044 67.4012,14.2579"/>
+  </object>
+  <object id="1201" x="1882.05" y="1558">
+   <polygon points="0,0 -23.3312,-24.6273 19.4426,-152.949 111.471,-133.506 112.767,-85.5476 93.3247,-7.77706 58.3279,14.2579"/>
+  </object>
+  <object id="1202" x="1907.97" y="1399.87">
+   <polygon points="0,0 -2.59235,-71.2897 94.6209,-59.6241 104.99,-44.07 104.99,0 82.9553,18.1465"/>
+  </object>
+  <object id="1203" x="1911.86" y="1329.88">
+   <polygon points="0,0 -1.29618,-72.5859 97.2132,-68.6973 110.175,-40.1815 92.0285,2.59235"/>
+  </object>
+  <object id="1204" x="1914.45" y="1255.99">
+   <polygon points="0,0 7.77706,-60.9203 88.14,-72.5859 110.175,-45.3662 110.175,-18.1465 93.3247,5.18471"/>
+  </object>
+  <object id="1205" x="1890.47" y="1104.99" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1206" x="1864.55" y="1024.63" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1207" x="1842.51" y="974.076" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1208" x="1799.74" y="939.08" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1209" x="1763.45" y="885.937" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1210" x="1685.68" y="852.236" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1211" x="1615.68" y="856.124" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1212" x="1550.87" y="879.456" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1213" x="1495.14" y="914.452" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1214" x="1461.44" y="961.115" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1215" x="1886.58" y="1394.04" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1216" x="1647.59" y="2002.33" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1217" x="1564.93" y="2059.16" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1218" x="1502.93" y="2136.65" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1219" x="1413.38" y="2133.21" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1220" x="1318.67" y="2131.48" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1221" x="1260.12" y="2148.7" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1222" x="1182.63" y="2126.32" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1223" x="1112.02" y="2079.82" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1224" x="1022.48" y="2053.99" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1226" x="1028.07" y="2078.53">
+   <polygon points="0,0 -29.275,-24.1088 -137.765,-10.3324 -146.375,60.2721 -3.44412,70.6044"/>
+  </object>
+  <object id="1227" x="779.667" y="2031.6" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1228" x="709.063" y="2062.6" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1229" x="600.573" y="2033.33" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1230" x="483.473" y="1983.39" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1231" x="364.651" y="1940.34" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1232" x="350.874" y="1864.56" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1233" x="297.49" y="1811.18" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1234" x="232.052" y="1778.46" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1235" x="171.78" y="1733.69" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1236" x="175.224" y="1645.86" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1237" x="97.7314" y="1552.87" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1238" x="77.0667" y="1422" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1239" x="21.9608" y="1358.28" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1240" x="30.5711" y="1225.68" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1241" x="-2.14803" y="1125.8" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1242" x="39.1814" y="1031.09" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1243" x="4.7402" y="922.598" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1244" x="63.2902" y="850.271" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1245" x="99.4535" y="771.057" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1246" x="152.837" y="681.51" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1247" x="106.23" y="578.186" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1248" x="93.2873" y="475.307" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1249" x="-3.53774" y="393.315" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1250" x="-67.5863" y="278.548" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1251" x="285.436" y="63.2902" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1254" x="343.986" y="128.728" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1255" x="443.865" y="161.448" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1256" x="438.699" y="252.717" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1257" x="548.911" y="295.768" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1258" x="648.79" y="347.43" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1259" x="726.283" y="357.762" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1260" x="789.999" y="328.487" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1261" x="1537.37" y="158.004" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1262" x="1602.81" y="120.118" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1263" x="2450.06" y="1716.47" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1264" x="698.73" y="679.788" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1265" x="633.292" y="738.338" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1266" x="597.129" y="819.274" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1267" x="569.576" y="898.489" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1268" x="545.467" y="979.426" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1269" x="547.189" y="1046.59" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1270" x="529.968" y="1122.36" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1271" x="533.412" y="1198.13" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1272" x="538.579" y="1272.18" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1273" x="559.243" y="1373.78" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1274" x="593.685" y="1459.88" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1275" x="640.18" y="1513.26" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1276" x="698.73" y="1571.81" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1277" x="802.054" y="1597.65" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1278" x="846.827" y="1566.65" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1279" x="881.269" y="1511.54" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+  <object id="1280" x="896.767" y="1451.27" width="117.952" height="117.952">
+   <ellipse/>
+  </object>
+ </objectgroup>
+ <objectgroup id="3" name="hidingSpots">
+  <object id="1145" name="main_left" x="644.083" y="1195.5">
+   <polygon points="0,0 89.6248,-45.5719 195.959,-10.6334 291.66,60.7626 328.118,194.44 208.112,423.819 65.3198,350.904 -10.6334,129.12"/>
+  </object>
+  <object id="1150" name="main_right" x="1686.16" y="967.644">
+   <polygon points="0,0 -95.701,59.2435 -150.387,142.792 -51.6482,332.675 98.7392,435.971 218.745,405.59 226.341,179.25 106.334,-6.07626"/>
+  </object>
+  <object id="1152" name="rightPassage" x="1850.22" y="1769.71">
+   <polygon points="0,0 -66.8388,165.578 -57.7244,182.288 151.906,176.211 157.983,110.892 78.9913,-7.59532"/>
+  </object>
+  <object id="1157" name="leftPassage" x="874.981" y="448.124">
+   <polygon points="0,0 -171.654,103.296 -148.868,223.302 -37.9766,309.889 34.9385,203.555 66.8388,104.815 25.8241,-1.51906"/>
+  </object>
  </objectgroup>
  <objectgroup id="2" name="meta">
-  <object id="1076" type="playerwall" x="-118" y="-246" width="118" height="514"/>
-  <object id="1077" type="playerwall" x="-44" y="-106" width="430" height="136"/>
-  <object id="1078" type="playerwall" x="2184" y="1930" width="372" height="164"/>
-  <object id="1079" type="playerwall" x="2464" y="1716" width="186" height="270"/>
-  <object id="1106" name="w9" type="waypoint" x="774" y="398" width="104" height="104">
+  <object id="1076" type="playerwall" x="-118" y="-201" width="118" height="514"/>
+  <object id="1077" type="playerwall" x="-47.0381" y="-25.4896" width="430" height="136"/>
+  <object id="1078" type="playerwall" x="2199.19" y="2078.87" width="372" height="164"/>
+  <object id="1079" type="playerwall" x="2479.19" y="1864.87" width="186" height="270"/>
+  <object id="1106" name="w9" type="waypoint" x="777.038" y="525.601" width="104" height="104">
    <properties>
     <property name="wps" value="w1,w6"/>
    </properties>
@@ -472,46 +1042,46 @@
    </properties>
    <ellipse/>
   </object>
-  <object id="1111" name="w3" type="waypoint" x="618" y="1594" width="266" height="266">
+  <object id="1111" name="w3" type="waypoint" x="614.962" y="1730.72" width="266" height="266">
    <properties>
     <property name="isplayerspawn" type="bool" value="true"/>
     <property name="wps" value="w2,w7"/>
    </properties>
    <ellipse/>
   </object>
-  <object id="1112" name="w8" type="waypoint" x="1836" y="1672" width="122" height="122">
+  <object id="1112" name="w8" type="waypoint" x="1836" y="1804.16" width="122" height="122">
    <properties>
     <property name="wps" value="w7,w4"/>
    </properties>
    <ellipse/>
   </object>
-  <object id="1114" name="w7" type="waypoint" x="1274" y="1480" width="422" height="422">
+  <object id="1114" name="w7" type="waypoint" x="1226.91" y="1531.65" width="422" height="422">
    <properties>
     <property name="wps" value="w3,pspawn6,w8,w6"/>
    </properties>
    <ellipse/>
   </object>
-  <object id="1116" name="w6" type="waypoint" x="1046" y="238" width="372" height="372">
+  <object id="1116" name="w6" type="waypoint" x="1001.95" y="473.455" width="372" height="372">
    <properties>
     <property name="wps" value="w9,pspawn5,w7,w5"/>
    </properties>
    <ellipse/>
   </object>
-  <object id="1118" name="pspawn6" type="waypoint" x="1574" y="890" width="282" height="282">
+  <object id="1118" name="pspawn6" type="waypoint" x="1581.6" y="1017.6" width="282" height="282">
    <properties>
     <property name="isplayerspawn" type="bool" value="true"/>
     <property name="wps" value="w7,pspawn5"/>
    </properties>
    <ellipse/>
   </object>
-  <object id="1119" name="pspawn5" type="waypoint" x="716" y="1014" width="294" height="294">
+  <object id="1119" name="pspawn5" type="waypoint" x="644.604" y="1213" width="294" height="294">
    <properties>
     <property name="isplayerspawn" type="bool" value="true"/>
     <property name="wps" value="w6,pspawn6"/>
    </properties>
    <ellipse/>
   </object>
-  <object id="1121" name="w5" type="waypoint" x="2018" y="544" width="316" height="316">
+  <object id="1121" name="w5" type="waypoint" x="1929.89" y="610.839" width="316" height="316">
    <properties>
     <property name="wps" value="w6,w4"/>
    </properties>
@@ -523,7 +1093,7 @@
    </properties>
    <ellipse/>
   </object>
-  <object id="1123" name="w1" type="waypoint" x="314" y="312" width="346" height="346">
+  <object id="1123" name="w1" type="waypoint" x="285.138" y="428.968" width="346" height="346">
    <properties>
     <property name="wps" value="spawnleft,w2,w9"/>
    </properties>
@@ -543,7 +1113,7 @@
    </properties>
    <ellipse/>
   </object>
-  <object id="1127" name="pspawn3" type="waypoint" x="1726" y="264" width="188" height="188">
+  <object id="1127" name="pspawn3" type="waypoint" x="1616.63" y="403.754" width="188" height="188">
    <properties>
     <property name="isplayerspawn" type="bool" value="true"/>
    </properties>
@@ -555,7 +1125,7 @@
    </properties>
    <ellipse/>
   </object>
-  <object id="1132" name="pspawn4" type="waypoint" x="384" y="1398" width="228" height="228">
+  <object id="1132" name="pspawn4" type="waypoint" x="305.009" y="1466.36" width="228" height="228">
    <properties>
     <property name="isplayerspawn" type="bool" value="true"/>
    </properties>

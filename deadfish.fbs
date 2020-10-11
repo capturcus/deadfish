@@ -7,16 +7,37 @@ struct Vec2 {
   y:float;
 }
 
-table Stone {
+table Tileinfo {
+  gid: uint16;
+  name: string;
+}
+
+table Object {
+    pos: Vec2;
+    rotation: float;
+    gid: uint16;
+    hspotname: string;
+}
+
+table Decoration {
+    pos: Vec2;
+    rotation: float;
+    gid: uint16;
+}
+
+table CollisionMask {
+    pos: Vec2;
     radius: float;
     rotation: float;
-    pos: Vec2;
+    polyverts: [Vec2];
 }
 
 table HidingSpot {
+    pos: Vec2;
     radius: float;
     rotation: float;
-    pos: Vec2;
+    polyverts: [Vec2];
+    name: string;
 }
 
 table NavPoint {
@@ -34,11 +55,14 @@ table PlayerWall {
 }
 
 table Level {
-    hidingspots:[HidingSpot];
-    stones:[Stone];
-    navpoints:[NavPoint];
-    playerwalls:[PlayerWall];
-    size:Vec2;
+  objects: [Object];
+  decoration: [Decoration];
+  hidingspots: [HidingSpot];
+  collisionMasks: [CollisionMask];
+  navpoints: [NavPoint];
+  playerwalls: [PlayerWall];
+  tileinfo: [Tileinfo];
+  size: Vec2;
 }
 
 // client
@@ -108,6 +132,7 @@ table WorldState {
   mobs:[Mob];
   indicators:[Indicator];
   stepsRemaining:uint64;
+  currentHidingSpot:string;
 }
 
 table HighscoreEntry {

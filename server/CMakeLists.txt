@@ -35,6 +35,7 @@ add_executable(deadfishserver
   main.cpp
   mobs.cpp
   level_loader.cpp
+  deadfish.cpp
 )
 
 target_link_libraries(deadfishserver

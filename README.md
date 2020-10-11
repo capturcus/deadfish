@@ -75,9 +75,9 @@ The entry point is gameThread, and that's where the game loop is. The box2d worl
 
 ### Overview
 
-Levels are created in [Tiled](https://www.mapeditor.org/). However, contrary to the editor name, the maps are not tile based and all interactive objects are placed freely. The maps contain visible objects: _obstacles_ (stones) and _hiding spots_ (bushes), as well as invisible, related to the game mechanics: _playerwalls_ and _waypoints_.
+Levels are created in [Tiled](https://www.mapeditor.org/). However, contrary to the editor name, the maps are not tile based and all interactive objects are placed freely. The maps contain visible objects: _obstacles_ (e.g. stones), _decorations_ (e.g. sand patterns) and _hiding spot_ visual representation (e.g. bushes), as well as invisible, related to the game mechanics: _collision_ objects, _hiding spot_ mechanical objects, _playerwalls_ and _waypoints_.
 
-It is __very__ important to use Tiled __version 1.4.0 or higher__ (otherwise there will be positioning problems with every rotated object.) The newest versions are available on `snap` or on Tiled [website](https://www.mapeditor.org/) (the newest version available via `apt` is below 1.4.0).
+It is __very__ important to use Tiled __version 1.4.0 or higher__ (otherwise there will be positioning problems with every rotated object.) The newest versions are available on `snap` or on Tiled [website](https://www.mapeditor.org/) (the newest version available via `apt` is currently below 1.4.0).
 
 ### Pipeline
 
@@ -85,23 +85,44 @@ The levels are created in Tiled and saved in the __.tlx__ format (Tiled XML). Th
 
 ### Structure
 
-Because of the aforementioned processing flow, the level's internal structure is very strict. Everything must be correct to the letter, or server won't be able to load the level.
+Because of the aforementioned processing flow, the level's internal structure is very strict. Everything must be structured correctly, or server won't be able to load the level.
 
 Tiled uses **tilesets** to group object "classes" and **layers** to group object instances in the map. `levelpacker.py` recognizes the layers by name.
-There should be two layers:
+The levels contain five basic layers:
  - `objects`
-     - This layer contains visible stuff, namely bushes and stones.
+     - This layer contains all main visible stuff, like bushes, stones etc. Everything from this layer will be rendered **over** the player.
+ - `decoration`
+     - The second visible layer, containing (surprise, surprise) decorations. Everything on this layer will be rendered **under** the player.
+ - `collision`
+     - This layer contains objects representing collision bodies. They are invisible.
+ - `hidingspots`
+     - As the name suggests, this layer defines hiding spots, but from a mechanical point of view - objects that obstruct sight by default, but not when you are inside. They are not visible either.
  - `meta`
-     - This is the layer for the mechanics. Here go the waypoints and playerwalls.
+     - This is the layer for the other general mechanics. Here go the waypoints and playerwalls.
 
-#### "Objects" layer
+#### General remarks
 
-The objects here are recognized by their `gid`, which is the ID of their "class" from the tileset. Due to this, using the [`default_tileset.tsx`](./levels/default_tileset.tsx) is strongly recommended. It can be imported to Tiled through "Map->Add External Tileset..." menu option.
+Objects on visible layers are **sprites**. Sprites can be added to Tiled via _tilesets_. Tilesets in Tiled can be **external** (function as a separate file) or **embedded** in map. Because we want the map to have the full info (so the server can manage it all and client doesn't have to access any file), all tilesets should be embedded. External tilesets can be easily imported to a map (via "Map->Add External Tileset...") and then embedded, so you can any and all existing ones or make a new, custom tileset to use across your levels.
 
-Only position and rotation are supported, scaled objects' behaviour is... weird and coincidental. All objects should be left at their original size and dimensions.
+Invisible objects (those from `collision`, `hidingspots` and `meta` layers) are **shapes**. Collision objects and hidingspots can be either a circle (not an ellipse!) or a polygon, waypoints should be circles and playerwalls should be rectangles.
 
-Obstacles (stones) are pretty self explanatory. They block way _and obstruct sight_.
-Hiding spots (bushes) function similarly to bushes from games like League of Legends. They don't block movement, but block sight unless you are inside them. However, unlike League of Legends, they are not grouped together - every single bush functions on its own.
+A circle is understood as a Tiled ellipse with equal width and height. If an object supposed to be a circle turns out to be an ellipse, `levelpacker.py` will crash with a message regarding the object.
+
+Polygons created in Tiled are later processed by box2d, so objects created from these shapes will stick to the box2d rules, which are:
+ - _only convex shapes_ -- any "hole" in a polygon will be filled by box2d so as to form a convex shape anyway,
+ - _no more than 8 vertices_ -- this is defined by b2dSettings.h somewhere deep in the box2d library. Checked by `levelpacker.py`.
+
+#### Colliding objects
+
+"Physical" objects, that are supposed to collide with players and mobs, need to have their visual and collision parts constructed separately - place a sprite (or a few) on the `objects` layer and then create a collision mask on `collision` layer with a circle or polygon shape. This may seem like unnecessary work, but it gives much more freedom and it's not that tedious if you consider [Tips & Tricks](#tips-&-tricks).
+
+Using this layer you can also create "overlaying decorations" - just add an object without a collision mask.
+
+#### Hiding spots
+
+Hiding spots need to be created in two parts, visible and "mechanical", similarly to collisions. Sprites of a group that makes a hiding spot are linked to the hidingspot object by its name. Create a shape on `hidingspots` layer and give it a `name` property. Then set the type property of all sprites that make the hiding spot to `hidingspot` and add a custom property `hspotName` with the value equal to the aforementioned name. [Tips & Tricks](#tips-&-tricks) might help with easy creation.
+
+Hiding spot sprites are rendered over decorations and regular objects, so you can create hidden obstacles in large hiding spots, for example.
 
 #### "Meta" layer 
 
@@ -115,4 +136,20 @@ Playerwalls are invisible walls for players that mobs can freely walk through. T
 
 ### Caveats
 
-One important detail is Object Alignment. It's a feature from Tiled v1.4.0 up. It's a tileset property that defines where is the "beginning" of the tiles. By default it's set to "Unspecified" for backwards compatibility, which sets the (0, 0) point of every tile to bottom left. For rotation to be interpreted properly by `levelpacker.py`, this needs to be set to "Center".
+One important detail is Object Alignment. It's a feature from Tiled v1.4.0 up. It's a tileset property that defines where is the "beginning" of the tiles. By default it's set to "Unspecified" for backwards compatibility, which sets the (0, 0) point of every tile to bottom left. For rotation to be interpreted properly by `levelpacker.py` and for compatibility with box2d, this needs to be set to "Top Left".
+
+### Tips & Tricks
+
+ - A good place to start creating a new level is [`template.tmx`](levels/template.tmx). It's an empty level with all the layers properly set.
+
+ - Most `levelpacker.py` errors come from objects accidentally added to a wrong layer. You can move them to the correct layer by selecting them and clicking the layer button in the object panel.
+
+ - If you have trouble selecting the needed objects, because something blocks your view (or simply because of a clusterfuck), you can try hiding overlaying layers, such as `collision`, `meta` or `hidingspots`, or even single objects. Another good way of selecting things is through the objects panel on the right - it also shows the selection rectangle on the map view. If you need to "click through" and select something underneath an overlaying object, click with Alt.
+
+ - Bulk object edition is supported - you can select a group of objects (e.g. a bush cluster) and set their properties simultaneously (e.g. their `hspotName`).
+
+ - Tiled supports easy duplication mechanics. You can make an object (e.g. a properly set up hiding spot sprite) or a group (e.g. an obstacle with its collision mask) and then copy the whole thing with Ctrl+C. Pressing Ctrl+V pastes the object (group) on the cursor location, which allows for a quite convenient creation workflow by setting up a template, copying and then spamming Ctrl+V, pasting it all over the place. Copied objects are selected on creation, so you can easily adjust the position if necessary.
+
+ - Objects, decorations, collisions and hidingspots fully support rotation. If you need to, you can select a whole part of a level and just rotate it, or copy it somewhere with added rotation.
+
+ - If you discover something worth mentioning, expand the list ;)

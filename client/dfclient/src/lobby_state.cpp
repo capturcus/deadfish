@@ -38,7 +38,7 @@ StateType LobbyState::OnMessage(const std::string& data) {
 	{
 		auto playerData = initMetadata->players()->Get(i);
 		gameData.players.emplace_back();
-		gameData.players.back().name = playerData->name()->c_str();
+		gameData.players.back().name = playerData->name()->str();
 		gameData.players.back().ready = playerData->ready();
 		gameData.players.back().species = playerData->species();
 		gameData.players.back().playerID = playerData->playerID();

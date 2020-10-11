@@ -22,8 +22,10 @@ namespace nc = ncine;
 
 const float PIXELS2METERS = 0.01f;
 const float METERS2PIXELS = 100.f;
-const int MOBS_LAYER = 16384;
-const int HIDING_SPOTS_LAYER = 24576;
+const unsigned short DECORATION_LAYER = 8192;
+const unsigned short MOBS_LAYER = 16384;
+const unsigned short OBJECTS_LAYER = 20480;
+const unsigned short HIDING_SPOTS_LAYER = 24576;
 
 struct Mob {
 	std::unique_ptr<ncine::AnimatedSprite> sprite;
@@ -69,8 +71,9 @@ private:
 
 	void updateRemainingText(uint64_t remainingFrames);
 
-	std::vector<std::unique_ptr<ncine::DrawableNode>> nodes;
-	std::vector<std::unique_ptr<ncine::DrawableNode>> hiding_spots;
+	typedef std::vector<std::unique_ptr<ncine::DrawableNode>> DrawableNodeVector;
+	DrawableNodeVector nodes;
+	std::map<std::string, DrawableNodeVector> hiding_spots;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
 	std::map<uint16_t, Mob> mobs;
 	ncine::Sprite* mySprite = nullptr;
@@ -80,6 +83,7 @@ private:
 	bool gameEnded = false;
 	std::vector<nc::DrawableNode*> indicators;
 	ncine::TextNode* timeLeftNode = nullptr;
+	std::string currentHidingSpot = "";
 
 	ncine::TimeStamp lastMessageReceivedTime;
 

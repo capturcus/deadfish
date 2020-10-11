@@ -1,7 +1,9 @@
 #include <complex>
 #include <functional>
 #include <iostream>
+#include <fstream>
 
+#include <ncine/FileSystem.h>
 #include <ncine/AnimatedSprite.h>
 #include <ncine/Application.h>
 #include <ncine/Colorf.h>
@@ -68,27 +70,64 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine:
 	return std::move(ret);
 }
 
+tweeny::tween<int>
+CreateHidingSpotTween(ncine::DrawableNode* hspot, int from, int to, int during) {
+	auto tween = tweeny::from(from)
+		.to(to).during(during).onStep(
+		[hspot] (tweeny::tween<int>& t, int v) -> bool {
+			hspot->setAlpha(v);
+			return false;
+		}
+	);
+	return tween;
+}
+
 void GameplayState::LoadLevel() {
 	auto level = FBUtilGetServerEvent(gameData.levelData, Level);
 
-	for (int i = 0; i < level->stones()->size(); i++) {
-		auto stone = level->stones()->Get(i);
-		auto stoneSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures["stone.png"].get(),
-			stone->pos()->x() * METERS2PIXELS, -stone->pos()->y() * METERS2PIXELS);
-		stoneSprite->setRotation(stone->rotation());
-		this->nodes.push_back(std::move(stoneSprite));
+	// build (guid->sprite) map
+	std::map<uint16_t, std::string> spritemap;
+
+	for (auto fb_Ti : *level->tileinfo()) {
+		spritemap.insert(std::pair<uint16_t, std::string>(fb_Ti->gid(), fb_Ti->name()->str()));
 	}
 
-	for (int i = 0; i < level->hidingspots()->size(); i++) {
-		auto hspot = level->hidingspots()->Get(i);
-		auto hspotSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures["bush.png"].get(),
-			hspot->pos()->x() * METERS2PIXELS, -hspot->pos()->y() * METERS2PIXELS);
-			hspotSprite->setRotation(hspot->rotation());
-		hspotSprite->setLayer(HIDING_SPOTS_LAYER);
-		this->hiding_spots.push_back(std::move(hspotSprite));
+	// initialize decoration
+	for (auto decoration : *level->decoration()) {
+		std::string spritename = spritemap[decoration->gid()];
+		auto decorationSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[spritename].get(),
+			decoration->pos()->x() * METERS2PIXELS, -decoration->pos()->y() * METERS2PIXELS);
+		decorationSprite->setAnchorPoint(0, 1);
+		decorationSprite->setRotation(-decoration->rotation());
+		decorationSprite->setLayer(DECORATION_LAYER);
+		this->nodes.push_back(std::move(decorationSprite));
+	}
+	
+	// initialize objects
+	for (auto object : *level->objects()) {
+		std::string spritename = spritemap[object->gid()];
+		auto objectSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[spritename].get(),
+			object->pos()->x() * METERS2PIXELS, -object->pos()->y() * METERS2PIXELS);
+		objectSprite->setAnchorPoint(0, 1);
+		objectSprite->setRotation(-object->rotation());
+		if(object->hspotname()->str().empty()){
+			objectSprite->setLayer(OBJECTS_LAYER);
+			this->nodes.push_back(std::move(objectSprite));
+		} else {
+			objectSprite->setLayer(HIDING_SPOTS_LAYER);
+			auto hspotgroup = this->hiding_spots.find(object->hspotname()->str());
+			if (hspotgroup != this->hiding_spots.end()) { // if found group, add to group
+				hspotgroup->second.push_back(std::move(objectSprite));
+			} else {	// if no group, create group
+				DrawableNodeVector vector;
+				vector.push_back(std::move(objectSprite));
+				std::pair<std::string, DrawableNodeVector> pair(object->hspotname()->str(), std::move(vector));
+				this->hiding_spots.insert(std::move(pair));
+			}
+		}
+
 	}
 }
-
 
 // this whole thing should probably be refactored
 void GameplayState::ProcessDeathReport(const FlatBuffGenerated::DeathReport* deathReport) {
@@ -268,6 +307,25 @@ void GameplayState::OnMessage(const std::string& data) {
 
 	// draw remaining time
 	updateRemainingText(worldState->stepsRemaining());
+
+	// make current hidingspot transparent
+	if(worldState->currentHidingSpot()->str() != "") {
+		auto &hspotSprites = this->hiding_spots[worldState->currentHidingSpot()->str()];
+		if (!hspotSprites.empty() && hspotSprites[0]->alpha() == MAX_HIDING_SPOT_OPACITY) {
+			for (auto &hsSprite : hspotSprites) {
+				auto tween = CreateHidingSpotTween(hsSprite.get(), MAX_HIDING_SPOT_OPACITY, MIN_HIDING_SPOT_OPACITY, 10);
+				_resources._tweens.push_back(tween);
+			}
+		}
+	}
+	if (worldState->currentHidingSpot()->str() != this->currentHidingSpot) {
+		auto &hspotSprites = this->hiding_spots[this->currentHidingSpot];
+		for (auto &hsSprite : hspotSprites) {
+			auto tween = CreateHidingSpotTween(hsSprite.get(), MIN_HIDING_SPOT_OPACITY, MAX_HIDING_SPOT_OPACITY, 20);
+			_resources._tweens.push_back(tween);
+		}
+	}
+	this->currentHidingSpot = worldState->currentHidingSpot()->str();
 }
 
 void Mob::setupLocRot(const FlatBuffGenerated::Mob& msg, bool firstUpdate) {
@@ -305,18 +363,6 @@ GameplayState::GameplayState(Resources& r) : _resources(r) {
 	timeLeftNode = new ncine::TextNode(&rootNode, _resources.fonts["comic"].get());
 
 	lastMessageReceivedTime = ncine::TimeStamp::now();
-}
-
-tweeny::tween<int>
-CreateHidingSpotTween(ncine::DrawableNode* hspot, int from, int to, int during) {
-	auto tween = tweeny::from(from)
-		.to(to).during(during).onStep(
-		[hspot] (tweeny::tween<int>& t, int v) -> bool {
-			hspot->setAlpha(v);
-			return false;
-		}
-	);
-	return tween;
 }
 
 GameplayState::~GameplayState() {
@@ -423,26 +469,6 @@ StateType GameplayState::Update(Messages m) {
 	if (closestMob && smallestNorm < radiusSquared) {
 		closestMob->hoverMarker = std::make_unique<ncine::Sprite>(closestMob->sprite.get(), _resources.textures["graycircle.png"].get());
 		closestMob->hoverMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
-	}
-
-	// hiding spot transparency
-	for (auto &&hspot : this->hiding_spots)
-	{
-		if (!this->mySprite) break;
-		auto distance = this->mySprite->position() - hspot->position();
-		auto radius = ncine::Vector2f(hspot->width()/2.0f, hspot->height()/2.0f);
-		auto radius_offset = ncine::Vector2f(this->mySprite->height()/4.f, this->mySprite->height()/4.f); // uwzględnienie odległości krawędzi od jego środka
-		radius += radius_offset;
-		// FIXME: [future] równanie elipsy jest w poziomie w tej chwili, jak krzak będzie podłużny i obrócony, to nie będzie działało
-		if ((distance.x*distance.x)/(radius.x*radius.x) + (distance.y*distance.y)/(radius.y*radius.y) <= 1) { //równanie elipsy, dziwki
-			if (hspot->alpha() == MAX_HIDING_SPOT_OPACITY) {
-			auto tween = CreateHidingSpotTween(hspot.get(), MAX_HIDING_SPOT_OPACITY, MIN_HIDING_SPOT_OPACITY, 10);
-			_resources._tweens.push_back(tween);
-			}
-		} else if (hspot->alpha() == MIN_HIDING_SPOT_OPACITY) {
-			auto tween = CreateHidingSpotTween(hspot.get(), MIN_HIDING_SPOT_OPACITY, MAX_HIDING_SPOT_OPACITY, 20);
-			_resources._tweens.push_back(tween);
-		}
 	}
 
 	return StateType::Gameplay;
