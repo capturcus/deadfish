@@ -229,20 +229,34 @@ def handle_tileset(ts: minidom.Node, objs: GameObjects, builder: flatbuffers.Bui
         FlatBuffGenerated.Tileinfo.TileinfoAddGid(builder, gid)
         objs.tileinfo.append(FlatBuffGenerated.Tileinfo.TileinfoEnd(builder))
 
-def handle_tile_layer(layer: minidom.Node, builder: flatbuffers.Builder) -> str:
+def handle_tile_layer(layer: minidom.Node, builder: flatbuffers.Builder) -> int:
     width = int(layer.getAttribute('width'))
     height = int(layer.getAttribute('height'))
-    data = layer.getElementsByTagName('data')[0]
+    tilewidth = float(layer.parentNode.getAttribute('tilewidth'))
+    tileheight = float(layer.parentNode.getAttribute('tileheight'))
+    dataNode = layer.getElementsByTagName('data')[0]
     
-    if data.firstChild is None:
+    if dataNode.firstChild is None:
         return
         
-    fbdata = builder.CreateString(data.firstChild.nodeValue)
+    dataString = dataNode.firstChild.nodeValue
+    rows = dataString.splitlines()
+    data = []
+    for row in rows:
+        for tile in row.split(','):
+            if tile == '': continue
+            data.append(int(tile))
 
+    FlatBuffGenerated.Tilelayer.TilelayerStartTiledataVector(builder, len(data))
+    for tile in data:
+        builder.PrependInt16(tile)
+    dataOffset = builder.EndVector(len(data))
     FlatBuffGenerated.Tilelayer.TilelayerStart(builder)
     FlatBuffGenerated.Tilelayer.TilelayerAddWidth(builder, width)
     FlatBuffGenerated.Tilelayer.TilelayerAddHeight(builder, height)
-    FlatBuffGenerated.Tilelayer.TilelayerAddData(builder, fbdata)
+    tilesize = FlatBuffGenerated.Vec2.CreateVec2(builder, tilewidth, tileheight)
+    FlatBuffGenerated.Tilelayer.TilelayerAddTilesize(builder, tilesize)
+    FlatBuffGenerated.Tilelayer.TilelayerAddTiledata(builder, dataOffset)
     return FlatBuffGenerated.Tilelayer.TilelayerEnd(builder)
 
 

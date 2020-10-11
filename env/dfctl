@@ -33,7 +33,7 @@ fi
 
 if [ "$1" == "test" ]
 then
-    cd test; pytest
+    cd test; pytest-3
     exit 0
 fi
 

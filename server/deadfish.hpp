@@ -132,10 +132,11 @@ struct Decoration {
 // just a data container to be able to send it later to clients
 struct Tilelayer {
 	Tilelayer() {}
-	Tilelayer(const FlatBuffGenerated::Tilelayer* fb_Tl) : width(fb_Tl->width()), height(fb_Tl->height()), data(fb_Tl->data()->str()) {}
+	Tilelayer(const FlatBuffGenerated::Tilelayer* fb_Tl);
 	uint16_t width;
 	uint16_t height;
-	std::string data;
+	glm::vec2 tilesize;
+	std::vector<uint16_t> tiledata;
 };
 
 struct HidingSpot : public Collideable {

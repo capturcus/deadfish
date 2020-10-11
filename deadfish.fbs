@@ -62,7 +62,8 @@ table PlayerWall {
 table Tilelayer {
   width: int;
   height: int;
-  data: string;
+  tilesize: Vec2;
+  tiledata: [uint16];
 }
 
 table Level {

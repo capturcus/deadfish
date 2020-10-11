@@ -25,9 +25,6 @@ const int FISH_FRAME_HEIGHT = 120;
 const int IMGS_PER_ROW = 10;
 const int IMGS_PER_SPECIES = 80;
 
-const int TILE_WIDTH = 128;
-const int TILE_HEIGHT = 128;
-
 const int MAX_HIDING_SPOT_OPACITY = 255;
 const int MIN_HIDING_SPOT_OPACITY = 128;
 
@@ -96,32 +93,24 @@ void GameplayState::LoadLevel() {
 	}
 
 	// initialize tile layer
-	if (level->tilelayer() && level->tilelayer()->data() && level->tilelayer()->data()->str() != "\n") {
+	if (level->tilelayer() && level->tilelayer()->tiledata()) {
 		auto width = level->tilelayer()->width();
 		auto height = level->tilelayer()->height();
-		std::vector<std::string> rows;
+		auto tilewidth = level->tilelayer()->tilesize()->x();
+		auto tileheight = level->tilelayer()->tilesize()->y();
 		
-		std::stringstream ss(level->tilelayer()->data()->str());
-		std::string row;
-		while (std::getline(ss, row, '\n')) {
-			if(row.empty()) continue; // first row is empty
-			rows.push_back(row);
+		std::vector<uint16_t> tiles;
+		for(auto tile : *level->tilelayer()->tiledata()) {
+			tiles.push_back(tile);
 		}
-
-		for (int i=0; i<height; ++i) {
-			std::vector<std::string> ids;
-
-			std::stringstream ss2(rows[i]);
-			std::string id;
-			while (std::getline(ss2, id, ',')) {
-				ids.push_back(id);
-			}
-
-			for (int j=0; j<width; ++j) {
-				auto spritename = spritemap[std::stoi(ids[j])];
+		
+		auto currentTile = tiles.rbegin(); // flatbuffer reversed the tile order
+		for (int i=0; i<height; ++i) {	// rows
+			for (int j=0; j<width; ++j) {	// columns
+				auto spritename = spritemap[*currentTile++];
 				if (spritename.empty()) continue;
 				auto tileSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[spritename].get(),
-					j * TILE_WIDTH, -i * TILE_HEIGHT);
+					j * tilewidth, -i * tileheight);
 				tileSprite->setAnchorPoint(0, 1);
 				tileSprite->setLayer(TILE_LAYER);
 				this->nodes.push_back(std::move(tileSprite));

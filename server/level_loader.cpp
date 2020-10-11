@@ -59,8 +59,9 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 
 	// tilelayer
 	Tilelayer& tilelayer = gameState.level->tilelayer;
-	auto data = builder.CreateString(tilelayer.data);
-	auto tilelayerOffset = FlatBuffGenerated::CreateTilelayer(builder, tilelayer.width, tilelayer.height, data);
+	auto dataOffset = builder.CreateVector<uint16_t>(tilelayer.tiledata);
+	FlatBuffGenerated::Vec2 tilesize(tilelayer.tilesize.x, tilelayer.tilesize.y);
+	auto tilelayerOffset = FlatBuffGenerated::CreateTilelayer(builder, tilelayer.width, tilelayer.height, &tilesize, dataOffset);
 
 	// final
 	FlatBuffGenerated::Vec2 size(gameState.level->size.x, gameState.level->size.y);
@@ -101,7 +102,9 @@ void loadLevel(std::string &path)
 	auto level = flatbuffers::GetRoot<FlatBuffGenerated::Level>(memblock.data());
 
 	// tilelayer
-	gameState.level->tilelayer = Tilelayer(level->tilelayer());
+	if (level->tilelayer()) {
+		gameState.level->tilelayer = Tilelayer(level->tilelayer());
+	}
 
 	// tilesets
 	for (auto tileinfo : *level->tileinfo()) {
