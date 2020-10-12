@@ -87,11 +87,3 @@ CollisionMask::CollisionMask(const FlatBuffGenerated::CollisionMask* fb_Col) {
 	body->CreateFixture(&fixtureDef);
 	body->SetUserData(this);
 }
-
-Tilelayer::Tilelayer(const FlatBuffGenerated::Tilelayer* fb_Tl) : width(fb_Tl->width()), height(fb_Tl->height()),
-	    tilesize(fb_Tl->tilesize()->x(), fb_Tl->tilesize()->y()) {
-    if(!(fb_Tl->tiledata()->size())) return;
-    for(auto tile : *fb_Tl->tiledata()) {
-        this->tiledata.push_back(tile);
-    }
-}
