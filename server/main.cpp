@@ -4,9 +4,9 @@
 
 #include "deadfish.hpp"
 #include "game_thread.hpp"
+#include "websocket.hpp"
 
 GameState gameState;
-server websocket_server;
 
 void sendInitMetadata()
 {
@@ -27,7 +27,7 @@ void sendInitMetadata()
 	}
 }
 
-void addNewPlayer(const std::string &name, websocketpp::connection_hdl hdl)
+void addNewPlayer(dfws::Handle hdl, const std::string &name)
 {
 	if (gameState.phase != GamePhase::LOBBY)
 	{
@@ -38,7 +38,7 @@ void addNewPlayer(const std::string &name, websocketpp::connection_hdl hdl)
 	auto p = std::make_unique<Player>();
 	p->mobID = newMobID();
 	p->name = name;
-	p->conn_hdl = std::move(hdl);
+	p->wsHandle = hdl;
 	p->playerID = gameState.players.size();
 
 	gameState.players.push_back(std::move(p));
@@ -48,20 +48,15 @@ void addNewPlayer(const std::string &name, websocketpp::connection_hdl hdl)
 
 void startGame() {
 	gameState.phase = GamePhase::GAME;
-	for (auto &p : gameState.players)
-	{
-		auto con = websocket_server.get_con_from_hdl(p->conn_hdl);
-		con->set_message_handler(&gameOnMessage);
-	}
+	dfws::SetOnMessage(&gameOnMessage);
 	new std::thread(gameThread); // leak the shit out of it yooo
 }
 
-void on_message(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
+void on_message(dfws::Handle hdl, const std::string& payload)
 {
 	std::cout << "on_message\n";
-	std::cout << "message from " << (uint64_t)hdl.lock().get() << "\n";
+	std::cout << "message from " << hdl << "\n";
 
-	const auto payload = msg->get_payload();
 	const auto clientMessage = flatbuffers::GetRoot<FlatBuffGenerated::ClientMessage>(payload.c_str());
 
 	switch (clientMessage->event_type())
@@ -75,7 +70,7 @@ void on_message(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
 			return;
 		}
 		std::cout << "new player " << event->name()->c_str() << "\n";
-		addNewPlayer(event->name()->c_str(), hdl);
+		addNewPlayer(hdl, event->name()->c_str());
 		std::cout << "player count " << gameState.players.size() << "\n";
 		if (gameState.options.count("numplayers")) {
 			auto numplayers = gameState.options["numplayers"].as<unsigned long>();
@@ -109,12 +104,12 @@ void on_message(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
 	}
 }
 
-void on_close(websocketpp::connection_hdl hdl)
+void on_close(dfws::Handle hdl)
 {
 	auto player = gameState.players.begin();
 	while (player != gameState.players.end())
 	{
-		if ((*player)->conn_hdl == hdl)
+		if ((*player)->wsHandle == hdl)
 		{
 			std::cout << "deleting player " << (*player)->name << "\n";
 			break;
@@ -135,7 +130,7 @@ void on_close(websocketpp::connection_hdl hdl)
 	}
 }
 
-void on_open(websocketpp::connection_hdl hdl) {
+void on_open(dfws::Handle hdl) {
 	if (gameState.phase == GamePhase::GAME) {
 		sendGameAlreadyInProgress(hdl);
 		return;
@@ -186,21 +181,14 @@ int main(int argc, const char* const argv[])
 	if (!handleCliOptions(argc, argv))
 		return 1;
 
-	websocket_server.get_alog().clear_channels(websocketpp::log::alevel::all);
-
-	websocket_server.set_open_handler(&on_open);
-	websocket_server.set_message_handler(&on_message);
-	websocket_server.set_reuse_addr(true);
-	websocket_server.set_close_handler(&on_close);
-
-	websocket_server.init_asio();
-	int port = gameState.options["port"].as<int>();
-	websocket_server.listen(port);
-	websocket_server.start_accept();
+	dfws::Init();
+	dfws::SetOnMessage(&on_message);
+	dfws::SetOnOpen(&on_open);
+	dfws::SetOnClose(&on_close);
 
 	std::cout << "server started\n";
 
-	websocket_server.run();
+	dfws::Run();
 
 	std::cout << "server stopped\n";
 	return 0;

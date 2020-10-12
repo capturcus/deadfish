@@ -30,12 +30,12 @@ find_package(Box2D REQUIRED)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(deadfishserver 
-  game_thread.cpp
-  main.cpp
-  mobs.cpp
-  level_loader.cpp
-  deadfish.cpp
+file(GLOB server_SRC
+  "*.cpp"
+)
+
+add_executable(deadfishserver
+  ${server_SRC}
 )
 
 target_link_libraries(deadfishserver

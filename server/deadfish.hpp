@@ -3,19 +3,18 @@
 #include <string>
 #include <mutex>
 #include <memory>
+#include <iostream>
+#include <thread>
 #include <Box2D/Box2D.h>
-#include <websocketpp/config/asio_no_tls.hpp>
-#include <websocketpp/server.hpp>
 #include <glm/vec2.hpp>
 #include <boost/program_options.hpp>
 #include "../common/deadfish_generated.h"
 #include "../common/constants.hpp"
+#include "websocket.hpp"
 
 namespace boost_po = boost::program_options;
 
 #define UNUSED __attribute__((unused)) 
-
-typedef websocketpp::server<websocketpp::config::asio> server;
 
 std::ostream& operator<<(std::ostream &os, glm::vec2 &v);
 std::ostream& operator<<(std::ostream &os, b2Vec2 v);
@@ -56,6 +55,7 @@ struct Collideable {
 struct Mob : public Collideable {
 	uint16_t mobID = 0;
 	uint16_t species = 0;
+	dfws::Handle wsHandle;
 	b2Body* body = nullptr;
 	MobState state = MobState::WALKING;
 	virtual void handleCollision(UNUSED Collideable& other) override {}
@@ -71,7 +71,6 @@ struct Mob : public Collideable {
 
 struct Player : public Mob {
 	std::string name;
-	websocketpp::connection_hdl conn_hdl;
 	bool ready = false;
 	Mob* killTarget = nullptr;
 	uint16_t attackTimeout = 0;
@@ -185,4 +184,3 @@ public:
 };
 
 extern GameState gameState;
-extern server websocket_server;
