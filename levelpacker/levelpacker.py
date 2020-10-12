@@ -248,7 +248,7 @@ def handle_tile_layer(layer: minidom.Node, builder: flatbuffers.Builder) -> int:
             data.append(int(tile))
 
     FlatBuffGenerated.Tilelayer.TilelayerStartTiledataVector(builder, len(data))
-    for tile in data:
+    for tile in reversed(data):
         builder.PrependInt16(tile)
     dataOffset = builder.EndVector(len(data))
     FlatBuffGenerated.Tilelayer.TilelayerStart(builder)

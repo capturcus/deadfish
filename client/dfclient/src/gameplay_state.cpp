@@ -104,7 +104,7 @@ void GameplayState::LoadLevel() {
 			tiles.push_back(tile);
 		}
 		
-		auto currentTile = tiles.rbegin(); // flatbuffer reversed the tile order
+		auto currentTile = tiles.begin();
 		for (int i=0; i<height; ++i) {	// rows
 			for (int j=0; j<width; ++j) {	// columns
 				auto spritename = spritemap[*currentTile++];
