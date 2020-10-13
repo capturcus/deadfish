@@ -99,12 +99,7 @@ void GameplayState::LoadLevel() {
 		auto tilewidth = level->tilelayer()->tilesize()->x();
 		auto tileheight = level->tilelayer()->tilesize()->y();
 		
-		std::vector<uint16_t> tiles;
-		for(auto tile : *level->tilelayer()->tiledata()) {
-			tiles.push_back(tile);
-		}
-		
-		auto currentTile = tiles.begin();
+		auto currentTile = level->tilelayer()->tiledata()->begin();
 		for (int i=0; i<height; ++i) {	// rows
 			for (int j=0; j<width; ++j) {	// columns
 				auto spritename = spritemap[*currentTile++];
