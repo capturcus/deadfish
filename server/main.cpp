@@ -176,19 +176,20 @@ bool handleCliOptions(int argc, const char* const argv[]) {
 
 int main(int argc, const char* const argv[])
 {
-	srand(time(nullptr));
+	// srand(time(nullptr));
 
-	if (!handleCliOptions(argc, argv))
-		return 1;
+	// if (!handleCliOptions(argc, argv))
+	// 	return 1;
 
-	dfws::Init();
-	dfws::SetOnMessage(&on_message);
-	dfws::SetOnOpen(&on_open);
-	dfws::SetOnClose(&on_close);
+	// dfws::SetOnMessage(&on_message);
+	// dfws::SetOnOpen(&on_open);
+	// dfws::SetOnClose(&on_close);
 
-	std::cout << "server started\n";
+	// std::cout << "server started\n";
 
-	dfws::Run();
+	// int port = gameState.options["port"].as<int>();
+
+	dfws::Run(63987);
 
 	std::cout << "server stopped\n";
 	return 0;
