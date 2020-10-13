@@ -32,6 +32,7 @@ const unsigned short HIDING_SPOTS_LAYER = 24576;
 struct Mob {
 	std::unique_ptr<ncine::AnimatedSprite> sprite;
 	bool seen;
+	bool isAfterimage = false;
 	FlatBuffGenerated::MobState state = FlatBuffGenerated::MobState_Walk;
 	std::unique_ptr<ncine::Sprite> hoverMarker;
 	std::unique_ptr<ncine::Sprite> relationMarker;

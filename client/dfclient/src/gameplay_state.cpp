@@ -70,12 +70,20 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine:
 	return std::move(ret);
 }
 
+/**
+ * Creates a tween making a sprite fade through from one alpha value to another (specified on a 0-255 scale)
+ * @param sprite	the sprite to change
+ * @param from 		the initial alpha value
+ * @param to 		the final alpha value
+ * @param during	time it takes
+ * @return 			the created tween
+*/
 tweeny::tween<int>
-CreateHidingSpotTween(ncine::DrawableNode* hspot, int from, int to, int during) {
+CreateAlphaTransitionTween(ncine::DrawableNode* sprite, int from, int to, int during) {
 	auto tween = tweeny::from(from)
 		.to(to).during(during).onStep(
-		[hspot] (tweeny::tween<int>& t, int v) -> bool {
-			hspot->setAlpha(v);
+		[sprite] (tweeny::tween<int>& t, int v) -> bool {
+			sprite->setAlpha(v);
 			return false;
 		}
 	);
@@ -228,6 +236,9 @@ nc::MeshSprite* GameplayState::CreateIndicator(float angle, float force, int ind
 	return arc;
 }
 
+const int MOB_FADEIN_TIME = 5;
+const int MOB_FADEOUT_TIME = 7;
+
 void GameplayState::OnMessage(const std::string& data) {
 	lastMessageReceivedTime = ncine::TimeStamp::now();
 
@@ -269,6 +280,10 @@ void GameplayState::OnMessage(const std::string& data) {
 			// this is the first time we see this mob, create it
 			Mob newMob;
 			newMob.sprite = CreateNewAnimSprite(this->cameraNode.get(), mobData->species());
+			newMob.sprite->setAlpha(1);
+			//fade in
+			_resources._mobTweens[mobData->mobID()] = std::move(CreateAlphaTransitionTween(newMob.sprite.get(), 1, 255, MOB_FADEIN_TIME));
+			newMob.isAfterimage = false;
 			this->mobs[mobData->mobID()] = std::move(newMob);
 			mobItr = this->mobs.find(mobData->mobID());
 			firstUpdate = true;
@@ -276,6 +291,12 @@ void GameplayState::OnMessage(const std::string& data) {
 		Mob& mob = mobItr->second;
 		mob.setupLocRot(*mobData, firstUpdate);
 		mob.seen = true;
+		if (mob.isAfterimage == true) {
+			//re-fade in
+			_resources._mobTweens[mobData->mobID()] = std::move(
+				CreateAlphaTransitionTween(mob.sprite.get(), mob.sprite->alpha(), 255, MOB_FADEIN_TIME*(1 - mob.sprite->alpha()/255)));
+		}
+		mob.isAfterimage = false;
 		if (mobData->state() != mob.state) {
 			mob.state = mobData->state();
 			mob.sprite->setAnimationIndex(mobData->state());
@@ -302,11 +323,20 @@ void GameplayState::OnMessage(const std::string& data) {
 	}
 	std::vector<int> deletedIDs;
 	for (auto& mob : this->mobs) {
-		if (!mob.second.seen)
-			deletedIDs.push_back(mob.first);
+		if (!mob.second.seen) { // not seen
+			if (!mob.second.isAfterimage) {	// not seen and not afterimage
+				// fade out
+				_resources._mobTweens[mob.first] = std::move(
+					CreateAlphaTransitionTween(mob.second.sprite.get(), mob.second.sprite->alpha(), 0, MOB_FADEOUT_TIME*(mob.second.sprite->alpha()/255)));
+				mob.second.isAfterimage = true;
+			} else if (mob.second.sprite->alpha() == 0){ // not seen and afterimage and alpha == 0
+				deletedIDs.push_back(mob.first);
+			}
+		}
 	}
 	for (auto id : deletedIDs) {
 		this->mobs.erase(id);
+		_resources._mobTweens.erase(id);
 		if (id == gameData.myMobID)
 			this->mySprite = nullptr;
 	}
@@ -339,7 +369,7 @@ void GameplayState::OnMessage(const std::string& data) {
 		auto &hspotSprites = this->hiding_spots[worldState->currentHidingSpot()->str()];
 		if (!hspotSprites.empty() && hspotSprites[0]->alpha() == MAX_HIDING_SPOT_OPACITY) {
 			for (auto &hsSprite : hspotSprites) {
-				auto tween = CreateHidingSpotTween(hsSprite.get(), MAX_HIDING_SPOT_OPACITY, MIN_HIDING_SPOT_OPACITY, 10);
+				auto tween = CreateAlphaTransitionTween(hsSprite.get(), MAX_HIDING_SPOT_OPACITY, MIN_HIDING_SPOT_OPACITY, 10);
 				_resources._tweens.push_back(tween);
 			}
 		}
@@ -347,7 +377,7 @@ void GameplayState::OnMessage(const std::string& data) {
 	if (worldState->currentHidingSpot()->str() != this->currentHidingSpot) {
 		auto &hspotSprites = this->hiding_spots[this->currentHidingSpot];
 		for (auto &hsSprite : hspotSprites) {
-			auto tween = CreateHidingSpotTween(hsSprite.get(), MIN_HIDING_SPOT_OPACITY, MAX_HIDING_SPOT_OPACITY, 20);
+			auto tween = CreateAlphaTransitionTween(hsSprite.get(), MIN_HIDING_SPOT_OPACITY, MAX_HIDING_SPOT_OPACITY, 20);
 			_resources._tweens.push_back(tween);
 		}
 	}
@@ -369,6 +399,8 @@ void Mob::setupLocRot(const FlatBuffGenerated::Mob& msg, bool firstUpdate) {
 }
 
 void Mob::updateLocRot(float subDelta) {
+	if(this->isAfterimage) return;
+
 	float angleDelta = currRotation - prevRotation;
 	if (angleDelta > M_PI) {
 		angleDelta -= 2.f * M_PI;
@@ -520,6 +552,7 @@ void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {
 	if (event.isRightButton()) {
 		// kill
 		for (auto& mob : this->mobs) {
+			if(mob.second.isAfterimage) continue;
 			if (mob.second.hoverMarker.get()) {
 				// if it is hovered kill it
 				flatbuffers::FlatBufferBuilder builder;

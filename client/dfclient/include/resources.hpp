@@ -22,6 +22,7 @@ struct Resources {
 	std::unique_ptr<ncine::AudioBufferPlayer> _wilhelmSound;
 
 	std::vector<tweeny::tween<int>> _tweens;
+	std::map<const uint16_t, tweeny::tween<int>> _mobTweens;
 
 	void UpdateTweens();
 };
