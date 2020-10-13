@@ -14,9 +14,15 @@ HidingSpot::HidingSpot(const FlatBuffGenerated::HidingSpot* fb_Hs) {
 	b2FixtureDef fixtureDef;
     fixtureDef.isSensor = true; // makes hiding spot detect collision but allow movement
     if (!fb_Hs->polyverts()) {
-        b2CircleShape circleShape;
-        circleShape.m_radius = fb_Hs->radius();
-        fixtureDef.shape = &circleShape;
+        if(fb_Hs->isCircle()){
+            b2CircleShape circleShape;
+            circleShape.m_radius = fb_Hs->size()->x() / 2.f;
+            fixtureDef.shape = &circleShape;
+        } else {
+            b2PolygonShape boxShape;
+            boxShape.SetAsBox(fb_Hs->size()->x()/2.f, fb_Hs->size()->y()/2.f);
+            fixtureDef.shape = &boxShape;
+        }
     } else {
         b2PolygonShape polyShape;
         std::vector<b2Vec2> vertices;
@@ -59,9 +65,15 @@ CollisionMask::CollisionMask(const FlatBuffGenerated::CollisionMask* fb_Col) {
 
 	b2FixtureDef fixtureDef;
     if (!fb_Col->polyverts()) {
-        b2CircleShape circleShape;
-        circleShape.m_radius = fb_Col->radius();
-        fixtureDef.shape = &circleShape;
+        if(fb_Col->isCircle()){
+            b2CircleShape circleShape;
+            circleShape.m_radius = fb_Col->size()->x() / 2.f;
+            fixtureDef.shape = &circleShape;
+        } else {
+            b2PolygonShape boxShape;
+            boxShape.SetAsBox(fb_Col->size()->x()/2.f, fb_Col->size()->y()/2.f);
+            fixtureDef.shape = &boxShape;
+        }
     } else {
         b2PolygonShape polyShape;
         std::vector<b2Vec2> vertices;

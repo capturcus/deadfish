@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="40" height="32" tilewidth="64" tileheight="64" infinite="0" nextlayerid="6" nextobjectid="1224">
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="40" height="32" tilewidth="64" tileheight="64" infinite="0" nextlayerid="6" nextobjectid="1227">
  <tileset firstgid="1" name="default_tileset" tilewidth="300" tileheight="300" tilecount="3" columns="0" objectalignment="topleft">
   <grid orientation="orthogonal" width="1" height="1"/>
   <tile id="0">
@@ -36,34 +36,39 @@
   <object id="1200" gid="2" x="1458.69" y="1298.18" width="128" height="128" rotation="21.0094"/>
   <object id="1201" gid="2" x="1559.08" y="1332.45" width="128" height="128" rotation="21.0094"/>
   <object id="1202" gid="2" x="1663.63" y="1372.6" width="128" height="128" rotation="21.0094"/>
-  <object id="1203" gid="1" x="1182.06" y="699.179" width="128" height="128" rotation="21.0094">
+  <object id="1203" gid="1" x="1133.06" y="682.179" width="128" height="128" rotation="21.0094">
    <properties>
     <property name="hspotName" value="poly"/>
    </properties>
   </object>
-  <object id="1204" gid="1" x="1239.23" y="751.131" width="128" height="128" rotation="21.0094">
+  <object id="1204" gid="1" x="1190.23" y="734.131" width="128" height="128" rotation="21.0094">
    <properties>
     <property name="hspotName" value="poly"/>
    </properties>
   </object>
-  <object id="1205" gid="1" x="1224.34" y="828.965" width="128" height="128" rotation="21.0094">
+  <object id="1205" gid="1" x="1175.34" y="811.965" width="128" height="128" rotation="21.0094">
    <properties>
     <property name="hspotName" value="poly"/>
    </properties>
   </object>
-  <object id="1206" gid="1" x="1154.24" y="782.763" width="128" height="128" rotation="21.0094">
+  <object id="1206" gid="1" x="1105.24" y="765.763" width="128" height="128" rotation="21.0094">
    <properties>
     <property name="hspotName" value="poly"/>
    </properties>
   </object>
-  <object id="1207" gid="1" x="1136.04" y="863.614" width="128" height="128" rotation="21.0094">
+  <object id="1207" gid="1" x="1087.04" y="846.614" width="128" height="128" rotation="21.0094">
    <properties>
     <property name="hspotName" value="poly"/>
    </properties>
   </object>
-  <object id="1209" gid="1" x="1400.03" y="809.383" width="128" height="128" rotation="21.0094">
+  <object id="1209" gid="1" x="1450.01" y="798.383" width="169.794" height="169.794" rotation="21.0094">
    <properties>
     <property name="hspotName" value="cirkuru"/>
+   </properties>
+  </object>
+  <object id="1225" gid="1" x="1309" y="799" width="70" height="96">
+   <properties>
+    <property name="hspotName" value="rect"/>
    </properties>
   </object>
  </objectgroup>
@@ -92,26 +97,16 @@
   <object id="1219" x="689.619" y="1013.53" rotation="21.0094">
    <polygon points="0,0 1128,-6 1164,50 1106,112 34,106 -20,58"/>
   </object>
-  <object id="1220" x="1170.3" y="552.121" width="120" height="120" rotation="21.0094">
-   <ellipse/>
-  </object>
-  <object id="1221" x="1255.15" y="594.545" width="120" height="120" rotation="21.0094">
-   <ellipse/>
-  </object>
-  <object id="1222" x="1355.15" y="630.909" width="120" height="120" rotation="21.0094">
-   <ellipse/>
-  </object>
-  <object id="1223" x="1452.12" y="664.242" width="120" height="120" rotation="21.0094">
-   <ellipse/>
-  </object>
+  <object id="1224" x="1172.13" y="568.539" width="414" height="94" rotation="21.0221"/>
  </objectgroup>
  <objectgroup id="4" name="hidingSpots">
-  <object id="1208" name="poly" x="1231.18" y="733.042" rotation="21.0094" visible="0">
+  <object id="1208" name="poly" x="1182.18" y="716.042" rotation="21.0094">
    <polygon points="0,0 114,46 136,178 8,280 -26,232 -40,36"/>
   </object>
-  <object id="1210" name="cirkuru" x="1405.38" y="825.078" width="107.842" height="107.842" rotation="21.0094">
+  <object id="1210" name="cirkuru" x="1457.11" y="819.202" width="143.054" height="143.054" rotation="21.0094">
    <ellipse/>
   </object>
+  <object id="1226" name="rect" x="1319.18" y="809.533" width="53" height="74" rotation="3.30583"/>
  </objectgroup>
  <objectgroup id="2" name="meta">
   <object id="1076" type="playerwall" x="855.662" y="530.978" width="118" height="514" rotation="21.0094"/>
@@ -128,7 +123,7 @@
    </properties>
    <ellipse/>
   </object>
-  <object id="1150" name="pspawn1" type="waypoint" x="1564.91" y="932.697" width="176" height="176">
+  <object id="1150" name="pspawn1" type="waypoint" x="1531.08" y="995.266" width="176" height="176" rotation="326.791">
    <properties>
     <property name="isplayerspawn" type="bool" value="true"/>
    </properties>

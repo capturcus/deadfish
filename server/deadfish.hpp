@@ -110,9 +110,11 @@ struct Tileinfo {
 // just a data container to be able to send it later to clients
 struct Object {
 	Object(const FlatBuffGenerated::Object* fb_Obj) : pos(fb_Obj->pos()->x(), fb_Obj->pos()->y()),
-		rotation(fb_Obj->rotation()), gid(fb_Obj->gid()), hspotname(fb_Obj->hspotname()->str()) {}
+		rotation(fb_Obj->rotation()), size(fb_Obj->size()->x(), fb_Obj->size()->y()),
+		gid(fb_Obj->gid()), hspotname(fb_Obj->hspotname()->str()) {}
 	glm::vec2 pos;
 	float rotation;
+	glm::vec2 size;
 	uint16_t gid;
 	std::string hspotname;
 };
@@ -120,9 +122,10 @@ struct Object {
 // just a data container to be able to send it later to clients
 struct Decoration {
 	Decoration(const FlatBuffGenerated::Decoration* fb_Dec) : pos(fb_Dec->pos()->x(), fb_Dec->pos()->y()),
-		rotation(fb_Dec->rotation()), gid(fb_Dec->gid()) {}
+		rotation(fb_Dec->rotation()), size(fb_Dec->size()->x(), fb_Dec->size()->y()), gid(fb_Dec->gid()) {}
 	glm::vec2 pos;
 	float rotation;
+	glm::vec2 size;
 	uint16_t gid;
 };
 
