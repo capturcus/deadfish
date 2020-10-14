@@ -20,32 +20,18 @@ namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
 
 #include "websocket.hpp"
+#include "deadfish.hpp"
+
+class DfWebsocket;
 
 net::io_context ioc{1};
 tcp::acceptor acceptor_{ioc};
 uint16_t lastSocketID = 0;
-std::map<uint16_t, websocket::stream<beast::tcp_stream>> sockets;
-std::map<uint16_t, beast::flat_buffer> buffers;
+std::vector<std::shared_ptr<DfWebsocket>> sockets;
 
-void dfws::SendData(Handle hdl, const std::string& data)
-{
-
-}
-
-void dfws::SetOnMessage(OnMessageHandler msgHandler)
-{
-
-}
-
-void dfws::SetOnOpen(OnOpenHandler handler)
-{
-
-}
-
-void dfws::SetOnClose(OnCloseHandler handler)
-{
-
-}
+static dfws::OnMessageHandler onMessageHandler = nullptr;
+static dfws::OnOpenHandler onOpenHandler = nullptr;
+static dfws::OnCloseHandler onCloseHandler = nullptr;
 
 void
 fail(beast::error_code ec, char const* what)
@@ -53,69 +39,131 @@ fail(beast::error_code ec, char const* what)
     std::cerr << what << ": " << ec.message() << "\n";
 }
 
-void dfwsOnRead(uint16_t socketID, beast::error_code ec, std::size_t bytes_transferred)
+void dfws::SetOnMessage(OnMessageHandler h)
 {
-    std::cout << "dfwsOnRead\n";
-    auto socketItr = sockets.find(socketID);
-    if (socketItr == sockets.end()) {
-        std::cout << "could not find socket for id " << socketID << "\n";
-        return;
-    }
-    auto bufferItr = buffers.find(socketID);
-    if (bufferItr == buffers.end()) {
-        std::cout << "could not find buffer for id " << socketID << "\n";
-        return;
-    }
-    auto& ws = socketItr->second;
-    auto& buffer = bufferItr->second;
-    ws.async_read(buffer, std::bind(&dfwsOnRead, socketID, std::placeholders::_1, std::placeholders::_2));
+    onMessageHandler = h;
 }
 
-void dfwsSocketOnAccept(uint16_t socketID, beast::error_code ec)
+void dfws::SetOnOpen(OnOpenHandler h)
 {
-    std::cout << "socket on accept " << socketID << "\n";
-    auto socketItr = sockets.find(socketID);
-    if (socketItr == sockets.end()) {
-        std::cout << "could not find socket for id " << socketID << "\n";
-        return;
+    onOpenHandler = h;
+}
+
+void dfws::SetOnClose(OnCloseHandler h)
+{
+    onCloseHandler = h;
+}
+
+class DfWebsocket : public std::enable_shared_from_this<DfWebsocket> {
+    websocket::stream<beast::tcp_stream> ws_;
+    beast::flat_buffer buffer_;
+
+public:
+    uint16_t socketID_;
+
+    // Take ownership of the socket
+    explicit
+    DfWebsocket(tcp::socket&& socket, int socketID)
+        : ws_(std::move(socket)), socketID_(socketID)
+    {
+        ws_.binary(true);
     }
-    auto bufferItr = buffers.find(socketID);
-    if (bufferItr == buffers.end()) {
-        std::cout << "could not find buffer for id " << socketID << "\n";
-        return;
+
+    void start() {
+        // Set suggested timeout settings for the websocket
+        ws_.set_option(
+            websocket::stream_base::timeout::suggested(
+                beast::role_type::server));
+
+        // Set a decorator to change the Server of the handshake
+        ws_.set_option(websocket::stream_base::decorator(
+            [](websocket::response_type& res)
+            {
+                res.set(http::field::server,
+                    std::string(BOOST_BEAST_VERSION_STRING) +
+                        " websocket-server-async");
+            }));
+        // Accept the websocket handshake
+        ws_.async_accept(
+            beast::bind_front_handler(
+                &DfWebsocket::OnAccept,
+                shared_from_this()));
     }
-    auto& ws = socketItr->second;
-    auto& buffer = bufferItr->second;
-    ws.async_read(buffer, std::bind(&dfwsOnRead, socketID, std::placeholders::_1, std::placeholders::_2));
+
+    void DoRead() {
+        // Read a message into our buffer
+        ws_.async_read(
+            buffer_,
+            beast::bind_front_handler(
+                &DfWebsocket::OnRead,
+                shared_from_this()));
+    }
+
+    void OnAccept(beast::error_code ec)
+    {
+        if(ec)
+            return fail(ec, "accept");
+
+        onOpenHandler(socketID_);
+
+        DoRead();
+    }
+
+    void
+    OnRead(
+        beast::error_code ec,
+        std::size_t bytes_transferred)
+    {
+        boost::ignore_unused(bytes_transferred);
+
+        // This indicates that the session was closed
+        if(ec == websocket::error::closed)
+            return;
+
+        if(ec) {
+            if (ec.value() == boost::system::errc::operation_canceled) {
+                // this websocket has disconnected
+                // TODO delete it from the vector
+                onCloseHandler(socketID_);
+                return;
+            }
+            fail(ec, "read");
+        }
+
+        auto str = beast::buffers_to_string(buffer_.data());
+        onMessageHandler(socketID_, str);
+        buffer_.consume(buffer_.size());
+
+        DoRead();
+    }
+
+    void Send(const std::string& data) {
+        // sync write
+        ws_.write(net::buffer(data));
+    }
+};
+
+void dfws::SendData(Handle hdl, const std::string& data)
+{
+    for (auto& s : sockets) {
+        if (s->socketID_ == hdl) {
+            s->Send(data);
+            return;
+        }
+    }
+    std::cout << "could not find socket with id " << hdl << "\n";
+    exit(1);
 }
 
 void dfwsOnAccept(beast::error_code ec, tcp::socket socket)
 {
     std::cout << "on accept\n";
+    if(ec)
+        return fail(ec, "accept");
     // websocket::stream<beast::tcp_stream> ws_(std::move(socket));
-    uint16_t currentID = lastSocketID++;
-    sockets.emplace(std::make_pair(currentID, websocket::stream<beast::tcp_stream>(std::move(socket))));
-    buffers.emplace(std::make_pair(currentID, beast::flat_buffer{}));
-    auto itr = sockets.find(currentID);
-    auto& ws_ = itr->second;
-
-    ws_.binary(true);
-
-    // Set suggested timeout settings for the websocket
-    ws_.set_option(
-        websocket::stream_base::timeout::suggested(
-            beast::role_type::server));
-
-    // Set a decorator to change the Server of the handshake
-    ws_.set_option(websocket::stream_base::decorator(
-        [](websocket::response_type& res)
-        {
-            res.set(http::field::server,
-                std::string(BOOST_BEAST_VERSION_STRING) +
-                    " websocket-server-async");
-        }));
-    // Accept the websocket handshake
-    ws_.async_accept(std::bind(&dfwsSocketOnAccept, currentID, std::placeholders::_1));
+    auto socketPtr = std::make_shared<DfWebsocket>(std::move(socket), lastSocketID++);
+    sockets.push_back(socketPtr);
+    sockets.back()->start();
 
     // accept another connection
     acceptor_.async_accept(&dfwsOnAccept);
