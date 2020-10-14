@@ -13,17 +13,29 @@
 
 static const char* TEXTURES_PATH = "textures";
 static const char* LEVELS_PATH = "../levels";
+static const char* SOUNDS_PATH = "sounds";
 
 struct Resources {
 	std::map<std::string, std::unique_ptr<ncine::Font>> fonts;
 	std::map<std::string, std::unique_ptr<ncine::Texture>> textures;
 
-	std::unique_ptr<ncine::AudioBuffer> _wilhelmAudioBuffer;
-	std::unique_ptr<ncine::AudioBufferPlayer> _wilhelmSound;
+	std::map<std::string, std::unique_ptr<ncine::AudioBuffer>> _sounds;
+	std::unique_ptr<ncine::AudioBuffer> _killSoundBuffer;
+	std::unique_ptr<ncine::AudioBufferPlayer> _killSound;
+	std::unique_ptr<ncine::AudioBufferPlayer> _deathSound;
 
 	std::vector<tweeny::tween<int>> _tweens;
 
 	void UpdateTweens();
+
+	/** Plays default kill sound
+	 * @param gain volume (1.0f is 100%)
+	*/
+	void playKillSound(float gain = 1.0f);
+
+	/** Plays random death sound
+	*/
+	void playRandomDeathSound();
 };
 
 #endif

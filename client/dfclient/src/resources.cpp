@@ -8,3 +8,16 @@ void Resources::UpdateTweens()
 			_tweens.erase(_tweens.begin() + i);
 	}
 }
+
+void Resources::playKillSound(float gain) {
+	_killSound->setGain(gain);
+	_killSound->play();
+}
+
+void Resources::playRandomDeathSound() {
+	auto randIndex = rand()%_sounds.size();
+	auto it = _sounds.begin();
+	for(auto i=0; i<randIndex; ++i, ++it);
+	_deathSound = std::make_unique<ncine::AudioBufferPlayer>(it->second.get());
+	_deathSound->play();
+}
