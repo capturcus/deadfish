@@ -57,6 +57,9 @@ void mainOnMessage(dfws::Handle hdl, const std::string& payload)
 	std::cout << "mainOnMessage\n";
 	std::cout << "message from " << hdl << "\n";
 
+	if (payload.size() == 0)
+		return; // wtf
+
 	const auto clientMessage = flatbuffers::GetRoot<FlatBuffGenerated::ClientMessage>(payload.c_str());
 
 	switch (clientMessage->event_type())

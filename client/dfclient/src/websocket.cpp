@@ -90,79 +90,103 @@ bool WebSocketEmscripten::Send(std::string& data) {
 
 #else // __EMSCRIPTEN__
 
-#include <websocketpp/config/asio_no_tls_client.hpp>
-#include <websocketpp/client.hpp>
-
-typedef websocketpp::client<websocketpp::config::asio_client> WebSocketPPClient;
-
-class WebSocketPP
+class WebSocketBeast
 	: public WebSocket
 {
 public:
 	int Connect(std::string& address) override;
 	bool Send(std::string& data) override;
-	virtual ~WebSocketPP() {}
+	virtual ~WebSocketBeast() {}
 
-	WebSocketPPClient c;
-	websocketpp::connection_hdl myHdl;
 };
 
-typedef WebSocketPP WebSocketType;
+typedef WebSocketBeast WebSocketType;
 
-std::map<void*, WebSocketPP*> clients;
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
+#include <boost/asio/connect.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <cstdlib>
+#include <iostream>
+#include <string>
+#include <thread>
 
-void WebSocketPPOnMessage(websocketpp::connection_hdl hdl, WebSocketPPClient::message_ptr msg) {
-	WebSocketPP* wspp = clients[hdl.lock().get()];
-	std::lock_guard<std::mutex> guard(wspp->mq_mutex);
-	wspp->messageQueue.push_back(msg->get_payload());
-}
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace http = beast::http;           // from <boost/beast/http.hpp>
+namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
-void WebSocketPPOnOpen(websocketpp::connection_hdl hdl) {
-	WebSocketPP* wspp = clients[hdl.lock().get()];
-	std::lock_guard<std::mutex> guard(wspp->mq_mutex);
-	wspp->toBeOpened = true;
-}
+net::io_context ioc;
+websocket::stream<tcp::socket> ws{ioc};
+beast::flat_buffer buffer;
 
-int WebSocketPP::Connect(std::string& address) {
-	// Set logging to be pretty verbose (everything except message payloads)
-	c.set_access_channels(websocketpp::log::alevel::none);
-	c.set_error_channels(websocketpp::log::elevel::all);
+void DoRead();
 
-	// Initialize ASIO
-	c.init_asio();
+void OnRead(beast::error_code ec, std::size_t bytes_transferred) {
+	if(ec == websocket::error::closed)
+		return;
 
-	// Register our message handler
-	c.set_message_handler(&WebSocketPPOnMessage);
-	c.set_open_handler(&WebSocketPPOnOpen);
-
-	websocketpp::lib::error_code ec;
-	WebSocketPPClient::connection_ptr con = c.get_connection(address, ec);
-	if (ec) {
-		std::cout << "could not create connection because: " << ec.message() << std::endl;
-		return -1;
+	if(ec) {
+		if (ec.value() == boost::system::errc::operation_canceled) {
+			// this websocket has disconnected
+			// todo: cleanup whatever is happening and return to main menu
+			return;
+		}
+		std::cout << "read failed " << ec << "\n";
 	}
 
-	// Note that connect here only requests a connection. No network messages are
-	// exchanged until the event loop starts running in the next line.
-	c.connect(con);
-	this->myHdl = con;
+	auto str = beast::buffers_to_string(buffer.data());
+	WebSocketBeast* wsb = (WebSocketBeast*) webSocketManager._ws.get();
+	std::lock_guard<std::mutex> guard(wsb->mq_mutex);
+	wsb->messageQueue.push_back(str);
+	buffer.consume(buffer.size());
+	DoRead();
+}
 
-	clients[this->myHdl.lock().get()] = this;
+void DoRead() {
+	ws.async_read(buffer, &OnRead);
+}
 
-	new std::thread([](WebSocketPPClient *c_ptr){
-		c_ptr->run();
-	}, &c);
+int WebSocketBeast::Connect(std::string& fullAddress) {
+	tcp::resolver resolver{ioc};
+
+	ws.binary(true);
+
+	auto address = fullAddress.substr(5, fullAddress.size());
+
+	auto colon = address.find(":");
+	if (colon == std::string::npos)
+		return -1;
+
+	// some boost websocket stuff
+	auto host = address.substr(0, colon);
+	auto port = address.substr(colon + 1, address.size());
+	auto const results = resolver.resolve(host, port);
+	auto ep = net::connect(ws.next_layer(), results);
+	host += ':' + std::to_string(ep.port());
+	ws.set_option(websocket::stream_base::decorator(
+		[](websocket::request_type& req)
+		{
+			req.set(http::field::user_agent,
+				std::string(BOOST_BEAST_VERSION_STRING) +
+					" websocket-client-coro");
+		}));
+	ws.handshake(host, "/");
+
+	webSocketManager._ws->toBeOpened = true;
+
+	DoRead();
+
+	new std::thread([&](){
+		ioc.run();
+	});
 
 	return 0;
 }
 
-bool WebSocketPP::Send(std::string& data) {
-	websocketpp::lib::error_code ec;
-	this->c.send(this->myHdl, data, websocketpp::frame::opcode::binary, ec);
-	if (ec)
-		std::cout << "Echo failed because: " << ec.message() << std::endl;
-
-	// FIXME return bool
+bool WebSocketBeast::Send(std::string& data) {
+	ws.write(net::buffer(std::string(data)));
 }
 
 #endif
