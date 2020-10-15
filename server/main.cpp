@@ -52,9 +52,9 @@ void startGame() {
 	new std::thread(gameThread); // leak the shit out of it yooo
 }
 
-void on_message(dfws::Handle hdl, const std::string& payload)
+void mainOnMessage(dfws::Handle hdl, const std::string& payload)
 {
-	std::cout << "on_message\n";
+	std::cout << "mainOnMessage\n";
 	std::cout << "message from " << hdl << "\n";
 
 	const auto clientMessage = flatbuffers::GetRoot<FlatBuffGenerated::ClientMessage>(payload.c_str());
@@ -104,7 +104,7 @@ void on_message(dfws::Handle hdl, const std::string& payload)
 	}
 }
 
-void on_close(dfws::Handle hdl)
+void mainOnClose(dfws::Handle hdl)
 {
 	auto player = gameState.players.begin();
 	while (player != gameState.players.end())
@@ -130,7 +130,7 @@ void on_close(dfws::Handle hdl)
 	}
 }
 
-void on_open(dfws::Handle hdl) {
+void mainOnOpen(dfws::Handle hdl) {
 	if (gameState.phase == GamePhase::GAME) {
 		sendGameAlreadyInProgress(hdl);
 		return;
@@ -181,9 +181,9 @@ int main(int argc, const char* const argv[])
 	if (!handleCliOptions(argc, argv))
 		return 1;
 
-	dfws::SetOnMessage(&on_message);
-	dfws::SetOnOpen(&on_open);
-	dfws::SetOnClose(&on_close);
+	dfws::SetOnMessage(&mainOnMessage);
+	dfws::SetOnOpen(&mainOnOpen);
+	dfws::SetOnClose(&mainOnClose);
 
 	std::cout << "server started\n";
 
