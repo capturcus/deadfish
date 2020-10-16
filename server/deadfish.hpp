@@ -55,7 +55,6 @@ struct Collideable {
 struct Mob : public Collideable {
 	uint16_t mobID = 0;
 	uint16_t species = 0;
-	dfws::Handle wsHandle;
 	b2Body* body = nullptr;
 	MobState state = MobState::WALKING;
 	virtual void handleCollision(UNUSED Collideable& other) override {}
@@ -73,6 +72,7 @@ struct Player : public Mob {
 	std::string name;
 	bool ready = false;
 	Mob* killTarget = nullptr;
+	dfws::Handle wsHandle;
 	uint16_t attackTimeout = 0;
 	std::chrono::system_clock::time_point lastAttack;
 	int points = 0;

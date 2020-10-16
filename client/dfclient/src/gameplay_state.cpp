@@ -110,7 +110,7 @@ void GameplayState::LoadLevel() {
 			object->pos()->x() * METERS2PIXELS, -object->pos()->y() * METERS2PIXELS);
 		objectSprite->setAnchorPoint(0, 1);
 		objectSprite->setRotation(-object->rotation());
-		if(object->hspotname()->str().empty()){
+		if (object->hspotname()->str().empty()){
 			objectSprite->setLayer(OBJECTS_LAYER);
 			this->nodes.push_back(std::move(objectSprite));
 		} else {
@@ -309,7 +309,7 @@ void GameplayState::OnMessage(const std::string& data) {
 	updateRemainingText(worldState->stepsRemaining());
 
 	// make current hidingspot transparent
-	if(worldState->currentHidingSpot()->str() != "") {
+	if (worldState->currentHidingSpot()->str() != "") {
 		auto &hspotSprites = this->hiding_spots[worldState->currentHidingSpot()->str()];
 		if (!hspotSprites.empty() && hspotSprites[0]->alpha() == MAX_HIDING_SPOT_OPACITY) {
 			for (auto &hsSprite : hspotSprites) {
@@ -409,7 +409,7 @@ StateType GameplayState::Update(Messages m) {
 		ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(7.0f, 0.0f, 0.6f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(7.0f, 0.0f, 0.7f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(7.0f, 0.0f, 0.8f));
-		if(ImGui::Button("No")) {
+		if (ImGui::Button("No")) {
 			this->showQuitDialog = false;
 		}
 		ImGui::PopStyleColor(3);

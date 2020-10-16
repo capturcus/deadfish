@@ -25,7 +25,7 @@ namespace net = boost::asio;            // from <boost/asio.hpp>
 class DfWebsocket;
 
 net::io_context ioc{1};
-tcp::acceptor acceptor_{ioc};
+tcp::acceptor acceptor{ioc};
 uint16_t lastSocketID = 0;
 std::vector<std::shared_ptr<DfWebsocket>> sockets;
 
@@ -63,7 +63,7 @@ public:
 
     // Take ownership of the socket
     explicit
-    DfWebsocket(tcp::socket&& socket, int socketID)
+    DfWebsocket(tcp::socket&& socket, uint16_t socketID)
         : ws_(std::move(socket)), socketID_(socketID)
     {
         ws_.binary(true);
@@ -101,7 +101,7 @@ public:
 
     void OnAccept(beast::error_code ec)
     {
-        if(ec)
+        if (ec)
             return fail(ec, "accept");
 
         onOpenHandler(socketID_);
@@ -117,10 +117,10 @@ public:
         boost::ignore_unused(bytes_transferred);
 
         // This indicates that the session was closed
-        if(ec == websocket::error::closed)
+        if (ec == websocket::error::closed)
             return;
 
-        if(ec) {
+        if (ec) {
             if (ec.value() == boost::system::errc::operation_canceled) {
                 // this websocket has disconnected
                 // TODO delete it from the vector
@@ -158,7 +158,7 @@ void dfws::SendData(Handle hdl, const std::string& data)
 void dfwsOnAccept(beast::error_code ec, tcp::socket socket)
 {
     std::cout << "on accept\n";
-    if(ec)
+    if (ec)
         return fail(ec, "accept");
     // websocket::stream<beast::tcp_stream> ws_(std::move(socket));
     auto socketPtr = std::make_shared<DfWebsocket>(std::move(socket), lastSocketID++);
@@ -166,7 +166,7 @@ void dfwsOnAccept(beast::error_code ec, tcp::socket socket)
     sockets.back()->start();
 
     // accept another connection
-    acceptor_.async_accept(&dfwsOnAccept);
+    acceptor.async_accept(&dfwsOnAccept);
 }
 
 void dfws::Run(unsigned short port)
@@ -176,38 +176,38 @@ void dfws::Run(unsigned short port)
     tcp::endpoint endpoint{address, port};
 
     // Open the acceptor
-    acceptor_.open(endpoint.protocol(), ec);
-    if(ec)
+    acceptor.open(endpoint.protocol(), ec);
+    if (ec)
     {
         fail(ec, "open");
         return;
     }
 
     // Allow address reuse
-    acceptor_.set_option(net::socket_base::reuse_address(true), ec);
-    if(ec)
+    acceptor.set_option(net::socket_base::reuse_address(true), ec);
+    if (ec)
     {
         fail(ec, "set_option");
         return;
     }
 
     // Bind to the server address
-    acceptor_.bind(endpoint, ec);
-    if(ec)
+    acceptor.bind(endpoint, ec);
+    if (ec)
     {
         fail(ec, "bind");
         return;
     }
 
     // Start listening for connections
-    acceptor_.listen(
+    acceptor.listen(
         net::socket_base::max_listen_connections, ec);
-    if(ec)
+    if (ec)
     {
         fail(ec, "listen");
         return;
     }
 
-    acceptor_.async_accept(&dfwsOnAccept);
+    acceptor.async_accept(&dfwsOnAccept);
     ioc.run();
 }

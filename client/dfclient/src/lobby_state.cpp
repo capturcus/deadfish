@@ -127,7 +127,7 @@ void LobbyState::SendPlayerReady() {
 }
 
 void LobbyState::OnMouseButtonPressed(const ncine::MouseEvent &event) {
-	if(IntersectsNode(event.x, event.y, *this->readyButton) && !this->ready) {
+	if (IntersectsNode(event.x, event.y, *this->readyButton) && !this->ready) {
 		this->ready = true;
 		this->SendPlayerReady();
 	}

@@ -208,7 +208,7 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 	std::string hspotname = ""; // name of the hidingspot that the player is in
 	for(auto &hspot : gameState.level->hidingspots) {
 		auto playerInHspot = hspot->playersInside.find(&player);
-		if(playerInHspot != hspot->playersInside.end()) {
+		if (playerInHspot != hspot->playersInside.end()) {
 			hspotname = hspot->name;
 			break;
 		}

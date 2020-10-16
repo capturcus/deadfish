@@ -124,10 +124,10 @@ beast::flat_buffer buffer;
 void DoRead();
 
 void OnRead(beast::error_code ec, std::size_t bytes_transferred) {
-	if(ec == websocket::error::closed)
+	if (ec == websocket::error::closed)
 		return;
 
-	if(ec) {
+	if (ec) {
 		if (ec.value() == boost::system::errc::operation_canceled) {
 			// this websocket has disconnected
 			// todo: cleanup whatever is happening and return to main menu
@@ -153,7 +153,7 @@ int WebSocketBeast::Connect(std::string& fullAddress) {
 
 	ws.binary(true);
 
-	auto address = fullAddress.substr(5, fullAddress.size());
+	auto address = fullAddress.substr(std::string("ws://").size(), fullAddress.size());
 
 	auto colon = address.find(":");
 	if (colon == std::string::npos)
