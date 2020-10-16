@@ -28,6 +28,7 @@ const unsigned short INDICATOR_LAYER = 12288;
 const unsigned short MOBS_LAYER = 16384;
 const unsigned short OBJECTS_LAYER = 20480;
 const unsigned short HIDING_SPOTS_LAYER = 24576;
+const unsigned short CAUSTICS_LAYER = 28672;
 
 struct Mob {
 	std::unique_ptr<ncine::AnimatedSprite> sprite;
@@ -63,6 +64,7 @@ private:
 	void OnMessage(const std::string& data);
 
 	void LoadLevel();
+	void InitializeCaustics(const FlatBuffGenerated::Level& level);
 	void ProcessDeathReport(const FlatBuffGenerated::DeathReport* deathReport);
 	void ProcessHighscoreUpdate(const FlatBuffGenerated::HighscoreUpdate* highscoreUpdate);
 	void CreateHidingSpotShowingTween(ncine::DrawableNode* hspot);
@@ -76,6 +78,7 @@ private:
 	typedef std::vector<std::unique_ptr<ncine::DrawableNode>> DrawableNodeVector;
 	DrawableNodeVector nodes;
 	std::map<std::string, DrawableNodeVector> hiding_spots;
+	std::vector<std::unique_ptr<ncine::AnimatedSprite>> caustics;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
 	std::map<uint16_t, Mob> mobs;
 	ncine::Sprite* mySprite = nullptr;

@@ -41,10 +41,16 @@ int ANIM_LENGTHS[] = {
 	[FISH_ANIMATIONS::ATTACK] = 40,
 };
 
-ncine::Vector2i spriteCoords(int spriteNum) {
+ncine::Vector2i fishSpriteCoords(int spriteNum) {
 	int row = spriteNum / IMGS_PER_ROW;
 	int col = spriteNum % IMGS_PER_ROW;
 	return {col * FISH_FRAME_WIDTH, row * FISH_FRAME_HEIGHT};
+}
+
+ncine::Vector2i causticSpriteCoords(int spriteNum) {
+	int row = spriteNum / 8;
+	int col = spriteNum % 8;
+	return {col * 768, row * 768};
 }
 
 std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species) {
@@ -56,7 +62,7 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine:
 			ncine::RectAnimation::LoopMode::ENABLED,
 			ncine::RectAnimation::RewindMode::FROM_START);
 		for (int j = 0; j < ANIM_LENGTHS[animNumber]; j++) {
-			auto coords = spriteCoords(currentImg);
+			auto coords = fishSpriteCoords(currentImg);
 			animation->addRect(coords.x, coords.y, FISH_FRAME_WIDTH, FISH_FRAME_HEIGHT);
 			currentImg++;
 		}
@@ -68,6 +74,32 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine:
 	ret->setPaused(false);
 	ret->setLayer(MOBS_LAYER);
 	return std::move(ret);
+}
+
+void GameplayState::InitializeCaustics(const FlatBuffGenerated::Level& level) {
+	float levelwidth = level.tilelayer()->width() * level.tilelayer()->tilesize()->x();
+	float levelheight = level.tilelayer()->height() * level.tilelayer()->tilesize()->y();
+	for (int i = 0; i<(levelwidth / 768)+1; ++i) {
+		for (int j = 0; j<(levelheight / 768)+1; ++j) {
+			std::unique_ptr<ncine::AnimatedSprite> caustics = std::make_unique<ncine::AnimatedSprite>(this->cameraNode.get(), _resources.textures["caustics.png"].get());
+			nctl::UniquePtr<ncine::RectAnimation> caustAnim = nctl::makeUnique<ncine::RectAnimation>(1./25,
+				ncine::RectAnimation::LoopMode::ENABLED,
+				ncine::RectAnimation::RewindMode::FROM_START);
+			for (int currentImg=0; currentImg < 128; ++currentImg) {
+				auto coords = causticSpriteCoords(currentImg);
+				caustAnim->addRect(coords.x, coords.y, 768, 768);
+			}
+			caustics->setPosition(i*768, -j*768);
+			std::cout << i*768 << " " <<  j*768 << std::endl;
+			caustics->addAnimation(nctl::move(caustAnim));
+			caustics->setAnimationIndex(0);
+			caustics->setFrame(0);
+			caustics->setPaused(false);
+			caustics->setLayer(CAUSTICS_LAYER);
+			caustics->setAlpha(110);
+			this->caustics.push_back(std::move(caustics));
+		}
+	}
 }
 
 tweeny::tween<int>
@@ -148,8 +180,8 @@ void GameplayState::LoadLevel() {
 				this->hiding_spots.insert(std::move(pair));
 			}
 		}
-
 	}
+	InitializeCaustics(*level);
 }
 
 // this whole thing should probably be refactored
