@@ -1,4 +1,3 @@
-#include <iostream>
 #include <limits>
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -10,11 +9,6 @@
 #include "deadfish.hpp"
 #include "game_thread.hpp"
 #include "level_loader.hpp"
-
-bool operator==(websocketpp::connection_hdl &a, websocketpp::connection_hdl &b)
-{
-	return a.lock().get() == b.lock().get();
-}
 
 uint16_t newMobID()
 {
@@ -53,7 +47,7 @@ std::string makeServerMessage(flatbuffers::FlatBufferBuilder &builder,
 }
 
 
-void sendGameAlreadyInProgress(const websocketpp::connection_hdl& hdl)
+void sendGameAlreadyInProgress(dfws::Handle hdl)
 {
 	std::cout << "sending game already in progress";
 	flatbuffers::FlatBufferBuilder builder;
@@ -61,7 +55,7 @@ void sendGameAlreadyInProgress(const websocketpp::connection_hdl& hdl)
 		FlatBuffGenerated::SimpleServerEventType_GameAlreadyInProgress);
 	auto str = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_SimpleServerEvent,
 		offset.Union());
-	websocket_server.send(hdl, str, websocketpp::frame::opcode::binary);
+	dfws::SendData(hdl, str);
 }
 
 void sendServerMessage(Player &player,
@@ -70,32 +64,23 @@ void sendServerMessage(Player &player,
 					   flatbuffers::Offset<void> offset)
 {
 	auto str = makeServerMessage(builder, type, offset);
-	websocket_server.send(player.conn_hdl, str, websocketpp::frame::opcode::binary);
+	dfws::SendData(player.wsHandle, str);
 }
 
 void sendToAll(std::string &data)
 {
 	for (auto &p : gameState.players)
 	{
-		websocket_server.send(p->conn_hdl, data, websocketpp::frame::opcode::binary);
+		dfws::SendData(p->wsHandle, data);
 	}
 }
 
-void stopAll()
-{
-	websocket_server.stop_perpetual();
-	for (auto& p : gameState.players)
-	{
-		websocket_server.close(p->conn_hdl, websocketpp::close::status::normal, "goodbye");
-	}
-}
-
-Player* getPlayerByConnHdl(websocketpp::connection_hdl &hdl)
+Player* getPlayerByConnHdl(dfws::Handle hdl)
 {
 	auto player = gameState.players.begin();
 	while (player != gameState.players.end())
 	{
-		if ((*player)->conn_hdl == hdl)
+		if ((*player)->wsHandle == hdl)
 		{
 			return player->get();
 		}
@@ -223,7 +208,7 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 	std::string hspotname = ""; // name of the hidingspot that the player is in
 	for(auto &hspot : gameState.level->hidingspots) {
 		auto playerInHspot = hspot->playersInside.find(&player);
-		if(playerInHspot != hspot->playersInside.end()) {
+		if (playerInHspot != hspot->playersInside.end()) {
 			hspotname = hspot->name;
 			break;
 		}
@@ -433,9 +418,8 @@ void sendHighscores()
 	sendToAll(data);
 }
 
-void gameOnMessage(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
+void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 {
-	const auto payload = msg->get_payload();
 	const auto clientMessage = flatbuffers::GetRoot<FlatBuffGenerated::ClientMessage>(payload.c_str());
 	const auto guard = gameState.lock();
 

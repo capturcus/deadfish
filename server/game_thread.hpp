@@ -2,11 +2,10 @@
 
 void gameThread();
 uint16_t newMobID();
-void gameOnMessage(websocketpp::connection_hdl hdl, const server::message_ptr& msg);
-bool operator==(websocketpp::connection_hdl &a, websocketpp::connection_hdl &b);
+void gameOnMessage(dfws::Handle hdl, const std::string& msg);
 void spawnPlayer(Player& p);
 void spawnCivilian();
-Player* getPlayerByConnHdl(websocketpp::connection_hdl &hdl);
+Player* getPlayerByConnHdl(dfws::Handle hdl);
 void sendServerMessage(Player& player,
 	flatbuffers::FlatBufferBuilder &builder,
 	FlatBuffGenerated::ServerMessageUnion type,
@@ -17,4 +16,4 @@ std::string makeServerMessage(flatbuffers::FlatBufferBuilder &builder,
 bool mobSeePoint(Mob &m, b2Vec2 &point);
 void sendToAll(std::string &data);
 void sendHighscores();
-void sendGameAlreadyInProgress(const websocketpp::connection_hdl& hdl);
+void sendGameAlreadyInProgress(dfws::Handle hdl);
