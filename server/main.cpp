@@ -54,9 +54,6 @@ void startGame() {
 
 void mainOnMessage(dfws::Handle hdl, const std::string& payload)
 {
-	std::cout << "mainOnMessage\n";
-	std::cout << "message from " << hdl << "\n";
-
 	if (payload.size() == 0)
 		return; // wtf
 
