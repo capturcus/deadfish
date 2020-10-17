@@ -129,6 +129,16 @@ struct Decoration {
 	uint16_t gid;
 };
 
+// just a data container to be able to send it later to clients
+struct Tilelayer {
+	Tilelayer(const FlatBuffGenerated::Tilelayer* fb_Tl) : width(fb_Tl->width()), height(fb_Tl->height()),
+	    tilesize(fb_Tl->tilesize()->x(), fb_Tl->tilesize()->y()), tiledata(fb_Tl->tiledata()->begin(), fb_Tl->tiledata()->end()) {}
+	uint16_t width;
+	uint16_t height;
+	glm::vec2 tilesize;
+	std::vector<uint16_t> tiledata;
+};
+
 struct HidingSpot : public Collideable {
 	HidingSpot(const FlatBuffGenerated::HidingSpot*);
 	std::string name;
@@ -165,6 +175,7 @@ struct Level {
 	std::vector<std::unique_ptr<PlayerWall>> playerwalls;
 	std::unordered_map<std::string, std::unique_ptr<NavPoint>> navpoints;
 	std::vector<std::unique_ptr<Tileinfo>> tileinfo;
+	std::unique_ptr<Tilelayer> tilelayer;
 	glm::vec2 size;
 };
 

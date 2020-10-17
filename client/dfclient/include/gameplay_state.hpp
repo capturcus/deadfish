@@ -22,7 +22,9 @@ namespace nc = ncine;
 
 const float PIXELS2METERS = 0.01f;
 const float METERS2PIXELS = 100.f;
+const unsigned short TILE_LAYER = 4096;
 const unsigned short DECORATION_LAYER = 8192;
+const unsigned short INDICATOR_LAYER = 12288;
 const unsigned short MOBS_LAYER = 16384;
 const unsigned short OBJECTS_LAYER = 20480;
 const unsigned short HIDING_SPOTS_LAYER = 24576;

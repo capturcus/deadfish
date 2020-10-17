@@ -59,6 +59,13 @@ table PlayerWall {
   rotation: float;
 }
 
+table Tilelayer {
+  width: int;
+  height: int;
+  tilesize: Vec2;
+  tiledata: [uint16];
+}
+
 table Level {
   objects: [Object];
   decoration: [Decoration];
@@ -67,6 +74,7 @@ table Level {
   navpoints: [NavPoint];
   playerwalls: [PlayerWall];
   tileinfo: [Tileinfo];
+  tilelayer: Tilelayer;
   size: Vec2;
 }
 

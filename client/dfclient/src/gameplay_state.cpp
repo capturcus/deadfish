@@ -92,6 +92,27 @@ void GameplayState::LoadLevel() {
 		spritemap.insert(std::pair<uint16_t, std::string>(fb_Ti->gid(), fb_Ti->name()->str()));
 	}
 
+	// initialize tile layer
+	if (level->tilelayer() && level->tilelayer()->tiledata()) {
+		auto width = level->tilelayer()->width();
+		auto height = level->tilelayer()->height();
+		auto tilewidth = level->tilelayer()->tilesize()->x();
+		auto tileheight = level->tilelayer()->tilesize()->y();
+		
+		auto currentTile = level->tilelayer()->tiledata()->begin();
+		for (int i=0; i<height; ++i) {	// rows
+			for (int j=0; j<width; ++j) {	// columns
+				auto spritename = spritemap[*currentTile++];
+				if (spritename.empty()) continue;
+				auto tileSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[spritename].get(),
+					j * tilewidth, -i * tileheight);
+				tileSprite->setAnchorPoint(0, 1);
+				tileSprite->setLayer(TILE_LAYER);
+				this->nodes.push_back(std::move(tileSprite));
+			}
+		}
+	}
+
 	// initialize decoration
 	for (auto decoration : *level->decoration()) {
 		std::string spritename = spritemap[decoration->gid()];
@@ -198,6 +219,7 @@ nc::MeshSprite* GameplayState::CreateIndicator(float angle, float force, int ind
 	auto arc = createArc(*this->mySprite, _resources.textures["pixel.png"].get(), 0, 0,
 		INDICATOR_OFFSET + indicatorNum * INDICATOR_WIDTH,
 		INDICATOR_OFFSET + (indicatorNum+1) * INDICATOR_WIDTH, force * 360.f);
+	arc->setLayer(INDICATOR_LAYER);
 	arc->setRotation(-this->mySprite->rotation() - angle * TO_DEGREES - force * 180.f + 180.f);
 	if (visible)
 		arc->setColor(255, 255, 255, INDICATOR_OPACITY * 255);
@@ -271,9 +293,11 @@ void GameplayState::OnMessage(const std::string& data) {
 		} else if (mobData->relation() == FlatBuffGenerated::PlayerRelation_Close) {
 			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), _resources.textures["bluecircle.png"].get());
 			mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
+			mob.relationMarker->setLayer(INDICATOR_LAYER);
 		} else if (mobData->relation() == FlatBuffGenerated::PlayerRelation_Targeted) {
 			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), _resources.textures["redcircle.png"].get());
 			mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
+			mob.relationMarker->setLayer(INDICATOR_LAYER);
 		}
 	}
 	std::vector<int> deletedIDs;
@@ -471,6 +495,7 @@ StateType GameplayState::Update(Messages m) {
 	if (closestMob && smallestNorm < radiusSquared) {
 		closestMob->hoverMarker = std::make_unique<ncine::Sprite>(closestMob->sprite.get(), _resources.textures["graycircle.png"].get());
 		closestMob->hoverMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
+		closestMob->hoverMarker->setLayer(INDICATOR_LAYER);
 	}
 
 	return StateType::Gameplay;
