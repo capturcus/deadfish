@@ -16,8 +16,8 @@ void Resources::playKillSound(float gain) {
 
 void Resources::playRandomDeathSound() {
 	auto randIndex = rand()%_sounds.size();
-	auto it = _sounds.begin();
-	for(auto i=0; i<randIndex; ++i, ++it);
+	std::map<std::string, std::unique_ptr<ncine::AudioBuffer>>::iterator it = _sounds.begin();
+	for(auto i=0; i<randIndex; ++i) ++it;
 	_deathSound = std::make_unique<ncine::AudioBufferPlayer>(it->second.get());
 	_deathSound->play();
 }

@@ -3,6 +3,7 @@
 #define __RESOURCES_HPP__
 
 #include <map>
+#include <string>
 #include <memory>
 
 #include <ncine/TextNode.h>
