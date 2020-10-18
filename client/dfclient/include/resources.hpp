@@ -3,6 +3,7 @@
 #define __RESOURCES_HPP__
 
 #include <map>
+#include <unordered_map>
 #include <memory>
 
 #include <ncine/TextNode.h>
@@ -22,7 +23,7 @@ struct Resources {
 	std::unique_ptr<ncine::AudioBufferPlayer> _wilhelmSound;
 
 	std::vector<tweeny::tween<int>> _tweens;
-	std::map<const uint16_t, tweeny::tween<int>> _mobTweens;
+	std::unordered_map<uint16_t, tweeny::tween<int>> _mobTweens;
 
 	void UpdateTweens();
 };

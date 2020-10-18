@@ -78,7 +78,7 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine:
  * @param during	time it takes
  * @return 			the created tween
 */
-tweeny::tween<int>
+static tweeny::tween<int>
 CreateAlphaTransitionTween(ncine::DrawableNode* sprite, int from, int to, int during) {
 	auto tween = tweeny::from(from)
 		.to(to).during(during).onStep(
@@ -141,7 +141,7 @@ void GameplayState::LoadLevel() {
 		objectSprite->setAnchorPoint(0, 1);
 		objectSprite->setRotation(-object->rotation());
 		objectSprite->setSize(object->size()->x(), object->size()->y());
-		if(object->hspotname()->str().empty()){
+		if (object->hspotname()->str().empty()){
 			objectSprite->setLayer(OBJECTS_LAYER);
 			this->nodes.push_back(std::move(objectSprite));
 		} else {
@@ -282,8 +282,7 @@ void GameplayState::OnMessage(const std::string& data) {
 			newMob.sprite = CreateNewAnimSprite(this->cameraNode.get(), mobData->species());
 			newMob.sprite->setAlpha(1);
 			//fade in
-			_resources._mobTweens[mobData->mobID()] = std::move(CreateAlphaTransitionTween(newMob.sprite.get(), 1, 255, MOB_FADEIN_TIME));
-			newMob.isAfterimage = false;
+			_resources._mobTweens[mobData->mobID()] = CreateAlphaTransitionTween(newMob.sprite.get(), 1, 255, MOB_FADEIN_TIME);
 			this->mobs[mobData->mobID()] = std::move(newMob);
 			mobItr = this->mobs.find(mobData->mobID());
 			firstUpdate = true;
@@ -291,12 +290,11 @@ void GameplayState::OnMessage(const std::string& data) {
 		Mob& mob = mobItr->second;
 		mob.setupLocRot(*mobData, firstUpdate);
 		mob.seen = true;
-		if (mob.isAfterimage == true) {
+		if (mob.isAfterimage) {
 			//re-fade in
-			_resources._mobTweens[mobData->mobID()] = std::move(
-				CreateAlphaTransitionTween(mob.sprite.get(), mob.sprite->alpha(), 255, MOB_FADEIN_TIME*(1 - mob.sprite->alpha()/255)));
+			_resources._mobTweens[mobData->mobID()] = CreateAlphaTransitionTween(mob.sprite.get(), mob.sprite->alpha(), 255, MOB_FADEIN_TIME*(1 - mob.sprite->alpha()/255));
+			mob.isAfterimage = false;
 		}
-		mob.isAfterimage = false;
 		if (mobData->state() != mob.state) {
 			mob.state = mobData->state();
 			mob.sprite->setAnimationIndex(mobData->state());
@@ -326,10 +324,9 @@ void GameplayState::OnMessage(const std::string& data) {
 		if (!mob.second.seen) { // not seen
 			if (!mob.second.isAfterimage) {	// not seen and not afterimage
 				// fade out
-				_resources._mobTweens[mob.first] = std::move(
-					CreateAlphaTransitionTween(mob.second.sprite.get(), mob.second.sprite->alpha(), 0, MOB_FADEOUT_TIME*(mob.second.sprite->alpha()/255)));
+				_resources._mobTweens[mob.first] = CreateAlphaTransitionTween(mob.second.sprite.get(), mob.second.sprite->alpha(), 0, MOB_FADEOUT_TIME*(mob.second.sprite->alpha()/255));
 				mob.second.isAfterimage = true;
-			} else if (mob.second.sprite->alpha() == 0){ // not seen and afterimage and alpha == 0
+			} else if (mob.second.sprite->alpha() == 0) { // not seen and afterimage and alpha == 0
 				deletedIDs.push_back(mob.first);
 			}
 		}
@@ -365,7 +362,7 @@ void GameplayState::OnMessage(const std::string& data) {
 	updateRemainingText(worldState->stepsRemaining());
 
 	// make current hidingspot transparent
-	if(worldState->currentHidingSpot()->str() != "") {
+	if (worldState->currentHidingSpot()->str() != "") {
 		auto &hspotSprites = this->hiding_spots[worldState->currentHidingSpot()->str()];
 		if (!hspotSprites.empty() && hspotSprites[0]->alpha() == MAX_HIDING_SPOT_OPACITY) {
 			for (auto &hsSprite : hspotSprites) {
@@ -399,7 +396,7 @@ void Mob::setupLocRot(const FlatBuffGenerated::Mob& msg, bool firstUpdate) {
 }
 
 void Mob::updateLocRot(float subDelta) {
-	if(this->isAfterimage) return;
+	if (this->isAfterimage) return;
 
 	float angleDelta = currRotation - prevRotation;
 	if (angleDelta > M_PI) {
@@ -467,7 +464,7 @@ StateType GameplayState::Update(Messages m) {
 		ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(7.0f, 0.0f, 0.6f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(7.0f, 0.0f, 0.7f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(7.0f, 0.0f, 0.8f));
-		if(ImGui::Button("No")) {
+		if (ImGui::Button("No")) {
 			this->showQuitDialog = false;
 		}
 		ImGui::PopStyleColor(3);
@@ -552,7 +549,7 @@ void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {
 	if (event.isRightButton()) {
 		// kill
 		for (auto& mob : this->mobs) {
-			if(mob.second.isAfterimage) continue;
+			if (mob.second.isAfterimage) continue;
 			if (mob.second.hoverMarker.get()) {
 				// if it is hovered kill it
 				flatbuffers::FlatBufferBuilder builder;
