@@ -7,4 +7,7 @@ void Resources::UpdateTweens()
 		if (_tweens[i].progress() == 1.f)
 			_tweens.erase(_tweens.begin() + i);
 	}
+	for (auto& tween : _mobTweens) {
+		tween.second.step(1);
+	}
 }
