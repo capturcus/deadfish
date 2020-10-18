@@ -182,10 +182,13 @@ void GameplayState::ProcessDeathReport(const FlatBuffGenerated::DeathReport* dea
 		text->setPosition(screenWidth * 0.5f, screenHeight * 0.75f);
 		text->setScale(3.0f);
 		_resources._tweens.push_back(CreateTextTween(text.get()));
+
+		_resources.playKillSound();
 		
 	} else if (deathReport->killed() == gameData.myPlayerID) {
 		// i died :c
-		_resources._wilhelmSound->play();
+		_resources.playKillSound(0.4f);
+		_resources.playRandomDeathSound();
 
 		text->setString(("you have been killed by " + gameData.players[deathReport->killer()].name).c_str());
 		text->setColor(255, 0, 0, 255);

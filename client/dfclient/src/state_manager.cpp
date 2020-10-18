@@ -13,9 +13,10 @@
 #include "websocket.hpp"
 
 StateManager::StateManager() {
+	// load textures
 	auto rootPath = ncine::theApplication().appConfiguration().dataPath();
-	auto dir = ncine::FileSystem::Directory((rootPath + TEXTURES_PATH).data());
-	const char* file = dir.readNext();
+	auto textureDir = ncine::FileSystem::Directory((rootPath + TEXTURES_PATH).data());
+	const char* file = textureDir.readNext();
 	while (file)
 	{
 		auto absPath = rootPath.data() + std::string(TEXTURES_PATH) + "/" + std::string(file);
@@ -23,12 +24,26 @@ StateManager::StateManager() {
 			std::cout << "loading " << file << " " << absPath << "\n";
 			_resources.textures[file] = std::make_unique<ncine::Texture>(absPath.c_str());
 		}
-		file = dir.readNext();
+		file = textureDir.readNext();
 	}
+	textureDir.close();
 	_resources.fonts["comic"] = std::make_unique<ncine::Font>((rootPath + "fonts/comic.fnt").data(), (rootPath + "fonts/comic.png").data());
 
-	_resources._wilhelmAudioBuffer = std::make_unique<ncine::AudioBuffer>((rootPath + "/sounds/wilhelm.wav").data());
-	_resources._wilhelmSound = std::make_unique<ncine::AudioBufferPlayer>(_resources._wilhelmAudioBuffer.get());
+	// load sounds
+	auto soundDir = ncine::FileSystem::Directory((rootPath + SOUNDS_PATH).data());
+	file = soundDir.readNext();
+	while (file) {
+		auto absPath = rootPath.data() + std::string(SOUNDS_PATH) + "/" + std::string(file);
+		if (ncine::FileSystem::isFile(absPath.c_str())) {
+			std::cout << "loading sound " << file << " " << absPath << "\n";
+			_resources._sounds[file] = std::make_unique<ncine::AudioBuffer>(absPath.c_str());
+		}
+		file = soundDir.readNext();
+	}
+	_resources._killSoundBuffer = std::move(_resources._sounds["amongus-kill.wav"]);
+	_resources._sounds.erase("amongus-kill.wav");
+	_resources._killSound = std::make_unique<ncine::AudioBufferPlayer>(_resources._killSoundBuffer.get());
+	
 
 	_currentStateType = StateType::Menu;
 	_currentState = std::make_unique<MenuState>(_resources);
