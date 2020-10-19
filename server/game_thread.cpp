@@ -10,6 +10,8 @@
 #include "game_thread.hpp"
 #include "level_loader.hpp"
 
+const float GOLDFISH_CHANCE = 0.5f;
+
 uint16_t newMobID()
 {
 	while (true)
@@ -280,52 +282,58 @@ std::vector<int> civiliansSpeciesCount()
 	ret.resize(gameState.players.size());
 	for (auto &c : gameState.civilians)
 	{
-		ret[c->species]++;
+		if (c->species != GOLDFISH_SPECIES)
+			ret[c->species]++;
 	}
 	return ret;
 }
 
-void spawnCivilian()
-{
-	// find spawns
-	std::vector<std::string> spawns;
-	for (auto &p : gameState.level->navpoints)
-	{
-		if (p.second->isspawn)
-		{
-			spawns.push_back(p.first);
-		}
-	}
-	if (spawns.size() == 0) {
-		std::cout << "could not find any civilian spawns\n";
-		exit(1);
-	}
-	auto &spawnName = spawns[random() % spawns.size()];
-	auto spawn = gameState.level->navpoints[spawnName].get();
+void spawnCivilian(std::string spawnName, NavPoint* spawn) {
 	auto c = std::make_unique<Civilian>();
 
-	// find species with lowest count of civilians
-	auto civCounts = civiliansSpeciesCount();
-	int lowestSpecies = 0;
-	int lowestSpeciesCount = INT_MAX;
-	for (size_t i = 0; i < civCounts.size(); i++)
-	{
-		if (civCounts[i] < lowestSpeciesCount)
+	int species = 0;
+
+	float goldfishBet = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+	if (goldfishBet < GOLDFISH_CHANCE)
+		species = GOLDFISH_SPECIES;
+	else {
+		// find species with lowest count of civilians
+		auto civCounts = civiliansSpeciesCount();
+		int lowestSpecies = 0;
+		int lowestSpeciesCount = INT_MAX;
+		for (size_t i = 0; i < civCounts.size(); i++)
 		{
-			lowestSpecies = i;
-			lowestSpeciesCount = civCounts[i];
+			if (civCounts[i] < lowestSpeciesCount)
+			{
+				lowestSpecies = i;
+				lowestSpeciesCount = civCounts[i];
+			}
 		}
+		species = lowestSpecies;
 	}
 
 	c->mobID = newMobID();
-	c->species = lowestSpecies;
+	c->species = species;
 	c->previousNavpoint = spawnName;
 	c->currentNavpoint = spawnName;
 	physicsInitMob(c.get(), spawn->position, 0, 0.3f);
 	c->setNextNavpoint();
 	gameState.civilians.push_back(std::move(c));
-	std::cout << "spawning civilian of species " << lowestSpecies <<
+	std::cout << "spawning civilian of species " << species <<
 		" at " << spawnName << " to a total of " << gameState.civilians.size() << "\n";
+}
+
+void spawnCivilians()
+{
+	// spawn on all spawnpoints
+	std::vector<std::string> spawns;
+	for (auto &p : gameState.level->navpoints)
+	{
+		if (p.second->isspawn)
+		{
+			spawnCivilian(p.first, p.second.get());
+		}
+	}
 }
 
 void spawnPlayer(Player &player)
@@ -541,7 +549,7 @@ void gameThread()
 		// spawn civilians if need be
 		if (!gameState.options["ghosttown"].as<bool>() && civilianTimer == 0 && gameState.civilians.size() < MAX_CIVILIANS)
 		{
-			spawnCivilian();
+			spawnCivilians();
 			civilianTimer = CIVILIAN_TIME;
 		}
 		else

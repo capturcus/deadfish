@@ -47,10 +47,10 @@ ncine::Vector2i spriteCoords(int spriteNum) {
 	return {col * FISH_FRAME_WIDTH, row * FISH_FRAME_HEIGHT};
 }
 
-std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species) {
-	std::unique_ptr<ncine::AnimatedSprite> ret = std::make_unique<ncine::AnimatedSprite>(parent, _resources.textures["fish.png"].get());
+std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species, const std::string& spritesheet, uint16_t maxAnimations) {
+	std::unique_ptr<ncine::AnimatedSprite> ret = std::make_unique<ncine::AnimatedSprite>(parent, _resources.textures[spritesheet].get());
 	int currentImg = species * IMGS_PER_SPECIES;
-	for (int animNumber = 0; animNumber < FISH_ANIMATIONS::MAX; animNumber++) {
+	for (int animNumber = 0; animNumber < maxAnimations; animNumber++) {
 		nctl::UniquePtr<ncine::RectAnimation> animation =
 		nctl::makeUnique<ncine::RectAnimation>(1./ANIMATION_FPS,
 			ncine::RectAnimation::LoopMode::ENABLED,
@@ -63,11 +63,20 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine:
 		ret->addAnimation(nctl::move(animation));
 	}
 
-	ret->setAnimationIndex(FISH_ANIMATIONS::WALK);
+	ret->setAnimationIndex(0);
 	ret->setFrame(0);
 	ret->setPaused(false);
 	ret->setLayer(MOBS_LAYER);
 	return std::move(ret);
+}
+
+std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewMobSprite(ncine::SceneNode* parent, uint16_t species) {
+	if (species == GOLDFISH_SPECIES) {
+		std::string goldfish("goldfish.png");
+		return this->CreateNewAnimSprite(parent, 0, goldfish, 1);
+	}
+	std::string fish("fish.png");
+	return this->CreateNewAnimSprite(parent, species, fish, FISH_ANIMATIONS::MAX);
 }
 
 /**
@@ -282,7 +291,7 @@ void GameplayState::OnMessage(const std::string& data) {
 		if (mobItr == this->mobs.end()) {
 			// this is the first time we see this mob, create it
 			Mob newMob;
-			newMob.sprite = CreateNewAnimSprite(this->cameraNode.get(), mobData->species());
+			newMob.sprite = CreateNewMobSprite(this->cameraNode.get(), mobData->species());
 			newMob.sprite->setAlpha(1);
 			//fade in
 			_resources._mobTweens[mobData->mobID()] = CreateAlphaTransitionTween(newMob.sprite.get(), 1, 255, MOB_FADEIN_TIME);

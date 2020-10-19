@@ -25,3 +25,5 @@ const int CIV_RESET_FRAMES = 80;
 
 const float TO_DEGREES = (180.f / M_PI);
 const float TO_RADIANS = (M_PI / 180.f);
+
+const uint16_t GOLDFISH_SPECIES = (uint16_t) -1;
