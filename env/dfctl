@@ -106,9 +106,9 @@ then
     exit 0
 fi
 
-if [ "$1" == "levelpacker" ]
+if [ "$1" == "packall" ]
 then
-    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/levelpacker && ./levelpacker.py'
+    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/levelpacker && ./pack_all.sh'
     exit 0
 fi
 
@@ -139,6 +139,6 @@ Available options:
     recmakenative - remove the native client directory and build it from scratch
     debs - start server debugging
     debc - start client debugging
-    levelpacker - run the levelpacker inside the container
+    packall - pack all the levels with the levelpacker inside the container
     generate - regenerate flatbuffer code from the .fbs file
 """

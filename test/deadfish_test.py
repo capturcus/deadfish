@@ -18,7 +18,7 @@ logger = logging.getLogger()
 
 def test_levelpacker():
     # this will raise an error on a non-zero return code
-    subprocess.check_output(["./levelpacker.py"], cwd="../levelpacker")
+    subprocess.check_output(["./pack_all.sh"], cwd="../levelpacker")
 
 def test_simple_connect():
     pyautogui.moveTo(100, 100)

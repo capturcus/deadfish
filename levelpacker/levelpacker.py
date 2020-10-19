@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import configparser, os, json, flatbuffers, math
+import configparser, os, json, flatbuffers, math, argparse
 import FlatBuffGenerated.Level, FlatBuffGenerated.Object, FlatBuffGenerated.HidingSpot, \
     FlatBuffGenerated.CollisionMask, FlatBuffGenerated.Decoration, FlatBuffGenerated.Vec2, \
     FlatBuffGenerated.Tileinfo, FlatBuffGenerated.NavPoint, FlatBuffGenerated.PlayerWall, \
@@ -12,11 +12,6 @@ from collections import namedtuple
 GLOBAL_SCALE = 0.01
 MAX_POLYGON_VERTICES = 8
 
-
-config = configparser.ConfigParser()
-config.read("levelpacker.ini")
-
-levels_dir = config['default']['levels_dir']
 
 GameObjects = namedtuple('GameObjects', ['objects', 'decoration', 'collision', 'hidingspots', 'navpoints', 'playerwalls', 'tileinfo'])
 
@@ -260,8 +255,9 @@ def handle_tile_layer(layer: minidom.Node, builder: flatbuffers.Builder) -> int:
     return FlatBuffGenerated.Tilelayer.TilelayerEnd(builder)
 
 
-def process_level(path: str):
-    dom = minidom.parse(path)
+def process_level(xml_path: str, out_path: str):
+    print("packing:", xml_path, "->", out_path)
+    dom = minidom.parse(xml_path)
     map_node = dom.firstChild
     objs = GameObjects([], [], [], [], [], [], [])
     tilelayer = 0
@@ -341,13 +337,15 @@ def process_level(path: str):
 
     buf = builder.Output()
 
-    with open(path[:-3]+"bin", "wb") as f:
+    with open(out_path, "wb") as f:
         f.write(buf)
 
-# the actual script beginning
-for i in os.listdir(levels_dir):
-    if i.endswith(".tmx"):
-        # level file
-        print("Processing level " + i + "...")
-        process_level(levels_dir+i)
-print("Levelpacker done.")
+def main():
+    parser = argparse.ArgumentParser(description='Pack the XML level file created in Tiled to a flabuffer binary file that can be read by the server.')
+    parser.add_argument('--xml', help='an XML level file created in Tiled', required=True)
+    parser.add_argument('--out', help='path to store the output flatbuffer binary file', required=True)
+    args = parser.parse_args()
+    process_level(args.xml, args.out)
+
+if __name__ == "__main__":
+    main()
