@@ -78,6 +78,7 @@ struct Player : public Mob {
 	int points = 0;
 	uint16_t deathTimeout = 0;
 	uint16_t playerID = 0;
+	std::vector<uint16_t> skills;
 
 	void handleCollision(Collideable& other) override;
 	void handleKill(Player& killer) override;

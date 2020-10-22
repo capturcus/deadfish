@@ -27,3 +27,13 @@ const float TO_DEGREES = (180.f / M_PI);
 const float TO_RADIANS = (M_PI / 180.f);
 
 const uint16_t GOLDFISH_SPECIES = (uint16_t) -1;
+
+enum class Skills {
+    INK_BOMB,
+    ATTRACTOR,
+    DISPERSOR,
+    BLINK,
+    SKILLS_MAX
+};
+
+const int MAX_SKILLS = 3;

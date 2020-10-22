@@ -22,12 +22,15 @@ namespace nc = ncine;
 
 const float PIXELS2METERS = 0.01f;
 const float METERS2PIXELS = 100.f;
-const unsigned short TILE_LAYER = 4096;
-const unsigned short DECORATION_LAYER = 8192;
-const unsigned short INDICATOR_LAYER = 12288;
-const unsigned short MOBS_LAYER = 16384;
-const unsigned short OBJECTS_LAYER = 20480;
-const unsigned short HIDING_SPOTS_LAYER = 24576;
+enum class Layers {
+	TILE = 0,
+	DECORATION,
+	INDICATOR,
+	MOBS,
+	OBJECTS,
+	HIDING_SPOTS,
+	SKILLS
+};
 
 struct Mob {
 	std::unique_ptr<ncine::AnimatedSprite> sprite;
@@ -60,12 +63,16 @@ struct GameplayState
 	void OnKeyPressed(const ncine::KeyboardEvent &event) override;
 	void OnKeyReleased(const ncine::KeyboardEvent &event) override;
 
+	void ProcessDeathReport(const void* deathReport);
+	void ProcessHighscoreUpdate(const void* highscoreUpdate);
+	void ProcessSimpleServerEvent(const void* simpleServerEvent);
+	void ProcessWorldState(const void* worldState);
+	void ProcessSkillBarUpdate(const void* worldState);
+
 private:
 	void OnMessage(const std::string& data);
 
 	void LoadLevel();
-	void ProcessDeathReport(const FlatBuffGenerated::DeathReport* deathReport);
-	void ProcessHighscoreUpdate(const FlatBuffGenerated::HighscoreUpdate* highscoreUpdate);
 	void CreateHidingSpotShowingTween(ncine::DrawableNode* hspot);
 	void CreateHidingSpotHidingTween(ncine::DrawableNode* hspot);
 	std::unique_ptr<ncine::AnimatedSprite> CreateNewMobSprite(ncine::SceneNode* parent, uint16_t species);
@@ -87,6 +94,8 @@ private:
 	std::vector<nc::DrawableNode*> indicators;
 	ncine::TextNode* timeLeftNode = nullptr;
 	std::string currentHidingSpot = "";
+
+	std::vector<std::unique_ptr<ncine::DrawableNode>> skillIcons;
 
 	ncine::TimeStamp lastMessageReceivedTime;
 
