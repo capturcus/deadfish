@@ -398,7 +398,6 @@ void GameplayState::ProcessSkillBarUpdate(const void* ev) {
 			i * 150 + 100, 100);
 		skillSprite->setScale(0.4f);
 		skillSprite->setLayer((unsigned short) Layers::SKILLS);
-		// std::cout << "skill " << skill << " " << skillTexture << " " << (uintptr_t) skillSprite.get() << "\n";
 		this->skillIcons.push_back(std::move(skillSprite));
 	}
 }
