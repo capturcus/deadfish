@@ -147,9 +147,15 @@ table Indicator {
   visible:bool;
 }
 
+table InkParticle {
+  inkID:uint16;
+  pos:Vec2;
+}
+
 table WorldState {
   mobs:[Mob];
   indicators:[Indicator];
+  inkParticles:[InkParticle];
   stepsRemaining:uint64;
   currentHidingSpot:string;
 }

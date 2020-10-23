@@ -220,7 +220,17 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 	auto indicatorsOffset = builder.CreateVector(indicators);
 	auto hidingspot = builder.CreateString(hspotname);
 
-	auto worldState = FlatBuffGenerated::CreateWorldState(builder, mobsOffset, indicatorsOffset, framesRemaining, hidingspot);
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::InkParticle>> inkParticles;
+	std::vector<FlatBuffGenerated::Vec2> inkVecs;
+	for (auto& ink : gameState.inkParticles) {
+		FlatBuffGenerated::Vec2 pos = b2f(ink->body->GetPosition());
+		auto inkOffset = FlatBuffGenerated::CreateInkParticle(builder, ink->inkID, &pos);
+		inkParticles.push_back(inkOffset);
+	}
+
+	auto inkParticlesOffset = builder.CreateVector(inkParticles);
+
+	auto worldState = FlatBuffGenerated::CreateWorldState(builder, mobsOffset, indicatorsOffset, inkParticlesOffset, framesRemaining, hidingspot);
 
 	return worldState.Union();
 }
@@ -462,6 +472,10 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 		p->state = p->state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
 		p->killTarget = nullptr;
 		p->lastAttack = std::chrono::system_clock::from_time_t(0);
+		if (p->skills.size() == 0) {
+			p->skills.push_back((uint16_t) Skills::INK_BOMB);
+			p->sendSkillBarUpdate();
+		}
 	}
 	break;
 	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_CommandRun:

@@ -384,6 +384,23 @@ void GameplayState::ProcessWorldState(const void* ev) {
 		}
 	}
 	this->currentHidingSpot = worldState->currentHidingSpot()->str();
+
+	for (int i = 0; i < worldState->inkParticles()->size(); i++) {
+		auto ink = worldState->inkParticles()->Get(i);
+		auto inkItr = inkParticles.find(ink->inkID());
+		if (inkItr == inkParticles.end()) {
+			// not found, make a new one
+			InkParticle newInk;
+			newInk.sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures["ink1.png"].get());
+			newInk.sprite->setLayer((unsigned short) Layers::INK_PARTICLES);
+			newInk.sprite->setScale(120./330.); // todo: fix my life
+
+			inkParticles.insert({ink->inkID(), std::move(newInk)});
+			inkItr = inkParticles.find(ink->inkID());
+		}
+		inkItr->second.sprite->setPosition(ink->pos()->x() * METERS2PIXELS, -ink->pos()->y() * METERS2PIXELS);
+		inkItr->second.seen = true;
+	}
 }
 
 void GameplayState::ProcessSkillBarUpdate(const void* ev) {
@@ -623,10 +640,8 @@ void SendCommandRun(bool run) {
 }
 
 void GameplayState::TryUseSkill(uint8_t skillPos) {
-	if (skillIcons[skillPos] == nullptr) {
-		// todo: some animation or information that skill cannot be used bc it's not there
+	if (skillPos >= skillIcons.size())
 		return;
-	}
 	const float screenWidth = ncine::theApplication().width();
 	const float screenHeight = ncine::theApplication().height();
 	auto &mouseState = ncine::theApplication().inputManager().mouseState();

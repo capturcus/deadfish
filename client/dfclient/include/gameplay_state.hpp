@@ -28,6 +28,7 @@ enum class Layers {
 	INDICATOR,
 	MOBS,
 	OBJECTS,
+	INK_PARTICLES,
 	HIDING_SPOTS,
 	SKILLS
 };
@@ -50,6 +51,11 @@ struct Mob {
 };
 
 class Resources;
+
+struct InkParticle {
+	std::unique_ptr<ncine::DrawableNode> sprite;
+	bool seen = false;
+};
 
 struct GameplayState
 	: public GameState
@@ -87,6 +93,7 @@ private:
 	std::map<std::string, DrawableNodeVector> hiding_spots;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
 	std::map<uint16_t, Mob> mobs;
+	std::map<uint16_t, InkParticle> inkParticles;
 	ncine::Sprite* mySprite = nullptr;
 	uint32_t lastNodeID = 0;
 	bool showHighscores = false;
