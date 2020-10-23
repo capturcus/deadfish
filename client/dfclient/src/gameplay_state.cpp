@@ -622,12 +622,37 @@ void SendCommandRun(bool run) {
 	SendData(builder);
 }
 
+void GameplayState::TryUseSkill(uint8_t skillPos) {
+	if (skillIcons[skillPos] == nullptr) {
+		// todo: some animation or information that skill cannot be used bc it's not there
+		return;
+	}
+	const float screenWidth = ncine::theApplication().width();
+	const float screenHeight = ncine::theApplication().height();
+	auto &mouseState = ncine::theApplication().inputManager().mouseState();
+	const float serverX = (this->mySprite->position().x + (mouseState.x - screenWidth / 2) * 1.5f) * PIXELS2METERS;
+	const float serverY = -(this->mySprite->position().y + (mouseState.y - screenHeight / 2) * 1.5f) * PIXELS2METERS;
+	flatbuffers::FlatBufferBuilder builder;
+	FlatBuffGenerated::Vec2 mousePos{serverX, serverY};
+	auto cmdSkill = FlatBuffGenerated::CreateCommandSkill(builder, skillPos, &mousePos);
+	auto message = FlatBuffGenerated::CreateClientMessage(builder, FlatBuffGenerated::ClientMessageUnion_CommandSkill, cmdSkill.Union());
+	builder.Finish(message);
+	SendData(builder);
+}
+
 void GameplayState::OnKeyPressed(const ncine::KeyboardEvent &event) {
 	if (event.sym == ncine::KeySym::Q)
 		SendCommandRun(true);
 	
 	if (event.sym == ncine::KeySym::TAB)
 		this->showHighscores = true;
+	
+	if (event.sym == ncine::KeySym::N1)
+		this->TryUseSkill(0);
+	if (event.sym == ncine::KeySym::N2)
+		this->TryUseSkill(1);
+	if (event.sym == ncine::KeySym::N3)
+		this->TryUseSkill(2);
 
 	if (event.sym == ncine::KeySym::ESCAPE)
 		this->showQuitDialog = !this->showQuitDialog;

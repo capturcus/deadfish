@@ -94,6 +94,7 @@ table CommandRun {
 
 table CommandSkill {
   skill:uint8;
+  mousePos:Vec2;
 }
 
 table JoinRequest {

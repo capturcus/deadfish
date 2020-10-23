@@ -240,13 +240,9 @@ Mob::~Mob()
 void handleGoldfishKill(Player& killer) {
 	if (killer.skills.size() == MAX_SKILLS)
 		return;
-	uint16_t skill = rand() % (int) Skills::SKILLS_MAX;
+	uint16_t skill = (rand() % ((int) Skills::SKILLS_MAX - 1)) + 1;
 	killer.skills.push_back(skill);
-	flatbuffers::FlatBufferBuilder builder;
-	auto skills = builder.CreateVector(killer.skills);
-	auto ev = FlatBuffGenerated::CreateSkillBarUpdate(builder, skills);
-	sendServerMessage(killer, builder, FlatBuffGenerated::ServerMessageUnion_SkillBarUpdate, ev.Union());
-	std::cout << "updated skills of player " << killer.name << "\n";
+	killer.sendSkillBarUpdate();
 }
 
 void Civilian::handleKill(Player& killer) {
@@ -298,4 +294,12 @@ void Player::handleKill(Player& killer) {
 
 bool Player::isDead() {
 	return this->deathTimeout > 0;
+}
+
+void Player::sendSkillBarUpdate() {
+	flatbuffers::FlatBufferBuilder builder;
+	auto skills = builder.CreateVector(this->skills);
+	auto ev = FlatBuffGenerated::CreateSkillBarUpdate(builder, skills);
+	sendServerMessage(*this, builder, FlatBuffGenerated::ServerMessageUnion_SkillBarUpdate, ev.Union());
+	std::cout << "updated skills of player " << this->name << "\n";
 }

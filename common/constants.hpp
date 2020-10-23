@@ -29,6 +29,7 @@ const float TO_RADIANS = (M_PI / 180.f);
 const uint16_t GOLDFISH_SPECIES = (uint16_t) -1;
 
 enum class Skills {
+    SKILL_NONE = 0,
     INK_BOMB,
     ATTRACTOR,
     DISPERSOR,

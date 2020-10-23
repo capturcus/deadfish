@@ -9,6 +9,7 @@
 #include "deadfish.hpp"
 #include "game_thread.hpp"
 #include "level_loader.hpp"
+#include "skills.hpp"
 
 const float GOLDFISH_CHANCE = 0.5f;
 
@@ -426,6 +427,19 @@ void sendHighscores()
 	sendToAll(data);
 }
 
+void executeSkill(Player& p, uint8_t skillPos, b2Vec2 mousePos) {
+	if (p.skills[skillPos] == (uint16_t) Skills::SKILL_NONE)
+		return;
+	Skills skill = (Skills) p.skills[skillPos];
+	auto skillHandler = skillHandlers[(uint16_t) skill];
+	if (skillHandler == nullptr) {
+		std::cout << "no such skill handler " << (uint16_t) skill << "\n";
+	}
+	skillHandler(p, skill, mousePos);
+	p.skills.erase(p.skills.begin() + skillPos);
+	p.sendSkillBarUpdate();
+}
+
 void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 {
 	const auto clientMessage = flatbuffers::GetRoot<FlatBuffGenerated::ClientMessage>(payload.c_str());
@@ -460,6 +474,12 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 	{
 		const auto event = clientMessage->event_as_CommandKill();
 		executeCommandKill(*p, event->mobID());
+	}
+	break;
+	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_CommandSkill:
+	{
+		const auto event = clientMessage->event_as_CommandSkill();
+		executeSkill(*p, event->skill(), {event->mousePos()->x(), event->mousePos()->y()});
 	}
 	break;
 

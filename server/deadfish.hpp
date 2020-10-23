@@ -86,6 +86,7 @@ struct Player : public Mob {
 	void reset();
 	bool isDead() override;
 	void setAttacking();
+	void sendSkillBarUpdate();
 };
 
 struct Civilian : public Mob {
