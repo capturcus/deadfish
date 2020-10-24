@@ -258,11 +258,8 @@ class TestContactListener : public b2ContactListener
 		if (collideableA && !collideableA->toBeDeleted &&
 			collideableB && !collideableB->toBeDeleted)
 		{
-			if (auto hidingSpot = dynamic_cast<HidingSpot*>(collideableA)) {
-				hidingSpot->playersInside.erase(dynamic_cast<Player*>(collideableB));
-			} else if ((hidingSpot = dynamic_cast<HidingSpot*>(collideableB))) {
-				hidingSpot->playersInside.erase(dynamic_cast<Player*>(collideableA));
-			}
+			collideableA->endCollision(*collideableB);
+			collideableB->endCollision(*collideableA);
 		}
 	}
 };
@@ -482,7 +479,10 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 	{
 		const auto event = clientMessage->event_as_CommandRun();
 		p->state = event->run() ? MobState::RUNNING : MobState::WALKING;
-		p->speed = event->run() ? RUN_SPEED : WALK_SPEED;
+		if (p->bombAffected)
+			p->speed = WALK_SPEED * INK_BOMB_SPEED_MODIFIER;
+		else
+			p->speed = event->run() ? RUN_SPEED : WALK_SPEED;
 	}
 	break;
 	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_CommandKill:

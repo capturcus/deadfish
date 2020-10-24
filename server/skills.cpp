@@ -12,7 +12,7 @@ void launchInkParticle(Player& p, b2Vec2 direction) {
 	b2CircleShape circleShape;
 	circleShape.m_radius = 0.6f;
 
-	auto inkPart = std::make_unique<InkParticle>(inkBody);
+	auto inkPart = std::make_unique<InkParticle>(inkBody, p);
 
 	b2FixtureDef fixtureDef;
 	fixtureDef.shape = &circleShape;
@@ -46,12 +46,30 @@ void executeSkillInkbomb(Player& p, UNUSED Skills skill, UNUSED b2Vec2 mousePos)
 	}
 }
 
-InkParticle::InkParticle(b2Body* b) {
+InkParticle::InkParticle(b2Body* b, Player& o) 
+	: owner(o) {
 	this->body = b;
 	this->lifetimeFrames = INK_LIFETIME_FRAMES;
 }
 
 InkParticle::~InkParticle() {
+	for (b2ContactEdge* edge = body->GetContactList(); edge; edge = edge->next) {
+		auto collideableA = (Collideable *) edge->contact->GetFixtureA()->GetBody()->GetUserData();
+		auto collideableB = (Collideable *) edge->contact->GetFixtureB()->GetBody()->GetUserData();
+
+		auto mobA = dynamic_cast<Mob *>(collideableA);
+		auto mobB = dynamic_cast<Mob *>(collideableB);
+
+		if (mobA) {
+			mobA->bombAffected = false;
+			mobA->speed = WALK_SPEED;
+		}
+		
+		if (mobB) {
+			mobB->bombAffected = false;
+			mobB->speed = WALK_SPEED;
+		}
+	}
 	gameState.b2world->DestroyBody(this->body);
 }
 
@@ -65,8 +83,22 @@ void InkParticle::update() {
 
 void InkParticle::handleCollision(Collideable& other) {
 	try {
+		auto& p = dynamic_cast<Player&>(other);
+		if (p.playerID == this->owner.playerID)
+			return; // bombs don't affects the players that threw them
+	} catch (...) {}
+	try {
 		auto& m = dynamic_cast<Mob&>(other);
-		m.speed *= 0.1f;
+		m.bombAffected = true;
+		m.speed *= INK_BOMB_SPEED_MODIFIER;
+	} catch (...) {}
+}
+
+void InkParticle::endCollision(Collideable& other) {
+	try {
+		auto& m = dynamic_cast<Mob&>(other);
+		m.bombAffected = false;
+		m.speed = WALK_SPEED;
 	} catch (...) {}
 }
 

@@ -151,7 +151,7 @@ void Civilian::collisionResolution() {
 
 void Civilian::update()
 {
-	if (b2Distance(this->body->GetPosition(), this->lastPos) < (WALK_SPEED/20)*0.4f) {
+	if (!this->bombAffected && b2Distance(this->body->GetPosition(), this->lastPos) < (WALK_SPEED/20) * 0.4f) {
 		slowFrames++;
 		if (slowFrames == CIV_SLOW_FRAMES) {
 			this->collisionResolution();

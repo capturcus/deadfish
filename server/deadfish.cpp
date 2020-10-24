@@ -49,6 +49,10 @@ void HidingSpot::handleCollision(Collideable& other) {
 	}
 }
 
+void HidingSpot::endCollision(Collideable& other) {
+	this->playersInside.erase(dynamic_cast<Player*>(&other));
+}
+
 bool HidingSpot::obstructsSight(Player* p) {
 	// obstructs sight if player is not inside
 	return playersInside.find(p) == playersInside.end();

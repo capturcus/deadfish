@@ -20,6 +20,8 @@ std::ostream& operator<<(std::ostream &os, glm::vec2 &v);
 std::ostream& operator<<(std::ostream &os, b2Vec2 v);
 std::ostream& operator<<(std::ostream& os, std::vector<std::string>& v);
 
+const float INK_BOMB_SPEED_MODIFIER = 0.2f;
+
 struct Player;
 
 static inline glm::vec2 b2g(b2Vec2 v) {
@@ -48,6 +50,8 @@ enum class MobState {
 struct Collideable {
 	bool toBeDeleted = false;
 	virtual void handleCollision(UNUSED Collideable& other) {}
+	virtual void endCollision(UNUSED Collideable& other) {}
+
 	virtual bool obstructsSight(Player*) = 0;
 
 	b2Body* body = nullptr;
@@ -72,6 +76,7 @@ struct Mob : public Collideable {
 
 	glm::vec2 targetPosition;
 	float speed = WALK_SPEED;
+	bool bombAffected = false;
 
 	virtual ~Mob();
 };
@@ -81,10 +86,12 @@ struct InkParticle :
 	
 	uint16_t inkID;
 	uint16_t lifetimeFrames;
+	Player& owner;
 
-	InkParticle(b2Body* b);
+	InkParticle(b2Body* b, Player& owner);
 
 	void handleCollision(Collideable& other) override;
+	void endCollision(Collideable& other) override;
 	bool obstructsSight(Player*) override;
 
 	virtual void update() override;
@@ -169,6 +176,7 @@ struct HidingSpot : public Collideable {
 	std::string name;
 	std::set<Player*> playersInside;
 	virtual void handleCollision(Collideable& other) override;
+	virtual void endCollision(Collideable& other) override;
 	virtual bool obstructsSight(Player* p) override;
 };
 
