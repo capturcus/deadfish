@@ -52,7 +52,9 @@ struct Collideable {
 
 	b2Body* body = nullptr;
 
-	virtual ~Collideable(){}
+	virtual ~Collideable() {}
+
+	virtual void update() {}
 
 	Collideable(){}
 	Collideable(const Collideable&) = delete;
@@ -66,10 +68,11 @@ struct Mob : public Collideable {
 	virtual void handleKill(Player& killer) = 0;
 	virtual bool isDead() { return false; }
 	virtual bool obstructsSight(Player*) override { return false; }
+	virtual void update() override;
 
 	glm::vec2 targetPosition;
+	float speed = WALK_SPEED;
 
-	virtual void update();
 	virtual ~Mob();
 };
 
@@ -77,11 +80,14 @@ struct InkParticle :
 	public Collideable {
 	
 	uint16_t inkID;
+	uint16_t lifetimeFrames;
 
 	InkParticle(b2Body* b);
 
 	void handleCollision(Collideable& other) override;
 	bool obstructsSight(Player*) override;
+
+	virtual void update() override;
 
 	~InkParticle();
 };

@@ -63,8 +63,7 @@ void Mob::update()
 	}
 
 	// update position
-	auto speed = this->state == MobState::WALKING ? WALK_SPEED : RUN_SPEED;
-	auto translation = glm::rotate(glm::vec2(1, 0), this->body->GetAngle() - (float)(M_PI / 2)) * speed;
+	auto translation = glm::rotate(glm::vec2(1, 0), this->body->GetAngle() - (float)(M_PI / 2)) * this->speed;
 	this->body->SetLinearVelocity(b2Vec2(translation.x, translation.y));
 }
 

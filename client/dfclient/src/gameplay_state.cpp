@@ -385,6 +385,9 @@ void GameplayState::ProcessWorldState(const void* ev) {
 	}
 	this->currentHidingSpot = worldState->currentHidingSpot()->str();
 
+	for (auto& i : this->inkParticles)
+		i.second.seen = false;
+
 	for (int i = 0; i < worldState->inkParticles()->size(); i++) {
 		auto ink = worldState->inkParticles()->Get(i);
 		auto inkItr = inkParticles.find(ink->inkID());
@@ -400,6 +403,17 @@ void GameplayState::ProcessWorldState(const void* ev) {
 		}
 		inkItr->second.sprite->setPosition(ink->pos()->x() * METERS2PIXELS, -ink->pos()->y() * METERS2PIXELS);
 		inkItr->second.seen = true;
+	}
+
+	// todo: abstract this logic along with mobs?
+	deletedIDs.clear();
+	for (auto& p : this->inkParticles) {
+		if (!p.second.seen) {
+			deletedIDs.push_back(p.first);
+		}
+	}
+	for (auto i : deletedIDs) {
+		this->inkParticles.erase(i);
 	}
 }
 

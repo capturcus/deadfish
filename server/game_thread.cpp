@@ -482,6 +482,7 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 	{
 		const auto event = clientMessage->event_as_CommandRun();
 		p->state = event->run() ? MobState::RUNNING : MobState::WALKING;
+		p->speed = event->run() ? RUN_SPEED : WALK_SPEED;
 	}
 	break;
 	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_CommandKill:
@@ -500,6 +501,22 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 	default:
 		std::cout << "gameOnMessage: some other message type received\n";
 		break;
+	}
+}
+
+template<typename C>
+void updateCollideables(std::vector<std::unique_ptr<C>>& collideables) {
+	std::vector<int> despawns;
+	for (size_t i = 0; i < collideables.size(); i++)
+	{
+		collideables[i]->update();
+		if (collideables[i]->toBeDeleted)
+			despawns.push_back(i);
+	}
+	for (int i = despawns.size() - 1; i >= 0; i--)
+	{
+		std::cout << "erasing collideable\n";
+		collideables.erase(collideables.begin() + despawns[i]);
 	}
 }
 
@@ -563,18 +580,8 @@ void gameThread()
 		// update physics
 		gameState.b2world->Step(1 / 20.0, 8, 3);
 
-		// update civilians
-		std::vector<int> despawns;
-		for (size_t i = 0; i < gameState.civilians.size(); i++)
-		{
-			gameState.civilians[i]->update();
-			if (gameState.civilians[i]->toBeDeleted)
-				despawns.push_back(i);
-		}
-		for (int i = despawns.size() - 1; i >= 0; i--)
-		{
-			gameState.civilians.erase(gameState.civilians.begin() + despawns[i]);
-		}
+		updateCollideables(gameState.civilians);
+		updateCollideables(gameState.inkParticles);
 
 		// update players
 		for (auto &p : gameState.players)
