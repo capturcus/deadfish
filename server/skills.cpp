@@ -54,20 +54,22 @@ InkParticle::InkParticle(b2Body* b, Player& o)
 
 InkParticle::~InkParticle() {
 	for (b2ContactEdge* edge = body->GetContactList(); edge; edge = edge->next) {
-		auto collideableA = (Collideable *) edge->contact->GetFixtureA()->GetBody()->GetUserData();
-		auto collideableB = (Collideable *) edge->contact->GetFixtureB()->GetBody()->GetUserData();
+		if (edge->contact->IsTouching()) {
+			auto collideableA = (Collideable *) edge->contact->GetFixtureA()->GetBody()->GetUserData();
+			auto collideableB = (Collideable *) edge->contact->GetFixtureB()->GetBody()->GetUserData();
 
-		auto mobA = dynamic_cast<Mob *>(collideableA);
-		auto mobB = dynamic_cast<Mob *>(collideableB);
+			auto mobA = dynamic_cast<Mob *>(collideableA);
+			auto mobB = dynamic_cast<Mob *>(collideableB);
 
-		if (mobA) {
-			mobA->bombAffected = false;
-			mobA->speed = WALK_SPEED;
-		}
-		
-		if (mobB) {
-			mobB->bombAffected = false;
-			mobB->speed = WALK_SPEED;
+			if (mobA && mobA->bombsAffecting > 0) {
+				mobA->bombsAffecting--;
+				mobA->speed = WALK_SPEED;
+			}
+			
+			if (mobB && mobB->bombsAffecting > 0) {
+				mobB->bombsAffecting--;
+				mobB->speed = WALK_SPEED;
+			}
 		}
 	}
 	gameState.b2world->DestroyBody(this->body);
@@ -89,7 +91,7 @@ void InkParticle::handleCollision(Collideable& other) {
 	} catch (...) {}
 	try {
 		auto& m = dynamic_cast<Mob&>(other);
-		m.bombAffected = true;
+		m.bombsAffecting++;
 		m.speed *= INK_BOMB_SPEED_MODIFIER;
 	} catch (...) {}
 }
@@ -97,7 +99,8 @@ void InkParticle::handleCollision(Collideable& other) {
 void InkParticle::endCollision(Collideable& other) {
 	try {
 		auto& m = dynamic_cast<Mob&>(other);
-		m.bombAffected = false;
+		if (m.bombsAffecting > 0)
+			m.bombsAffecting--;
 		m.speed = WALK_SPEED;
 	} catch (...) {}
 }

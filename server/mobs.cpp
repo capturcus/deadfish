@@ -109,6 +109,7 @@ void Player::update()
 		this->targetPosition = b2g(this->killTarget->body->GetPosition());
 	}
 	Mob::update();
+	std::cout << "bombs affecting " << this->bombsAffecting << "\n";
 }
 
 glm::vec2 randFromCircle(glm::vec2 center, float radius)
@@ -151,7 +152,7 @@ void Civilian::collisionResolution() {
 
 void Civilian::update()
 {
-	if (!this->bombAffected && b2Distance(this->body->GetPosition(), this->lastPos) < (WALK_SPEED/20) * 0.4f) {
+	if (this->bombsAffecting == 0 && b2Distance(this->body->GetPosition(), this->lastPos) < (WALK_SPEED/20) * 0.4f) {
 		slowFrames++;
 		if (slowFrames == CIV_SLOW_FRAMES) {
 			this->collisionResolution();

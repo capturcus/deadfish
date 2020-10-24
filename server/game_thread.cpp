@@ -479,7 +479,7 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 	{
 		const auto event = clientMessage->event_as_CommandRun();
 		p->state = event->run() ? MobState::RUNNING : MobState::WALKING;
-		if (p->bombAffected)
+		if (p->bombsAffecting > 0)
 			p->speed = WALK_SPEED * INK_BOMB_SPEED_MODIFIER;
 		else
 			p->speed = event->run() ? RUN_SPEED : WALK_SPEED;

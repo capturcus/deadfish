@@ -76,7 +76,7 @@ struct Mob : public Collideable {
 
 	glm::vec2 targetPosition;
 	float speed = WALK_SPEED;
-	bool bombAffected = false;
+	uint32_t bombsAffecting = 0;
 
 	virtual ~Mob();
 };
