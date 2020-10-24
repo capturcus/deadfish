@@ -11,7 +11,7 @@
 #include "level_loader.hpp"
 #include "skills.hpp"
 
-const float GOLDFISH_CHANCE = 0.5f;
+const float GOLDFISH_CHANCE = 0.05f;
 
 uint16_t newMobID()
 {
@@ -469,10 +469,6 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 		p->state = p->state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
 		p->killTarget = nullptr;
 		p->lastAttack = std::chrono::system_clock::from_time_t(0);
-		if (p->skills.size() == 0) {
-			p->skills.push_back((uint16_t) Skills::INK_BOMB);
-			p->sendSkillBarUpdate();
-		}
 	}
 	break;
 	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_CommandRun:

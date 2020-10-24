@@ -394,7 +394,9 @@ void GameplayState::ProcessWorldState(const void* ev) {
 		if (inkItr == inkParticles.end()) {
 			// not found, make a new one
 			InkParticle newInk;
-			newInk.sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures["ink1.png"].get());
+			int inkNum = rand() % 3 + 1;
+			std::string inkTexName = std::string("ink") + std::to_string(inkNum) + ".png";
+			newInk.sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[inkTexName].get());
 			newInk.sprite->setLayer((unsigned short) Layers::INK_PARTICLES);
 			newInk.sprite->setScale(120./330.); // todo: fix my life
 
