@@ -54,13 +54,13 @@ struct Mob : public Movable {
 };
 
 class Resources;
+class TextCreator;
 
 struct InkParticle : public Movable {
 };
 
 struct Manipulator : public Movable {
 };
-
 struct GameplayState
 	: public GameState
 {
@@ -104,8 +104,11 @@ private:
 	std::map<uint16_t, Mob> mobs;
 	std::map<uint16_t, InkParticle> inkParticles;
 
+	friend class TextCreator;
+
 	typedef std::vector<std::unique_ptr<ncine::DrawableNode>> DrawableNodeVector;
 	DrawableNodeVector nodes;
+	DrawableNodeVector textNodes;
 	std::map<std::string, DrawableNodeVector> hiding_spots;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
 	ncine::Sprite* mySprite = nullptr;

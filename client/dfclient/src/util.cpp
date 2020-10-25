@@ -43,10 +43,10 @@ nc::MeshSprite* createArc(nc::SceneNode& rootNode, nc::Texture* texture,
 	return ret;
 }
 
-tweeny::tween<int> CreateTextTween(ncine::TextNode* textPtr) {
-	auto tween = tweeny::from(255)
-		.to(255).during(60)
-		.to(0).during(60).onStep(
+tweeny::tween<int> CreateTextTween(ncine::TextNode* textPtr, int from, int hold, int decay) {
+	auto tween = tweeny::from(from)
+		.to(from).during(hold)
+		.to(0).during(decay).onStep(
 		[textPtr] (tweeny::tween<int>& t, int v) -> bool {
 			auto textColor = textPtr->color();
 			textPtr->setColor(textColor.r(), textColor.g(), textColor.b(), v);
