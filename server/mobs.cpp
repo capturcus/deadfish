@@ -125,10 +125,14 @@ void Player::update()
 	}
 	if (this->bombsAffecting > 0)
 		this->killTarget = nullptr;
-	if (this->killTarget)
-	{
-		this->targetPosition = b2g(this->killTarget->body->GetPosition());
+
+	if (this->killTarget && !playerSeeMob(*this, *this->killTarget)) {
+		this->killTarget = nullptr;
+		this->targetPosition = b2g(this->body->GetPosition());
 	}
+
+	if (this->killTarget)
+		this->targetPosition = b2g(this->killTarget->body->GetPosition());
 	Mob::update();
 }
 

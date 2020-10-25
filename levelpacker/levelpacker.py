@@ -272,26 +272,37 @@ def process_level(path: str):
     tilelayer = 0
     builder = flatbuffers.Builder(1)
 
+    processedLayers = 0
+
     for ts in map_node.getElementsByTagName('tileset'):
         handle_tileset(ts, objs, builder)
     if map_node.getElementsByTagName('layer'):
         tilelayer = handle_tile_layer(map_node.getElementsByTagName('layer')[0], builder)
+        processedLayers += 1
 
     for g in map_node.getElementsByTagName('objectgroup'):
         group_name = g.getAttribute('name')
         if group_name == 'objects':
             handle_objects_layer(g, objs, builder)
+            processedLayers += 1
         elif group_name == 'decoration':
             handle_decoration_layer(g, objs, builder)
+            processedLayers += 1
         elif group_name == 'collisionMasks':
             handle_collision_layer(g, objs, builder)
+            processedLayers += 1
         elif group_name == 'hidingSpots':
             handle_hidingspots_layer(g, objs, builder)
+            processedLayers += 1
         elif group_name == 'meta':
             handle_meta_layer(g, objs, builder)
+            processedLayers += 1
         else:
             print("WARNING: Unknown group {}".format(group_name))
     
+    if processedLayers < 6:
+        print("WARNING: a layer is missing")
+
     FlatBuffGenerated.Level.LevelStartObjectsVector(builder, len(objs.objects))
     for o in objs.objects:
         builder.PrependUOffsetTRelative(o)
