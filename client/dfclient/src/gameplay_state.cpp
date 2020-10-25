@@ -160,53 +160,6 @@ void GameplayState::LoadLevel() {
 	}
 }
 
-// this whole thing should probably be refactored
-void GameplayState::ProcessDeathReport(const FlatBuffGenerated::DeathReport* deathReport) {
-	auto& rootNode = ncine::theApplication().rootNode();
-	auto text = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic"].get());
-	const float screenWidth = ncine::theApplication().width();
-	const float screenHeight = ncine::theApplication().height();
-	if (deathReport->killer() == gameData.myPlayerID) {
-		// i killed someone
-		std::string killedName;
-		if (deathReport->killed() == (uint16_t)-1) {
-			// it was an npc
-			killedName = "a civilian";
-			text->setColor(0, 0, 0, 255);
-		} else {
-			// it was a player
-			text->setColor(0, 255, 0, 255);
-			killedName = gameData.players[deathReport->killed()].name + "!";
-		}
-		text->setString(("you killed " + killedName).c_str());
-		text->setPosition(screenWidth * 0.5f, screenHeight * 0.75f);
-		text->setScale(3.0f);
-		_resources._tweens.push_back(CreateTextTween(text.get()));
-
-		_resources.playKillSound();
-		
-	} else if (deathReport->killed() == gameData.myPlayerID) {
-		// i died :c
-		_resources.playKillSound(0.4f);
-		_resources.playRandomDeathSound();
-
-		text->setString(("you have been killed by " + gameData.players[deathReport->killer()].name).c_str());
-		text->setColor(255, 0, 0, 255);
-		text->setPosition(screenWidth * 0.5f, screenHeight * 0.5f);
-		text->setScale(2.0f);
-		_resources._tweens.push_back(CreateTextTween(text.get()));
-	} else {
-		auto killer = gameData.players[deathReport->killer()].name;
-		auto killed = gameData.players[deathReport->killed()].name;
-		text->setString((killer + " killed " + killed).c_str());
-		text->setScale(0.5f);
-		text->setPosition(screenWidth * 0.8f, screenHeight * 0.8f);
-		text->setColor(0, 0, 0, 255);
-		_resources._tweens.push_back(CreateTextTween(text.get()));
-	}
-	this->nodes.push_back(std::move(text));
-}
-
 void GameplayState::ProcessHighscoreUpdate(const FlatBuffGenerated::HighscoreUpdate* highscoreUpdate) {
 	for (int i = 0; i < highscoreUpdate->players()->size(); i++) {
 		auto highscoreEntry = highscoreUpdate->players()->Get(i);
@@ -529,6 +482,13 @@ StateType GameplayState::Update(Messages m) {
 		closestMob->hoverMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
 		closestMob->hoverMarker->setLayer(INDICATOR_LAYER);
 	}
+
+	// clean up transparent text
+	std::vector<GameplayState::DrawableNodeVector::iterator> toDelete;
+	for (auto it = this->textNodes.begin(); it != this->textNodes.end(); ++it) {
+		if ((*it)->alpha() == 0) toDelete.push_back(it);
+	}
+	for (auto it : toDelete) this->textNodes.erase(it);
 
 	return StateType::Gameplay;
 }

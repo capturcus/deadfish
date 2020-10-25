@@ -47,6 +47,7 @@ struct Mob {
 };
 
 class Resources;
+class TextCreator;
 
 struct GameplayState
 	: public GameState
@@ -71,11 +72,13 @@ private:
 	std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species);
 	void ToggleHighscores();
 	nc::MeshSprite* CreateIndicator(float angle, float force, int indicatorNum, bool visible);
-
 	void updateRemainingText(uint64_t remainingFrames);
+
+	friend class TextCreator;
 
 	typedef std::vector<std::unique_ptr<ncine::DrawableNode>> DrawableNodeVector;
 	DrawableNodeVector nodes;
+	DrawableNodeVector textNodes;
 	std::map<std::string, DrawableNodeVector> hiding_spots;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
 	std::map<uint16_t, Mob> mobs;

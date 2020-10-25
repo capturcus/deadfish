@@ -159,7 +159,15 @@ table HighscoreUpdate {
 
 table DeathReport {
   killer:uint16;
-  killed:uint16;
+  victim:uint16;
+  killerKills:uint16;
+  victimKills:uint16;
+  multikill:uint16;
+  killing_spree:uint16;
+  shutdown:uint16;
+  domination:uint16;
+  revenge:uint16;
+  comeback:uint16;
 }
 
 enum SimpleServerEventType: byte {

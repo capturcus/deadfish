@@ -79,6 +79,18 @@ struct Player : public Mob {
 	uint16_t deathTimeout = 0;
 	uint16_t playerID = 0;
 
+	uint16_t kills = 0;
+	uint16_t killingSpreeCounter = 0;
+	uint16_t deaths = 0;
+	uint16_t comebackCounter = 0;
+	uint16_t multikillTimer = 0;
+	uint16_t multikillCounter = 0;
+
+	// Keeps track of total kills against a player (playerID->kills)
+	std::unordered_map<uint16_t, uint16_t> playerKillCounters;
+	// Keeps track of unrevenged kills against a player (playerID->kills)
+	std::unordered_map<uint16_t, uint16_t> dominationCounters;
+
 	void handleCollision(Collideable& other) override;
 	void handleKill(Player& killer) override;
 	void update() override;
