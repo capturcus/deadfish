@@ -434,6 +434,10 @@ void sendHighscores()
 }
 
 void executeSkill(Player& p, uint8_t skillPos, b2Vec2 mousePos) {
+	if (skillPos >= p.skills.size()) {
+		std::cout << "skillPos out of bounds\n";
+		return;
+	}
 	if (p.skills[skillPos] == (uint16_t) Skills::SKILL_NONE)
 		return;
 	Skills skill = (Skills) p.skills[skillPos];
@@ -442,6 +446,7 @@ void executeSkill(Player& p, uint8_t skillPos, b2Vec2 mousePos) {
 		std::cout << "no such skill handler " << (uint16_t) skill << "\n";
 	}
 	skillHandler(p, skill, mousePos);
+	std::cout << "skills size " << p.skills.size() << "\n";
 	p.skills.erase(p.skills.begin() + skillPos);
 	p.sendSkillBarUpdate();
 }

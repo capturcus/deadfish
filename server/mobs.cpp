@@ -93,6 +93,7 @@ void Player::reset()
 	this->lastAttack = std::chrono::system_clock::from_time_t(0);
 	this->bombsAffecting = 0;
 	this->skills.clear();
+	this->sendSkillBarUpdate();
 }
 
 void Player::update()
