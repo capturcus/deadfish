@@ -73,9 +73,9 @@ struct Mob : public Collideable {
 	virtual bool isDead() { return false; }
 	virtual bool obstructsSight(Player*) override { return false; }
 	virtual void update() override;
+	virtual float calculateSpeed();
 
 	glm::vec2 targetPosition;
-	float speed = WALK_SPEED;
 	uint32_t bombsAffecting = 0;
 
 	virtual ~Mob();
@@ -111,6 +111,7 @@ struct Player : public Mob {
 	uint16_t playerID = 0;
 	std::vector<uint16_t> skills;
 
+	float calculateSpeed() override;
 	void handleCollision(Collideable& other) override;
 	void handleKill(Player& killer) override;
 	void update() override;

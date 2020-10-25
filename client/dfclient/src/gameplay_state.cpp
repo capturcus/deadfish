@@ -314,10 +314,6 @@ void GameplayState::ProcessWorldState(const void* ev) {
 
 		if (mobData->relation() == FlatBuffGenerated::PlayerRelation_None) {
 			mob.relationMarker.reset(nullptr);
-		} else if (mobData->relation() == FlatBuffGenerated::PlayerRelation_Close) {
-			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), _resources.textures["bluecircle.png"].get());
-			mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
-			mob.relationMarker->setLayer((unsigned short)Layers::INDICATOR);
 		} else if (mobData->relation() == FlatBuffGenerated::PlayerRelation_Targeted) {
 			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), _resources.textures["redcircle.png"].get());
 			mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));

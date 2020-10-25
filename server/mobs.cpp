@@ -19,6 +19,12 @@ std::ostream &operator<<(std::ostream &os, b2Vec2 v)
 	return os;
 }
 
+float Mob::calculateSpeed() {
+	if (this->bombsAffecting > 0)
+		return WALK_SPEED * INK_BOMB_SPEED_MODIFIER;
+	return WALK_SPEED;
+}
+
 void Mob::update()
 {
 	float dist = glm::distance(b2g(this->body->GetPosition()), this->targetPosition);
@@ -63,8 +69,19 @@ void Mob::update()
 	}
 
 	// update position
-	auto translation = glm::rotate(glm::vec2(1, 0), this->body->GetAngle() - (float)(M_PI / 2)) * this->speed;
+	auto translation = glm::rotate(glm::vec2(1, 0), this->body->GetAngle() - (float)(M_PI / 2)) * this->calculateSpeed();
 	this->body->SetLinearVelocity(b2Vec2(translation.x, translation.y));
+}
+
+float Player::calculateSpeed() {
+	if (this->bombsAffecting > 0)
+		return WALK_SPEED * INK_BOMB_SPEED_MODIFIER;
+	float speed = WALK_SPEED;
+	if (this->state == MobState::RUNNING)
+		speed *= RUN_MODIFIER;
+	if (this->killTarget != nullptr)
+		speed *= CHASE_SPEED_BONUS;
+	return speed;
 }
 
 void Player::reset()
@@ -74,6 +91,8 @@ void Player::reset()
 	this->toBeDeleted = false;
 	this->state = MobState::WALKING;
 	this->lastAttack = std::chrono::system_clock::from_time_t(0);
+	this->bombsAffecting = 0;
+	this->skills.clear();
 }
 
 void Player::update()
@@ -104,6 +123,8 @@ void Player::update()
 		this->reset();
 		this->deathTimeout = DEATH_TIMEOUT;
 	}
+	if (this->bombsAffecting > 0)
+		this->killTarget = nullptr;
 	if (this->killTarget)
 	{
 		this->targetPosition = b2g(this->killTarget->body->GetPosition());
@@ -267,8 +288,6 @@ void Civilian::handleKill(Player& killer) {
 void Player::handleKill(Player& killer) {
 	if (killer.isDead())
 		return;
-	std::cout << std::chrono::system_clock::to_time_t(this->lastAttack) <<
-	" " << std::chrono::system_clock::to_time_t(killer.lastAttack) << "\n";
 	// did i kill him first?
 	if (this->killTarget &&
 		this->killTarget->mobID == killer.mobID &&

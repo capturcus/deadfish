@@ -61,15 +61,11 @@ InkParticle::~InkParticle() {
 			auto mobA = dynamic_cast<Mob *>(collideableA);
 			auto mobB = dynamic_cast<Mob *>(collideableB);
 
-			if (mobA && mobA->bombsAffecting > 0) {
+			if (mobA && mobA->bombsAffecting > 0)
 				mobA->bombsAffecting--;
-				mobA->speed = WALK_SPEED;
-			}
-			
-			if (mobB && mobB->bombsAffecting > 0) {
+
+			if (mobB && mobB->bombsAffecting > 0)
 				mobB->bombsAffecting--;
-				mobB->speed = WALK_SPEED;
-			}
 		}
 	}
 	gameState.b2world->DestroyBody(this->body);
@@ -92,7 +88,6 @@ void InkParticle::handleCollision(Collideable& other) {
 	try {
 		auto& m = dynamic_cast<Mob&>(other);
 		m.bombsAffecting++;
-		m.speed *= INK_BOMB_SPEED_MODIFIER;
 	} catch (...) {}
 }
 
@@ -101,7 +96,6 @@ void InkParticle::endCollision(Collideable& other) {
 		auto& m = dynamic_cast<Mob&>(other);
 		if (m.bombsAffecting > 0)
 			m.bombsAffecting--;
-		m.speed = WALK_SPEED;
 	} catch (...) {}
 }
 

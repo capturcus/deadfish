@@ -163,8 +163,6 @@ flatbuffers::Offset<FlatBuffGenerated::Mob> createFBMob(flatbuffers::FlatBufferB
 {
 	auto distance = b2Distance(m->body->GetPosition(), player.body->GetPosition());
 	FlatBuffGenerated::PlayerRelation relation = FlatBuffGenerated::PlayerRelation_None;
-	if (distance < KILL_DISTANCE && player.mobID != m->mobID)
-		relation = FlatBuffGenerated::PlayerRelation_Close;
 	if (player.killTarget == m)
 		relation = FlatBuffGenerated::PlayerRelation_Targeted;
 	auto posVec = FlatBuffGenerated::Vec2(m->body->GetPosition().x, m->body->GetPosition().y);
@@ -399,8 +397,17 @@ Mob &findMobById(uint16_t id)
 
 void executeCommandKill(Player &player, uint16_t id)
 {
+	if (player.bombsAffecting > 0)
+		return;
 	player.lastAttack = std::chrono::system_clock::now();
 	auto &m = findMobById(id);
+	try {
+		auto &otherPlayer = dynamic_cast<Player &>(m);
+		if (otherPlayer.killTarget && otherPlayer.killTarget->mobID == player.mobID) {
+			// they're already targeting us, abort
+			return;
+		}
+	} catch(...) {}
 	auto distance = b2Distance(m.body->GetPosition(), player.body->GetPosition());
 	if (distance < INSTA_KILL_DISTANCE)
 	{
@@ -408,15 +415,7 @@ void executeCommandKill(Player &player, uint16_t id)
 		m.handleKill(player);
 		return;
 	}
-	if (distance < KILL_DISTANCE)
-	{
-		player.killTarget = &m;
-		return;
-	}
-	// send message too far
-	flatbuffers::FlatBufferBuilder builder(1);
-	auto ev = FlatBuffGenerated::CreateSimpleServerEvent(builder, FlatBuffGenerated::SimpleServerEventType_TooFarToKill);
-	sendServerMessage(player, builder, FlatBuffGenerated::ServerMessageUnion_SimpleServerEvent, ev.Union());
+	player.killTarget = &m;
 }
 
 void sendHighscores()
@@ -475,10 +474,6 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 	{
 		const auto event = clientMessage->event_as_CommandRun();
 		p->state = event->run() ? MobState::RUNNING : MobState::WALKING;
-		if (p->bombsAffecting > 0)
-			p->speed = WALK_SPEED * INK_BOMB_SPEED_MODIFIER;
-		else
-			p->speed = event->run() ? RUN_SPEED : WALK_SPEED;
 	}
 	break;
 	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_CommandKill:
