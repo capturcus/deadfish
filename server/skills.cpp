@@ -31,23 +31,25 @@ void launchInkParticle(Player& p, b2Vec2 direction) {
 	gameState.inkParticles.push_back(std::move(inkPart));
 }
 
-const float INK_INIT_SPEED_BASE = 0.5;
+const float INK_INIT_SPEED_BASE = 3;
 const float INK_INIT_SPEED_VARIABLE = 1.5;
 const int INK_COUNT = 5;
 const int INK_LIFETIME_FRAMES = 80; // 4s
 
-void executeSkillInkbomb(Player& p, UNUSED Skills skill, UNUSED b2Vec2 mousePos) {
+void executeSkillInkbomb(Player& p, UNUSED Skills skill, b2Vec2 mousePos) {
 	std::cout << "ink bomb\n";
+	b2Vec2 mouseVector = mousePos - p.body->GetPosition();
+	float mouseAngleDeg = -angleFromVector(mouseVector) * TO_DEGREES;
 	for (int i = 0; i < INK_COUNT; i++) {
+		float mouseAngleRandomized = mouseAngleDeg + rand() % 90 - 45;
 		b2Vec2 direction(INK_INIT_SPEED_BASE + (rand() % ((int)(INK_INIT_SPEED_VARIABLE * 10)))/10.f, 0);
-		int dirDeg = rand() % 360;
-		direction = rotateVector(direction, dirDeg * (M_PI / 180.f));
+		direction = rotateVector(direction, mouseAngleRandomized * TO_RADIANS);
 		launchInkParticle(p, direction);
 	}
 }
 
 InkParticle::InkParticle(b2Body* b, Player& o) 
-	: owner(o) {
+{
 	this->body = b;
 	this->lifetimeFrames = INK_LIFETIME_FRAMES;
 }
@@ -80,11 +82,6 @@ void InkParticle::update() {
 }
 
 void InkParticle::handleCollision(Collideable& other) {
-	try {
-		auto& p = dynamic_cast<Player&>(other);
-		if (p.playerID == this->owner.playerID)
-			return; // bombs don't affects the players that threw them
-	} catch (...) {}
 	try {
 		auto& m = dynamic_cast<Mob&>(other);
 		m.bombsAffecting++;

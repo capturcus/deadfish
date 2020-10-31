@@ -86,7 +86,6 @@ struct InkParticle :
 	
 	uint16_t inkID;
 	uint16_t lifetimeFrames;
-	Player& owner;
 
 	InkParticle(b2Body* b, Player& owner);
 
