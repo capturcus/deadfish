@@ -473,9 +473,6 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 		p->state = p->state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
 		p->killTarget = nullptr;
 		p->lastAttack = std::chrono::system_clock::from_time_t(0);
-
-		p->skills.push_back((uint16_t) Skills::INK_BOMB);
-		p->sendSkillBarUpdate();
 	}
 	break;
 	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_CommandRun:

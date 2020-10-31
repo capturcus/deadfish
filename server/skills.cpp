@@ -31,7 +31,7 @@ void launchInkParticle(Player& p, b2Vec2 direction) {
 	gameState.inkParticles.push_back(std::move(inkPart));
 }
 
-const float INK_INIT_SPEED_BASE = 3;
+const float INK_INIT_SPEED_BASE = 2;
 const float INK_INIT_SPEED_VARIABLE = 1.5;
 const int INK_COUNT = 5;
 const int INK_LIFETIME_FRAMES = 80; // 4s
@@ -97,7 +97,7 @@ void InkParticle::endCollision(Collideable& other) {
 }
 
 bool InkParticle::obstructsSight(UNUSED Player* p) {
-	return false;
+	return true;
 }
 
 void executeSkillMobManipulator(UNUSED Player& p, UNUSED Skills skill, UNUSED b2Vec2 mousePos) {
