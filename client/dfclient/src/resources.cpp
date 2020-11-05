@@ -2,13 +2,20 @@
 
 void Resources::UpdateTweens()
 {
-    for (int i = _tweens.size() - 1; i >= 0; i--) {
-		_tweens[i].step(1);
-		if (_tweens[i].progress() == 1.f)
-			_tweens.erase(_tweens.begin() + i);
+    for (int i = _intTweens.size() - 1; i >= 0; i--) {
+		_intTweens[i].step(1);
+		if (_intTweens[i].progress() == 1.f)
+			_intTweens.erase(_intTweens.begin() + i);
 	}
 	for (auto& tween : _mobTweens) {
 		tween.second.step(1);
+	}
+	for (auto it = _floatTweens.begin(); it != _floatTweens.end(); ++it) {
+		it->step(1);
+		if (it->progress() == 1.f) {
+			_floatTweens.erase(it);
+			--it;
+		}
 	}
 }
 

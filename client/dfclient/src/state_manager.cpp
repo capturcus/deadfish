@@ -50,6 +50,10 @@ StateManager::StateManager() {
 	_currentState = std::make_unique<MenuState>(_resources);
 }
 
+TextCreator StateManager::CreateTextCreator() {
+	return TextCreator(_resources);
+}
+
 void StateManager::OnFrameStart() {
 	_resources.UpdateTweens();
 
