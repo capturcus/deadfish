@@ -32,7 +32,7 @@ MenuState::MenuState(Resources& r) : _resources(r) {
 		text->setPosition(res.x * 0.5f, res.y * 0.75f);
 		text->setScale(2.0f);
 		text->setColor(0, 0, 0, 255);
-		_resources._tweens.push_back(CreateTextTween(text));
+		_resources._intTweens.push_back(CreateTextTween(text));
 		gameData.gameInProgress = false;
 	}
 }

@@ -323,7 +323,7 @@ void GameplayState::OnMessage(const std::string& data) {
 		if (!hspotSprites.empty() && hspotSprites[0]->alpha() == MAX_HIDING_SPOT_OPACITY) {
 			for (auto &hsSprite : hspotSprites) {
 				auto tween = CreateAlphaTransitionTween(hsSprite.get(), MAX_HIDING_SPOT_OPACITY, MIN_HIDING_SPOT_OPACITY, 10);
-				_resources._tweens.push_back(tween);
+				_resources._intTweens.push_back(tween);
 			}
 		}
 	}
@@ -331,7 +331,7 @@ void GameplayState::OnMessage(const std::string& data) {
 		auto &hspotSprites = this->hiding_spots[this->currentHidingSpot];
 		for (auto &hsSprite : hspotSprites) {
 			auto tween = CreateAlphaTransitionTween(hsSprite.get(), MIN_HIDING_SPOT_OPACITY, MAX_HIDING_SPOT_OPACITY, 20);
-			_resources._tweens.push_back(tween);
+			_resources._intTweens.push_back(tween);
 		}
 	}
 	this->currentHidingSpot = worldState->currentHidingSpot()->str();
@@ -484,11 +484,12 @@ StateType GameplayState::Update(Messages m) {
 	}
 
 	// clean up transparent text
-	std::vector<GameplayState::DrawableNodeVector::iterator> toDelete;
 	for (auto it = this->textNodes.begin(); it != this->textNodes.end(); ++it) {
-		if ((*it)->alpha() == 0) toDelete.push_back(it);
+		if ((*it)->alpha() == 0) {
+			textNodes.erase(it);
+			--it;
+		}
 	}
-	for (auto it : toDelete) this->textNodes.erase(it);
 
 	return StateType::Gameplay;
 }

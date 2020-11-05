@@ -13,16 +13,6 @@ TextCreator::TextCreator(Resources& resources) : _resources(resources) {
     _from = 255; _hold = 60; _decay = 60;
 }
 
-// std::unique_ptr<ncine::TextNode> TextCreator::CreateText(std::string text) {}
-// std::unique_ptr<ncine::TextNode> TextCreator::CreateText(std::string text, ncine::Color color) {}
-// std::unique_ptr<ncine::TextNode> TextCreator::CreateText(std::string text, float pos_x, float pos_y) {}
-// std::unique_ptr<ncine::TextNode> TextCreator::CreateText(std::string text, ncine::Color color, float pos_x, float pos_y) {}
-// std::unique_ptr<ncine::TextNode> TextCreator::CreateText(std::string text, float scale) {}
-// std::unique_ptr<ncine::TextNode> TextCreator::CreateText(std::string text, ncine::Color, float scale) {}
-// std::unique_ptr<ncine::TextNode> TextCreator::CreateText(std::string text, ncine::Color, float pos_x, float pos_y, float scale) {}
-// std::unique_ptr<ncine::TextNode> TextCreator::CreateText(std::string text, int from, int hold, int decay) {}
-// std::unique_ptr<ncine::TextNode> TextCreator::CreateText(std::string text, ncine::Color, int from, int hold, int decay) {}
-
 std::unique_ptr<ncine::TextNode> TextCreator::CreateText(
 	std::string text,
 	std::optional<ncine::Color> color,
@@ -51,6 +41,6 @@ std::unique_ptr<ncine::TextNode> TextCreator::doCreateText(std::string text, nci
 	ret->setColor(color);
 	ret->setPosition(pos_x, pos_y);
 	ret->setScale(scale);
-	_resources._tweens.push_back(CreateTextTween(ret.get(), from, hold, decay));
+	_resources._intTweens.push_back(CreateTextTween(ret.get(), from, hold, decay));
 	return std::move(ret);
 }

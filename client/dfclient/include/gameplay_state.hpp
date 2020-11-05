@@ -66,6 +66,7 @@ private:
 
 	void LoadLevel();
 	void ProcessDeathReport(const FlatBuffGenerated::DeathReport* deathReport);
+	std::unique_ptr<ncine::TextNode> processMultikill(int multikillness);
 	void ProcessHighscoreUpdate(const FlatBuffGenerated::HighscoreUpdate* highscoreUpdate);
 	void CreateHidingSpotShowingTween(ncine::DrawableNode* hspot);
 	void CreateHidingSpotHidingTween(ncine::DrawableNode* hspot);

@@ -26,8 +26,9 @@ struct Resources {
 	std::unique_ptr<ncine::AudioBufferPlayer> _killSound;
 	std::unique_ptr<ncine::AudioBufferPlayer> _deathSound;
 
-	std::vector<tweeny::tween<int>> _tweens;
+	std::vector<tweeny::tween<int>> _intTweens;
 	std::unordered_map<uint16_t, tweeny::tween<int>> _mobTweens;
+	std::vector<tweeny::tween<float>> _floatTweens;
 
 	void UpdateTweens();
 

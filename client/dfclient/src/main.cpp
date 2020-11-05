@@ -34,10 +34,12 @@ void MyEventHandler::onPreInit(nc::AppConfiguration &config)
 
 GameData gameData;
 std::optional<StateManager> stateManager;
+std::optional<TextCreator> textCreator;
 
 void MyEventHandler::onInit()
 {
 	stateManager.emplace();
+	textCreator.emplace(stateManager->CreateTextCreator());
 }
 
 void MyEventHandler::onFrameStart()
