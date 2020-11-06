@@ -76,7 +76,7 @@ private:
 	void CreateHidingSpotShowingTween(ncine::DrawableNode* hspot);
 	void CreateHidingSpotHidingTween(ncine::DrawableNode* hspot);
 	std::unique_ptr<ncine::AnimatedSprite> CreateNewMobSprite(ncine::SceneNode* parent, uint16_t species);
-	std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species, const std::string& spritesheet, uint16_t maxAnimations);
+	std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species, const std::string& spritesheet, uint16_t maxAnimations, Layers layer);
 	nc::MeshSprite* CreateIndicator(float angle, float force, int indicatorNum, bool visible);
 
 	void updateRemainingText(uint64_t remainingFrames);
