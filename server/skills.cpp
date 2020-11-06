@@ -75,10 +75,8 @@ InkParticle::~InkParticle() {
 
 void InkParticle::update() {
 	this->lifetimeFrames--;
-	if (this->lifetimeFrames == 0) {
+	if (this->lifetimeFrames == 0)
 		this->toBeDeleted = true;
-		std::cout << "ink particle toBeDeleted\n";
-	}
 }
 
 void InkParticle::handleCollision(Collideable& other) {

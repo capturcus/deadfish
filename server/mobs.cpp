@@ -265,7 +265,6 @@ Mob::~Mob()
 void handleGoldfishKill(Player& killer) {
 	if (killer.skills.size() == MAX_SKILLS)
 		return;
-	// uint16_t skill = (rand() % ((int) Skills::SKILLS_MAX - 1)) + 1;
 	uint16_t skill = (int) Skills::INK_BOMB; // all skills are ink bombs bc it's the only working skill for now
 	killer.skills.push_back(skill);
 	killer.sendSkillBarUpdate();

@@ -510,10 +510,7 @@ void updateCollideables(std::vector<std::unique_ptr<C>>& collideables) {
 			despawns.push_back(i);
 	}
 	for (int i = despawns.size() - 1; i >= 0; i--)
-	{
-		std::cout << "erasing collideable\n";
 		collideables.erase(collideables.begin() + despawns[i]);
-	}
 }
 
 void gameThread()

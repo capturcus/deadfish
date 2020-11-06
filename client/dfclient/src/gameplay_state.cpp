@@ -403,15 +403,11 @@ void GameplayState::ProcessWorldState(const void* ev) {
 		inkItr->second.seen = true;
 	}
 
-	// todo: abstract this logic along with mobs?
-	deletedIDs.clear();
-	for (auto& p : this->inkParticles) {
-		if (!p.second.seen) {
-			deletedIDs.push_back(p.first);
-		}
-	}
-	for (auto i : deletedIDs) {
-		this->inkParticles.erase(i);
+	for (auto it = this->inkParticles.begin(); it != this->inkParticles.end();) {
+		if (!it->second.seen)
+			it = this->inkParticles.erase(it);
+		else
+			++it;
 	}
 }
 
