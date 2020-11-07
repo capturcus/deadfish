@@ -87,7 +87,7 @@ struct InkParticle :
 	uint16_t inkID;
 	uint16_t lifetimeFrames;
 
-	InkParticle(b2Body* b, Player& owner);
+	InkParticle(b2Body* b);
 
 	void handleCollision(Collideable& other) override;
 	void endCollision(Collideable& other) override;

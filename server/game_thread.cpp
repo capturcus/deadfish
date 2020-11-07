@@ -445,10 +445,11 @@ void executeSkill(Player& p, uint8_t skillPos, b2Vec2 mousePos) {
 	if (skillHandler == nullptr) {
 		std::cout << "no such skill handler " << (uint16_t) skill << "\n";
 	}
-	skillHandler(p, skill, mousePos);
-	std::cout << "skills size " << p.skills.size() << "\n";
-	p.skills.erase(p.skills.begin() + skillPos);
-	p.sendSkillBarUpdate();
+	bool used = skillHandler(p, skill, mousePos);
+	if (used) {
+		p.skills.erase(p.skills.begin() + skillPos);
+		p.sendSkillBarUpdate();
+	}
 }
 
 void gameOnMessage(dfws::Handle hdl, const std::string& payload)

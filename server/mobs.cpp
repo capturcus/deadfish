@@ -265,7 +265,7 @@ Mob::~Mob()
 void handleGoldfishKill(Player& killer) {
 	if (killer.skills.size() == MAX_SKILLS)
 		return;
-	uint16_t skill = (int) Skills::INK_BOMB; // all skills are ink bombs bc it's the only working skill for now
+	uint16_t skill = (uint16_t) (rand() % 2 == 0 ? Skills::INK_BOMB : Skills::BLINK);
 	killer.skills.push_back(skill);
 	killer.sendSkillBarUpdate();
 }
@@ -284,7 +284,6 @@ void Civilian::handleKill(Player& killer) {
 	flatbuffers::FlatBufferBuilder builder;
 	auto ev = FlatBuffGenerated::CreateDeathReport(builder, killer.playerID, -1);
 	sendServerMessage(killer, builder, FlatBuffGenerated::ServerMessageUnion_DeathReport, ev.Union());
-	std::cout << "sent a death report\n";
 
 	sendHighscores();
 }

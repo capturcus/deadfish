@@ -654,7 +654,7 @@ void GameplayState::TryUseSkill(uint8_t skillPos) {
 	const float screenHeight = ncine::theApplication().height();
 	auto &mouseState = ncine::theApplication().inputManager().mouseState();
 	const float serverX = (this->mySprite->position().x + (mouseState.x - screenWidth / 2) * 1.5f) * PIXELS2METERS;
-	const float serverY = -(this->mySprite->position().y + (mouseState.y - screenHeight / 2) * 1.5f) * PIXELS2METERS;
+	const float serverY = -(this->mySprite->position().y - (mouseState.y - screenHeight / 2) * 1.5f) * PIXELS2METERS;
 	flatbuffers::FlatBufferBuilder builder;
 	FlatBuffGenerated::Vec2 mousePos{serverX, serverY};
 	auto cmdSkill = FlatBuffGenerated::CreateCommandSkill(builder, skillPos, &mousePos);
