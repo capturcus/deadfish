@@ -14,7 +14,7 @@ uint16_t newMobID()
 {
 	while (true)
 	{
-		uint16_t ret = random() % UINT16_MAX;
+		uint16_t ret = rand() % UINT16_MAX;
 
 		for (auto &p : gameState.players)
 		{
@@ -300,7 +300,7 @@ void spawnCivilian()
 		std::cout << "could not find any civilian spawns\n";
 		exit(1);
 	}
-	auto &spawnName = spawns[random() % spawns.size()];
+	auto &spawnName = spawns[rand() % spawns.size()];
 	auto spawn = gameState.level->navpoints[spawnName].get();
 	auto c = std::make_unique<Civilian>();
 
@@ -468,11 +468,9 @@ void gameThread()
 
 	{
 		const auto guard = gameState.lock();
-
 		// init physics
 		gameState.b2world = std::make_unique<b2World>(b2Vec2(0, 0));
 		gameState.b2world->SetContactListener(&tcl);
-
 		// load level
 		gameState.level = std::make_unique<Level>();
 		auto path = gameState.options["level"].as<std::string>();
@@ -496,6 +494,7 @@ void gameThread()
 		}
 	}
 
+
 	int civilianTimer = 0;
 	uint64_t roundTimer = ROUND_LENGTH;
 
@@ -517,7 +516,6 @@ void gameThread()
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
 			exit(0);
 		}
-
 		// update physics
 		gameState.b2world->Step(1 / 20.0, 8, 3);
 
@@ -533,6 +531,7 @@ void gameThread()
 		{
 			gameState.civilians.erase(gameState.civilians.begin() + despawns[i]);
 		}
+
 
 		// update players
 		for (auto &p : gameState.players)
@@ -554,7 +553,6 @@ void gameThread()
 			auto offset = makeWorldState(*p, builder, roundTimer);
 			sendServerMessage(*p, builder, FlatBuffGenerated::ServerMessageUnion_WorldState, offset);
 		}
-
 		// Drop the lock
 		maybe_guard.reset();
 

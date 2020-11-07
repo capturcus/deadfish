@@ -134,6 +134,8 @@ void OnRead(beast::error_code ec, std::size_t bytes_transferred) {
 			return;
 		}
 		std::cout << "read failed " << ec << "\n";
+		DoRead();
+		return;
 	}
 
 	auto str = beast::buffers_to_string(buffer.data());

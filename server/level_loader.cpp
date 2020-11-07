@@ -81,7 +81,8 @@ void loadLevel(std::string &path)
 	if (!in.is_open())
 	{
 		std::cout << "failed to open level file " << path << "\n";
-		exit(1);
+		exit(1); // todo: actually exit the program
+		// even if some beast io is running in the background
 	}
 	auto size = in.tellg();
 	std::vector<char> memblock(size);
@@ -91,11 +92,15 @@ void loadLevel(std::string &path)
 
 	auto level = flatbuffers::GetRoot<FlatBuffGenerated::Level>(memblock.data());
 
+	std::cout << "a\n";
+
 	// tilesets
 	for (auto tileinfo : *level->tileinfo()) {
 		auto ti = std::make_unique<Tileinfo>(tileinfo);
 		gameState.level->tileinfo.push_back(std::move(ti));
 	}
+
+	std::cout << "b\n";
 
 	// objects
 	for (auto object : *level->objects())
@@ -104,12 +109,16 @@ void loadLevel(std::string &path)
 		gameState.level->objects.push_back(std::move(o));
 	}
 
+	std::cout << "c\n";
+
 	// decoration
 	for (auto decoration : *level->decoration())
 	{
 		auto d = std::make_unique<Decoration>(decoration);
 		gameState.level->decoration.push_back(std::move(d));
 	}
+
+	std::cout << "d\n";
 
 	// hiding spots
 	for (auto hspot : *level->hidingspots())
@@ -118,6 +127,8 @@ void loadLevel(std::string &path)
 		gameState.level->hidingspots.push_back(std::move(hs));
 	}
 
+	std::cout << "e\n";
+
 	// collisionMasks
 	for (auto cmask : *level->collisionMasks())
 	{
@@ -125,11 +136,15 @@ void loadLevel(std::string &path)
 		gameState.level->collisionMasks.push_back(std::move(s));
 	}
 
+	std::cout << "f\n";
+
 	// playerwalls
 	for (auto playerwall : *level->playerwalls())
 	{
 		initPlayerwall(playerwall);
 	}
+
+	std::cout << "g\n";
 
 	// navpoints
 	for (auto navpoint : *level->navpoints())
@@ -145,4 +160,6 @@ void loadLevel(std::string &path)
 		}
 		gameState.level->navpoints[navpoint->name()->str()] = std::move(n);
 	}
+
+	std::cout << "h\n";
 }

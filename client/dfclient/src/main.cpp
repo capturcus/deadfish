@@ -7,6 +7,7 @@
 #include <ncine/AppConfiguration.h>
 #include <ncine/FileSystem.h>
 #include <ncine/imgui.h>
+#include <ncine/PCApplication.h>
 
 #include "main.h"
 #include "state_manager.hpp"
@@ -14,6 +15,8 @@
 #include "lobby_state.hpp"
 #include "gameplay_state.hpp"
 #include "game_data.hpp"
+
+#include <windows.h>
 
 nc::IAppEventHandler *createAppEventHandler()
 {
@@ -63,4 +66,9 @@ void MyEventHandler::onMouseButtonPressed(const nc::MouseEvent &event)
 void MyEventHandler::onMouseMoved(const nc::MouseState &state)
 {
 	stateManager->OnMouseMoved(state);
+}
+
+int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
+	return ncine::PCApplication::start(createAppEventHandler);
 }

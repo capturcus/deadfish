@@ -11,6 +11,9 @@
 #include "util.hpp"
 
 StateType LobbyState::OnMessage(const std::string& data) {
+	if (data.size() == 0) {
+		return StateType::Lobby;
+	}
 	std::cout << "lobby received data\n";
 	auto event = FBUtilGetServerEvent(data, SimpleServerEvent);
 	if (event) {
