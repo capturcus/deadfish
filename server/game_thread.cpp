@@ -25,11 +25,9 @@ uint16_t newMobID()
 				continue;
 		}
 
-		for (auto &n : gameState.civilians)
-		{
-			if (n->mobID == ret)
-				continue;
-		}
+		auto it = gameState.civilians.find(ret);
+		if (it != gameState.civilians.end())
+			continue;
 
 		return ret;
 	}
@@ -179,8 +177,9 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 {
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::Mob>> mobs;
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::Indicator>> indicators;
-	for (auto &c : gameState.civilians)
+	for (auto &p : gameState.civilians)
 	{
+		auto &c = p.second;
 		if (!playerSeeMob(player, *c))
 			continue;
 		auto mob = createFBMob(builder, player, c.get());
@@ -286,8 +285,9 @@ std::vector<int> civiliansSpeciesCount()
 {
 	std::vector<int> ret;
 	ret.resize(gameState.players.size());
-	for (auto &c : gameState.civilians)
+	for (auto &p : gameState.civilians)
 	{
+		auto &c = p.second;
 		if (c->species != GOLDFISH_SPECIES)
 			ret[c->species]++;
 	}
@@ -324,7 +324,7 @@ void spawnCivilian(std::string spawnName, NavPoint* spawn) {
 	c->currentNavpoint = spawnName;
 	physicsInitMob(c.get(), spawn->position, 0, 0.3f);
 	c->setNextNavpoint();
-	gameState.civilians.push_back(std::move(c));
+	gameState.civilians[c->mobID] = std::move(c);
 	std::cout << "spawning civilian of species " << species <<
 		" at " << spawnName << " to a total of " << gameState.civilians.size() << "\n";
 }
@@ -382,10 +382,9 @@ void spawnPlayer(Player &player)
 
 Mob &findMobById(uint16_t id)
 {
-	auto it = std::find_if(gameState.civilians.begin(), gameState.civilians.end(),
-						   [id](const auto &c) { return c->mobID == id; });
+	auto it = gameState.civilians.find(id);
 	if (it != gameState.civilians.end())
-		return *(*it);
+		return *it->second;
 
 	auto it2 = std::find_if(gameState.players.begin(), gameState.players.end(),
 							[id](const auto &p) { return p->mobID == id; });
@@ -574,8 +573,16 @@ void gameThread()
 		// update physics
 		gameState.b2world->Step(1 / 20.0, 8, 3);
 
-		updateCollideables(gameState.civilians);
 		updateCollideables(gameState.inkParticles);
+
+		// update civilians
+		for (auto it = gameState.civilians.cbegin(); it != gameState.civilians.cend();) {
+			it->second->update();
+			if (it->second->toBeDeleted)
+				it = gameState.civilians.erase(it);
+			else
+				++it;
+		}
 
 		// update players
 		for (auto &p : gameState.players)

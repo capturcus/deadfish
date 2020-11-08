@@ -1,5 +1,6 @@
 #pragma once
 #include <unordered_map>
+#include <map>
 #include <string>
 #include <mutex>
 #include <memory>
@@ -219,7 +220,7 @@ public:
 
 	std::unique_ptr<b2World> b2world = nullptr;
 	std::vector<std::unique_ptr<Player>> players;
-	std::vector<std::unique_ptr<Civilian>> civilians;
+	std::map<uint16_t, std::unique_ptr<Civilian>> civilians;
 	std::vector<std::unique_ptr<InkParticle>> inkParticles;
 
 	inline std::unique_ptr<std::lock_guard<std::mutex>> lock() {
