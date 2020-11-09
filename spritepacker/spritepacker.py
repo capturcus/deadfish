@@ -1,63 +1,42 @@
 #!/usr/bin/python3
 
-import os
+import os, argparse
 from PIL import Image
 from resizeimage import resizeimage
 
-import configparser
-config = configparser.ConfigParser()
-config.read('spritepacker.ini')
+parser = argparse.ArgumentParser(description='Packs a folder or a series of folders into a sprite sheet. Supports only PNGs for now.')
+parser.add_argument("--imgsinrow", help="how many images to fit in a row", default=10)
+parser.add_argument("--imgsize", help="the size of a single sprite in the target spritesheet", default=120)
+parser.add_argument("--out", help="path to the resulting spritesheet", required=True)
+parser.add_argument("--paths", help="folders to pack into the spritesheet", required=True, nargs="+")
 
-IMGSINROW = int(config['default']['imgsinrow'])
-IMGSIZE = int(config['default']['imgsize'])
-IMGPATH = config['default']['imgpath']
-DESTINATION = config['default']['destination']
-ASSETS = "../assets/"
-print("imgs in row:", IMGSINROW)
-print("img size:", IMGSIZE)
-print("img path:", IMGPATH)
+args = parser.parse_args()
+
+imgsize = int(args.imgsize)
+imgsinrow = int(args.imgsinrow)
 
 imgs = []
-folders = []
-for f in os.listdir(IMGPATH):
-    if os.path.isdir(ASSETS+f) and "." in f:
-        print("including", f)
-        folders.append(f)
 
-def mapAnimKeys(key):
-    if key == "walk":
-        return "a"
-    elif key == "run":
-        return "b"
-    elif key == "attack":
-        return "c"
-    raise "wrong folder name"
-
-# sort folders so that they are in the order accepted by the client
-folders = sorted(folders, key=lambda name: name.split(".")[0]+mapAnimKeys(name.split(".")[1]))
-
-print(folders)
-
-for fol in folders:
+for fol in args.paths:
+    print("processing", fol)
     files = []
-    for f in os.listdir(ASSETS+fol):
+    for f in os.listdir(fol):
         if f.endswith(".png"):
             files.append(f)
     for f in sorted(files):
-        print(f)
-        ff = open(IMGPATH+"/"+fol+"/"+f, 'r+b')
+        ff = open(fol+"/"+f, 'r+b')
         image = Image.open(ff)
         if image.size[0] != image.size[1]:
             print("image not square:", image.size, f)
         imgs.append(image)
 
-rows = int((len(imgs)/IMGSINROW))+1
-finalimg = Image.new("RGBA", (IMGSINROW*IMGSIZE, rows*IMGSIZE))
+rows = int((len(imgs)/imgsinrow)) + (0 if len(imgs) % imgsinrow == 0 else 1)
+finalimg = Image.new("RGBA", (imgsinrow * imgsize, rows * imgsize))
 print("finalimg size", finalimg.size)
 
-for i in range(len(imgs)):
-    resized = resizeimage.resize_cover(imgs[i], [IMGSIZE, IMGSIZE])
-    offset = ((i % IMGSINROW)*IMGSIZE, int((i//IMGSINROW)*IMGSIZE))
+for i, img in enumerate(imgs):
+    resized = resizeimage.resize_cover(img, [imgsize, imgsize])
+    offset = ((i % imgsinrow)*imgsize, int((i//imgsinrow)*imgsize))
     finalimg.paste(resized, offset)
 
-finalimg.save(DESTINATION+".png", finalimg.format)
+finalimg.save(args.out, finalimg.format)

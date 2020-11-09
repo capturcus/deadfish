@@ -19,6 +19,12 @@ std::ostream &operator<<(std::ostream &os, b2Vec2 v)
 	return os;
 }
 
+float Mob::calculateSpeed() {
+	if (this->bombsAffecting > 0)
+		return WALK_SPEED * INK_BOMB_SPEED_MODIFIER;
+	return WALK_SPEED;
+}
+
 void Mob::update()
 {
 	float dist = glm::distance(b2g(this->body->GetPosition()), this->targetPosition);
@@ -63,9 +69,19 @@ void Mob::update()
 	}
 
 	// update position
-	auto speed = this->state == MobState::WALKING ? WALK_SPEED : RUN_SPEED;
-	auto translation = glm::rotate(glm::vec2(1, 0), this->body->GetAngle() - (float)(M_PI / 2)) * speed;
+	auto translation = glm::rotate(glm::vec2(1, 0), this->body->GetAngle() - (float)(M_PI / 2)) * this->calculateSpeed();
 	this->body->SetLinearVelocity(b2Vec2(translation.x, translation.y));
+}
+
+float Player::calculateSpeed() {
+	if (this->bombsAffecting > 0)
+		return WALK_SPEED * INK_BOMB_SPEED_MODIFIER;
+	float speed = WALK_SPEED;
+	if (this->state == MobState::RUNNING)
+		speed *= RUN_MODIFIER;
+	if (this->killTarget != nullptr)
+		speed *= CHASE_SPEED_BONUS;
+	return speed;
 }
 
 void Player::reset()
@@ -78,6 +94,9 @@ void Player::reset()
 	this->toBeDeleted = false;
 	this->state = MobState::WALKING;
 	this->lastAttack = std::chrono::system_clock::from_time_t(0);
+	this->bombsAffecting = 0;
+	this->skills.clear();
+	this->sendSkillBarUpdate();
 }
 
 void Player::update()
@@ -114,10 +133,16 @@ void Player::update()
 		this->reset();
 		this->deathTimeout = DEATH_TIMEOUT;
 	}
-	if (this->killTarget)
-	{
-		this->targetPosition = b2g(this->killTarget->body->GetPosition());
+	if (this->bombsAffecting > 0)
+		this->killTarget = nullptr;
+
+	if (this->killTarget && !playerSeeMob(*this, *this->killTarget)) {
+		this->killTarget = nullptr;
+		this->targetPosition = b2g(this->body->GetPosition());
 	}
+
+	if (this->killTarget)
+		this->targetPosition = b2g(this->killTarget->body->GetPosition());
 	Mob::update();
 }
 
@@ -161,7 +186,7 @@ void Civilian::collisionResolution() {
 
 void Civilian::update()
 {
-	if (b2Distance(this->body->GetPosition(), this->lastPos) < (WALK_SPEED/20)*0.4f) {
+	if (this->bombsAffecting == 0 && b2Distance(this->body->GetPosition(), this->lastPos) < (WALK_SPEED/20) * 0.4f) {
 		slowFrames++;
 		if (slowFrames == CIV_SLOW_FRAMES) {
 			this->collisionResolution();
@@ -317,10 +342,22 @@ MultiplayerMechanicsInfo handleMultiplayerMechanics(Player& killer, Player& vict
 	return ret;
 }
 
+void handleGoldfishKill(Player& killer) {
+	if (killer.skills.size() == MAX_SKILLS)
+		return;
+	uint16_t skill = (int) Skills::INK_BOMB; // all skills are ink bombs bc it's the only working skill for now
+	killer.skills.push_back(skill);
+	killer.sendSkillBarUpdate();
+}
+
 void Civilian::handleKill(Player& killer) {
 	if (killer.isDead())
 		return;
 	this->toBeDeleted = true;
+	if (this->species == GOLDFISH_SPECIES) {
+		handleGoldfishKill(killer);
+		return;
+	}
 	killer.points += CIVILIAN_PENALTY;
 	killer.killingSpreeCounter = 0;
 
@@ -336,8 +373,6 @@ void Civilian::handleKill(Player& killer) {
 void Player::handleKill(Player& killer) {
 	if (killer.isDead())
 		return;
-	std::cout << std::chrono::system_clock::to_time_t(this->lastAttack) <<
-	" " << std::chrono::system_clock::to_time_t(killer.lastAttack) << "\n";
 	// did i kill him first?
 	if (this->killTarget &&
 		this->killTarget->mobID == killer.mobID &&
@@ -376,4 +411,12 @@ void Player::handleKill(Player& killer) {
 
 bool Player::isDead() {
 	return this->deathTimeout > 0;
+}
+
+void Player::sendSkillBarUpdate() {
+	flatbuffers::FlatBufferBuilder builder;
+	auto skills = builder.CreateVector(this->skills);
+	auto ev = FlatBuffGenerated::CreateSkillBarUpdate(builder, skills);
+	sendServerMessage(*this, builder, FlatBuffGenerated::ServerMessageUnion_SkillBarUpdate, ev.Union());
+	std::cout << "updated skills of player " << this->name << "\n";
 }

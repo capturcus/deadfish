@@ -13,6 +13,7 @@ void sendServerMessage(Player& player,
 std::string makeServerMessage(flatbuffers::FlatBufferBuilder &builder,
 	FlatBuffGenerated::ServerMessageUnion type,
 	flatbuffers::Offset<void> offset);
+bool playerSeeMob(Player &p, Mob &m);
 bool mobSeePoint(Mob &m, b2Vec2 &point);
 void sendToAll(std::string &data);
 void sendHighscores();

@@ -92,6 +92,11 @@ table CommandRun {
   run:bool;
 }
 
+table CommandSkill {
+  skill:uint8;
+  mousePos:Vec2;
+}
+
 table JoinRequest {
   name:string;
 }
@@ -104,6 +109,7 @@ union ClientMessageUnion {
   CommandMove,
   CommandKill,
   CommandRun,
+  CommandSkill,
   JoinRequest,
   PlayerReady
 }
@@ -122,7 +128,6 @@ enum MobState: byte {
 
 enum PlayerRelation: byte {
   None,
-  Close,
   Targeted
 }
 
@@ -141,9 +146,15 @@ table Indicator {
   visible:bool;
 }
 
+table InkParticle {
+  inkID:uint16;
+  pos:Vec2;
+}
+
 table WorldState {
   mobs:[Mob];
   indicators:[Indicator];
+  inkParticles:[InkParticle];
   stepsRemaining:uint64;
   currentHidingSpot:string;
 }
@@ -172,7 +183,6 @@ table DeathReport {
 
 enum SimpleServerEventType: byte {
   GameEnded,
-  TooFarToKill,
   GameAlreadyInProgress
 }
 
@@ -193,13 +203,18 @@ table InitMetadata {
   yourPlayerID:uint16;
 }
 
+table SkillBarUpdate {
+  skills:[uint16];
+}
+
 union ServerMessageUnion {
   DeathReport,
   HighscoreUpdate,
   SimpleServerEvent,
   InitMetadata,
   WorldState,
-  Level
+  Level,
+  SkillBarUpdate
 }
 
 table ServerMessage {
