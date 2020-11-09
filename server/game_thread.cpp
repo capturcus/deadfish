@@ -12,6 +12,7 @@
 #include "skills.hpp"
 
 const float GOLDFISH_CHANCE = 0.05f;
+const uint32_t PRESIMULATE_TICKS = 1000;
 
 uint16_t newMobID()
 {
@@ -472,6 +473,10 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 		p->state = p->state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
 		p->killTarget = nullptr;
 		p->lastAttack = std::chrono::system_clock::from_time_t(0);
+		if (p->skills.size() == 0) {
+			p->skills.push_back((uint16_t) Skills::DISPERSOR);
+			p->sendSkillBarUpdate();
+		}
 	}
 	break;
 	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_CommandRun:
@@ -512,43 +517,81 @@ void updateCollideables(std::vector<std::unique_ptr<C>>& collideables) {
 		collideables.erase(collideables.begin() + despawns[i]);
 }
 
+void initGameThread(TestContactListener& tcl)
+{
+	flatbuffers::FlatBufferBuilder builder(1);
+	const auto guard = gameState.lock();
+
+	// init physics
+	gameState.b2world = std::make_unique<b2World>(b2Vec2(0, 0));
+	gameState.b2world->SetContactListener(&tcl);
+
+	// load level
+	gameState.level = std::make_unique<Level>();
+	auto path = gameState.options["level"].as<std::string>();
+	loadLevel(path);
+
+	// send level to clients
+	auto levelOffset = serializeLevel(builder);
+	auto data = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_Level, levelOffset.Union());
+	sendToAll(data);
+
+	// shuffle the players to give them random species unless it's a test
+	if (gameState.options.count("test") == 0)
+		std::shuffle(gameState.players.begin(), gameState.players.end(), std::mt19937(std::random_device()()));
+
+	uint8_t lastSpecies = 0;
+	for (auto &player : gameState.players)
+	{
+		player->species = lastSpecies;
+		lastSpecies++;
+		spawnPlayer(*player);
+	}
+}
+
+void gameThreadTick(int& civilianTimer)
+{
+	// update physics
+	gameState.b2world->Step(1 / 20.0, 8, 3);
+
+	updateCollideables(gameState.inkParticles);
+
+	// update civilians
+	for (auto it = gameState.civilians.cbegin(); it != gameState.civilians.cend();) {
+		it->second->update();
+		if (it->second->toBeDeleted)
+			it = gameState.civilians.erase(it);
+		else
+			++it;
+	}
+
+	// update players
+	for (auto &p : gameState.players)
+		p->update();
+
+	// spawn civilians if need be
+	if (!gameState.options["ghosttown"].as<bool>() && civilianTimer == 0 && gameState.civilians.size() < MAX_CIVILIANS)
+	{
+		spawnCivilians();
+		civilianTimer = CIVILIAN_TIME;
+	}
+	else
+		civilianTimer = std::max(0, civilianTimer - 1);
+}
+
 void gameThread()
 {
 	TestContactListener tcl;
 	flatbuffers::FlatBufferBuilder builder(1);
 
-	{
-		const auto guard = gameState.lock();
-
-		// init physics
-		gameState.b2world = std::make_unique<b2World>(b2Vec2(0, 0));
-		gameState.b2world->SetContactListener(&tcl);
-
-		// load level
-		gameState.level = std::make_unique<Level>();
-		auto path = gameState.options["level"].as<std::string>();
-		loadLevel(path);
-
-		// send level to clients
-		auto levelOffset = serializeLevel(builder);
-		auto data = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_Level, levelOffset.Union());
-		sendToAll(data);
-
-		// shuffle the players to give them random species unless it's a test
-		if (gameState.options.count("test") == 0)
-			std::shuffle(gameState.players.begin(), gameState.players.end(), std::mt19937(std::random_device()()));
-
-		uint8_t lastSpecies = 0;
-		for (auto &player : gameState.players)
-		{
-			player->species = lastSpecies;
-			lastSpecies++;
-			spawnPlayer(*player);
-		}
-	}
-
 	int civilianTimer = 0;
 	uint64_t roundTimer = ROUND_LENGTH;
+
+	initGameThread(tcl);
+
+	for (uint32_t i = 0; i < PRESIMULATE_TICKS; i++) {
+		gameThreadTick(civilianTimer);
+	}
 
 	// game loop
 	while (true)
@@ -569,32 +612,7 @@ void gameThread()
 			exit(0);
 		}
 
-		// update physics
-		gameState.b2world->Step(1 / 20.0, 8, 3);
-
-		updateCollideables(gameState.inkParticles);
-
-		// update civilians
-		for (auto it = gameState.civilians.cbegin(); it != gameState.civilians.cend();) {
-			it->second->update();
-			if (it->second->toBeDeleted)
-				it = gameState.civilians.erase(it);
-			else
-				++it;
-		}
-
-		// update players
-		for (auto &p : gameState.players)
-			p->update();
-
-		// spawn civilians if need be
-		if (!gameState.options["ghosttown"].as<bool>() && civilianTimer == 0 && gameState.civilians.size() < MAX_CIVILIANS)
-		{
-			spawnCivilians();
-			civilianTimer = CIVILIAN_TIME;
-		}
-		else
-			civilianTimer = std::max(0, civilianTimer - 1);
+		gameThreadTick(civilianTimer);
 
 		// send data to everyone
 		for (auto &p : gameState.players)
