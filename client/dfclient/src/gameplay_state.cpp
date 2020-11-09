@@ -314,10 +314,6 @@ void GameplayState::ProcessWorldState(const void* ev) {
 
 		if (mobData->relation() == FlatBuffGenerated::PlayerRelation_None) {
 			mob.relationMarker.reset(nullptr);
-		} else if (mobData->relation() == FlatBuffGenerated::PlayerRelation_Close) {
-			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), _resources.textures["bluecircle.png"].get());
-			mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
-			mob.relationMarker->setLayer((unsigned short)Layers::INDICATOR);
 		} else if (mobData->relation() == FlatBuffGenerated::PlayerRelation_Targeted) {
 			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), _resources.textures["redcircle.png"].get());
 			mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
@@ -384,6 +380,35 @@ void GameplayState::ProcessWorldState(const void* ev) {
 		}
 	}
 	this->currentHidingSpot = worldState->currentHidingSpot()->str();
+
+	for (auto& i : this->inkParticles)
+		i.second.seen = false;
+
+	for (int i = 0; i < worldState->inkParticles()->size(); i++) {
+		auto ink = worldState->inkParticles()->Get(i);
+		auto inkItr = inkParticles.find(ink->inkID());
+		if (inkItr == inkParticles.end()) {
+			// not found, make a new one
+			InkParticle newInk;
+			int inkNum = rand() % 3 + 1;
+			std::string inkTexName = std::string("ink") + std::to_string(inkNum) + ".png";
+			newInk.sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[inkTexName].get());
+			newInk.sprite->setLayer((unsigned short) Layers::INK_PARTICLES);
+			newInk.sprite->setScale(120./330.); // todo: fix my life
+
+			inkParticles.insert({ink->inkID(), std::move(newInk)});
+			inkItr = inkParticles.find(ink->inkID());
+		}
+		inkItr->second.sprite->setPosition(ink->pos()->x() * METERS2PIXELS, -ink->pos()->y() * METERS2PIXELS);
+		inkItr->second.seen = true;
+	}
+
+	for (auto it = this->inkParticles.begin(); it != this->inkParticles.end();) {
+		if (!it->second.seen)
+			it = this->inkParticles.erase(it);
+		else
+			++it;
+	}
 }
 
 void GameplayState::ProcessSkillBarUpdate(const void* ev) {
@@ -622,12 +647,35 @@ void SendCommandRun(bool run) {
 	SendData(builder);
 }
 
+void GameplayState::TryUseSkill(uint8_t skillPos) {
+	if (skillPos >= skillIcons.size())
+		return;
+	const float screenWidth = ncine::theApplication().width();
+	const float screenHeight = ncine::theApplication().height();
+	auto &mouseState = ncine::theApplication().inputManager().mouseState();
+	const float serverX = (this->mySprite->position().x + (mouseState.x - screenWidth / 2) * 1.5f) * PIXELS2METERS;
+	const float serverY = -(this->mySprite->position().y + (mouseState.y - screenHeight / 2) * 1.5f) * PIXELS2METERS;
+	flatbuffers::FlatBufferBuilder builder;
+	FlatBuffGenerated::Vec2 mousePos{serverX, serverY};
+	auto cmdSkill = FlatBuffGenerated::CreateCommandSkill(builder, skillPos, &mousePos);
+	auto message = FlatBuffGenerated::CreateClientMessage(builder, FlatBuffGenerated::ClientMessageUnion_CommandSkill, cmdSkill.Union());
+	builder.Finish(message);
+	SendData(builder);
+}
+
 void GameplayState::OnKeyPressed(const ncine::KeyboardEvent &event) {
 	if (event.sym == ncine::KeySym::Q)
 		SendCommandRun(true);
 	
 	if (event.sym == ncine::KeySym::TAB)
 		this->showHighscores = true;
+	
+	if (event.sym == ncine::KeySym::N1)
+		this->TryUseSkill(0);
+	if (event.sym == ncine::KeySym::N2)
+		this->TryUseSkill(1);
+	if (event.sym == ncine::KeySym::N3)
+		this->TryUseSkill(2);
 
 	if (event.sym == ncine::KeySym::ESCAPE)
 		this->showQuitDialog = !this->showQuitDialog;

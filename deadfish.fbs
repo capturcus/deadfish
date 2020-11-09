@@ -94,6 +94,7 @@ table CommandRun {
 
 table CommandSkill {
   skill:uint8;
+  mousePos:Vec2;
 }
 
 table JoinRequest {
@@ -127,7 +128,6 @@ enum MobState: byte {
 
 enum PlayerRelation: byte {
   None,
-  Close,
   Targeted
 }
 
@@ -146,9 +146,15 @@ table Indicator {
   visible:bool;
 }
 
+table InkParticle {
+  inkID:uint16;
+  pos:Vec2;
+}
+
 table WorldState {
   mobs:[Mob];
   indicators:[Indicator];
+  inkParticles:[InkParticle];
   stepsRemaining:uint64;
   currentHidingSpot:string;
 }
@@ -169,7 +175,6 @@ table DeathReport {
 
 enum SimpleServerEventType: byte {
   GameEnded,
-  TooFarToKill,
   GameAlreadyInProgress
 }
 

@@ -9,8 +9,9 @@
 #include "deadfish.hpp"
 #include "game_thread.hpp"
 #include "level_loader.hpp"
+#include "skills.hpp"
 
-const float GOLDFISH_CHANCE = 0.5f;
+const float GOLDFISH_CHANCE = 0.05f;
 
 uint16_t newMobID()
 {
@@ -160,10 +161,7 @@ makePlayerIndicator(flatbuffers::FlatBufferBuilder &builder,
 flatbuffers::Offset<FlatBuffGenerated::Mob> createFBMob(flatbuffers::FlatBufferBuilder &builder,
 	Player& player, const Mob* m)
 {
-	auto distance = b2Distance(m->body->GetPosition(), player.body->GetPosition());
 	FlatBuffGenerated::PlayerRelation relation = FlatBuffGenerated::PlayerRelation_None;
-	if (distance < KILL_DISTANCE && player.mobID != m->mobID)
-		relation = FlatBuffGenerated::PlayerRelation_Close;
 	if (player.killTarget == m)
 		relation = FlatBuffGenerated::PlayerRelation_Targeted;
 	auto posVec = FlatBuffGenerated::Vec2(m->body->GetPosition().x, m->body->GetPosition().y);
@@ -219,7 +217,17 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 	auto indicatorsOffset = builder.CreateVector(indicators);
 	auto hidingspot = builder.CreateString(hspotname);
 
-	auto worldState = FlatBuffGenerated::CreateWorldState(builder, mobsOffset, indicatorsOffset, framesRemaining, hidingspot);
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::InkParticle>> inkParticles;
+	std::vector<FlatBuffGenerated::Vec2> inkVecs;
+	for (auto& ink : gameState.inkParticles) {
+		FlatBuffGenerated::Vec2 pos = b2f(ink->body->GetPosition());
+		auto inkOffset = FlatBuffGenerated::CreateInkParticle(builder, ink->inkID, &pos);
+		inkParticles.push_back(inkOffset);
+	}
+
+	auto inkParticlesOffset = builder.CreateVector(inkParticles);
+
+	auto worldState = FlatBuffGenerated::CreateWorldState(builder, mobsOffset, indicatorsOffset, inkParticlesOffset, framesRemaining, hidingspot);
 
 	return worldState.Union();
 }
@@ -247,11 +255,8 @@ class TestContactListener : public b2ContactListener
 		if (collideableA && !collideableA->toBeDeleted &&
 			collideableB && !collideableB->toBeDeleted)
 		{
-			if (auto hidingSpot = dynamic_cast<HidingSpot*>(collideableA)) {
-				hidingSpot->playersInside.erase(dynamic_cast<Player*>(collideableB));
-			} else if ((hidingSpot = dynamic_cast<HidingSpot*>(collideableB))) {
-				hidingSpot->playersInside.erase(dynamic_cast<Player*>(collideableA));
-			}
+			collideableA->endCollision(*collideableB);
+			collideableB->endCollision(*collideableA);
 		}
 	}
 };
@@ -391,8 +396,17 @@ Mob &findMobById(uint16_t id)
 
 void executeCommandKill(Player &player, uint16_t id)
 {
+	if (player.bombsAffecting > 0)
+		return;
 	player.lastAttack = std::chrono::system_clock::now();
 	auto &m = findMobById(id);
+	try {
+		auto &otherPlayer = dynamic_cast<Player &>(m);
+		if (otherPlayer.killTarget && otherPlayer.killTarget->mobID == player.mobID) {
+			// they're already targeting us, abort
+			return;
+		}
+	} catch(...) {}
 	auto distance = b2Distance(m.body->GetPosition(), player.body->GetPosition());
 	if (distance < INSTA_KILL_DISTANCE)
 	{
@@ -400,15 +414,7 @@ void executeCommandKill(Player &player, uint16_t id)
 		m.handleKill(player);
 		return;
 	}
-	if (distance < KILL_DISTANCE)
-	{
-		player.killTarget = &m;
-		return;
-	}
-	// send message too far
-	flatbuffers::FlatBufferBuilder builder(1);
-	auto ev = FlatBuffGenerated::CreateSimpleServerEvent(builder, FlatBuffGenerated::SimpleServerEventType_TooFarToKill);
-	sendServerMessage(player, builder, FlatBuffGenerated::ServerMessageUnion_SimpleServerEvent, ev.Union());
+	player.killTarget = &m;
 }
 
 void sendHighscores()
@@ -424,6 +430,24 @@ void sendHighscores()
 	auto update = FlatBuffGenerated::CreateHighscoreUpdate(builder, v);
 	auto data = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_HighscoreUpdate, update.Union());
 	sendToAll(data);
+}
+
+void executeSkill(Player& p, uint8_t skillPos, b2Vec2 mousePos) {
+	if (skillPos >= p.skills.size()) {
+		std::cout << "skillPos out of bounds\n";
+		return;
+	}
+	if (p.skills[skillPos] == (uint16_t) Skills::SKILL_NONE)
+		return;
+	Skills skill = (Skills) p.skills[skillPos];
+	auto skillHandler = skillHandlers[(uint16_t) skill];
+	if (skillHandler == nullptr) {
+		std::cout << "no such skill handler " << (uint16_t) skill << "\n";
+	}
+	skillHandler(p, skill, mousePos);
+	std::cout << "skills size " << p.skills.size() << "\n";
+	p.skills.erase(p.skills.begin() + skillPos);
+	p.sendSkillBarUpdate();
 }
 
 void gameOnMessage(dfws::Handle hdl, const std::string& payload)
@@ -462,11 +486,30 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 		executeCommandKill(*p, event->mobID());
 	}
 	break;
+	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_CommandSkill:
+	{
+		const auto event = clientMessage->event_as_CommandSkill();
+		executeSkill(*p, event->skill(), {event->mousePos()->x(), event->mousePos()->y()});
+	}
+	break;
 
 	default:
 		std::cout << "gameOnMessage: some other message type received\n";
 		break;
 	}
+}
+
+template<typename C>
+void updateCollideables(std::vector<std::unique_ptr<C>>& collideables) {
+	std::vector<int> despawns;
+	for (size_t i = 0; i < collideables.size(); i++)
+	{
+		collideables[i]->update();
+		if (collideables[i]->toBeDeleted)
+			despawns.push_back(i);
+	}
+	for (int i = despawns.size() - 1; i >= 0; i--)
+		collideables.erase(collideables.begin() + despawns[i]);
 }
 
 void gameThread()
@@ -529,18 +572,8 @@ void gameThread()
 		// update physics
 		gameState.b2world->Step(1 / 20.0, 8, 3);
 
-		// update civilians
-		std::vector<int> despawns;
-		for (size_t i = 0; i < gameState.civilians.size(); i++)
-		{
-			gameState.civilians[i]->update();
-			if (gameState.civilians[i]->toBeDeleted)
-				despawns.push_back(i);
-		}
-		for (int i = despawns.size() - 1; i >= 0; i--)
-		{
-			gameState.civilians.erase(gameState.civilians.begin() + despawns[i]);
-		}
+		updateCollideables(gameState.civilians);
+		updateCollideables(gameState.inkParticles);
 
 		// update players
 		for (auto &p : gameState.players)
