@@ -240,10 +240,26 @@ Mob::~Mob()
 	}
 }
 
+void handleGoldfishKill(Player& killer) {
+	if (killer.skills.size() == MAX_SKILLS)
+		return;
+	uint16_t skill = rand() % (int) Skills::SKILLS_MAX;
+	killer.skills.push_back(skill);
+	flatbuffers::FlatBufferBuilder builder;
+	auto skills = builder.CreateVector(killer.skills);
+	auto ev = FlatBuffGenerated::CreateSkillBarUpdate(builder, skills);
+	sendServerMessage(killer, builder, FlatBuffGenerated::ServerMessageUnion_SkillBarUpdate, ev.Union());
+	std::cout << "updated skills of player " << killer.name << "\n";
+}
+
 void Civilian::handleKill(Player& killer) {
 	if (killer.isDead())
 		return;
 	this->toBeDeleted = true;
+	if (this->species == GOLDFISH_SPECIES) {
+		handleGoldfishKill(killer);
+		return;
+	}
 	killer.points += CIVILIAN_PENALTY;
 
 	// send the deathreport killed npc message

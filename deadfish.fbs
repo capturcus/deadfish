@@ -92,6 +92,10 @@ table CommandRun {
   run:bool;
 }
 
+table CommandSkill {
+  skill:uint8;
+}
+
 table JoinRequest {
   name:string;
 }
@@ -104,6 +108,7 @@ union ClientMessageUnion {
   CommandMove,
   CommandKill,
   CommandRun,
+  CommandSkill,
   JoinRequest,
   PlayerReady
 }
@@ -185,13 +190,18 @@ table InitMetadata {
   yourPlayerID:uint16;
 }
 
+table SkillBarUpdate {
+  skills:[uint16];
+}
+
 union ServerMessageUnion {
   DeathReport,
   HighscoreUpdate,
   SimpleServerEvent,
   InitMetadata,
   WorldState,
-  Level
+  Level,
+  SkillBarUpdate
 }
 
 table ServerMessage {
