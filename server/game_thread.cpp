@@ -99,6 +99,9 @@ struct FOVCallback
 	{
 		auto data = (Collideable *)fixture->GetBody()->GetUserData();
 		// on return 1.f the currently reported fixture will be ignored and the raycast will continue
+		if (ignoreMobs && dynamic_cast<Mob*>(data))
+			return 1.f;
+
 		if (data && data != target && player && !data->obstructsSight(player))
 			return 1.f;
 		if (fraction < minfraction)
@@ -110,26 +113,28 @@ struct FOVCallback
 	}
 	float minfraction = 1.f;
 	b2Fixture *closest = nullptr;
-	Mob *target = nullptr;
+	Collideable *target = nullptr;
 	Player *player = nullptr;
+	bool ignoreMobs = false;
 };
 
-bool playerSeeMob(Player &p, Mob &m)
+bool playerSeeCollideable(Player &p, Collideable &c)
 {
-	if (m.isDead())
-		return false; // can't see dead ppl lol
 	FOVCallback fovCallback;
-	fovCallback.target = &m;
+	fovCallback.target = &c;
 	fovCallback.player = &p;
 	auto ppos = p.deathTimeout > 0 ? g2b(p.targetPosition) : p.body->GetPosition();
-	auto mpos = m.body->GetPosition();
-	gameState.b2world->RayCast(&fovCallback, ppos, mpos);
-	return fovCallback.closest && fovCallback.closest->GetBody() == m.body;
+	auto cpos = c.body->GetPosition();
+	gameState.b2world->RayCast(&fovCallback, ppos, cpos);
+	return fovCallback.closest && fovCallback.closest->GetBody() == c.body;
 }
 
-bool mobSeePoint(Mob &m, b2Vec2 &point)
+bool mobSeePoint(Mob &m, const b2Vec2 &point, bool ignoreMobs)
 {
+	if (b2Distance(m.body->GetPosition(), point) == 0.0f)
+		return true;
 	FOVCallback fovCallback;
+	fovCallback.ignoreMobs = ignoreMobs;
 	gameState.b2world->RayCast(&fovCallback, m.body->GetPosition(), point);
 	return fovCallback.minfraction == 1.f;
 }
@@ -154,7 +159,7 @@ makePlayerIndicator(flatbuffers::FlatBufferBuilder &builder,
 	if (force != 0)
 		angle = angleFromVector(toTarget);
 	return FlatBuffGenerated::CreateIndicator(builder, angle,
-		force, playerSeeMob(rootPlayer, otherPlayer));
+		force, playerSeeCollideable(rootPlayer, otherPlayer));
 }
 
 flatbuffers::Offset<FlatBuffGenerated::Mob> createFBMob(flatbuffers::FlatBufferBuilder &builder,
@@ -180,7 +185,7 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 	for (auto &p : gameState.civilians)
 	{
 		auto &c = p.second;
-		if (!playerSeeMob(player, *c))
+		if (!playerSeeCollideable(player, *c))
 			continue;
 		auto mob = createFBMob(builder, player, c.get());
 		mobs.push_back(mob);
@@ -196,7 +201,7 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 		bool canSeeOther;
 		if (differentPlayer)
 		{
-			canSeeOther = playerSeeMob(player, *p);
+			canSeeOther = playerSeeCollideable(player, *p);
 			auto indicator = makePlayerIndicator(builder, player, *p);
 			indicators.push_back(indicator);
 		}
@@ -220,6 +225,8 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::InkParticle>> inkParticles;
 	std::vector<FlatBuffGenerated::Vec2> inkVecs;
 	for (auto& ink : gameState.inkParticles) {
+		if (!playerSeeCollideable(player, *ink))
+			continue;
 		FlatBuffGenerated::Vec2 pos = b2f(ink->body->GetPosition());
 		auto inkOffset = FlatBuffGenerated::CreateInkParticle(builder, ink->inkID, &pos);
 		inkParticles.push_back(inkOffset);
@@ -227,7 +234,18 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 
 	auto inkParticlesOffset = builder.CreateVector(inkParticles);
 
-	auto worldState = FlatBuffGenerated::CreateWorldState(builder, mobsOffset, indicatorsOffset, inkParticlesOffset, framesRemaining, hidingspot);
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::MobManipulator>> manipulators;
+	for (auto& manipulator : gameState.mobManipulators) {
+		if (!mobSeePoint(player, manipulator.pos, true))
+			continue;
+		FlatBuffGenerated::Vec2 pos = {manipulator.pos.x, manipulator.pos.y};
+		auto manOffset = FlatBuffGenerated::CreateMobManipulator(builder, &pos, manipulator.dispersor);
+		manipulators.push_back(manOffset);
+	}
+
+	auto manipulatorsOffset = builder.CreateVector(manipulators);
+
+	auto worldState = FlatBuffGenerated::CreateWorldState(builder, mobsOffset, indicatorsOffset, inkParticlesOffset, framesRemaining, manipulatorsOffset, hidingspot);
 
 	return worldState.Union();
 }

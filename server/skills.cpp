@@ -102,6 +102,10 @@ bool InkParticle::obstructsSight(UNUSED Player* p) {
 
 bool executeSkillMobManipulator(UNUSED Player& p, UNUSED Skills skill, UNUSED b2Vec2 mousePos) {
 	std::cout << "mob manipulator " << (uint16_t) skill << "\n";
+	MobManipulator manipulator;
+	manipulator.pos = p.body->GetPosition();
+	manipulator.dispersor = skill == Skills::DISPERSOR;
+	gameState.mobManipulators.push_back(manipulator);
 	return true;
 }
 

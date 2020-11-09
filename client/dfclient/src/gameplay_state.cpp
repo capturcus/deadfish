@@ -381,6 +381,7 @@ void GameplayState::ProcessWorldState(const void* ev) {
 	}
 	this->currentHidingSpot = worldState->currentHidingSpot()->str();
 
+	// handle ink particles
 	for (auto& i : this->inkParticles)
 		i.second.seen = false;
 
@@ -408,6 +409,18 @@ void GameplayState::ProcessWorldState(const void* ev) {
 			it = this->inkParticles.erase(it);
 		else
 			++it;
+	}
+
+	this->manipulators.clear();
+	// handle mob manipulators
+	for (int i = 0; i < worldState->mobManipulators()->size(); i++) {
+		auto manipulator = worldState->mobManipulators()->Get(i);
+		auto manipTexture = manipulator->dispersor() ? "dispersor.png" : "attractor.png";
+		auto sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[manipTexture].get());
+		sprite->setLayer((unsigned short) Layers::MOB_MANIPULATORS);
+		sprite->setPosition({manipulator->pos()->x() * METERS2PIXELS, -manipulator->pos()->y() * METERS2PIXELS});
+		sprite->setScale(120./524.); // xd
+		this->manipulators.push_back(std::move(sprite));
 	}
 }
 

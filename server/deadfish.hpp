@@ -210,6 +210,11 @@ struct Level {
 	glm::vec2 size;
 };
 
+struct MobManipulator {
+	b2Vec2 pos;
+	bool dispersor;
+};
+
 struct GameState {
 private:
 	std::mutex mut;
@@ -222,6 +227,7 @@ public:
 	std::vector<std::unique_ptr<Player>> players;
 	std::map<uint16_t, std::unique_ptr<Civilian>> civilians;
 	std::vector<std::unique_ptr<InkParticle>> inkParticles;
+	std::vector<MobManipulator> mobManipulators;
 
 	inline std::unique_ptr<std::lock_guard<std::mutex>> lock() {
 		return std::make_unique<std::lock_guard<std::mutex>>(mut);

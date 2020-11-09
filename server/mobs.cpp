@@ -130,7 +130,7 @@ void Player::update()
 	if (this->bombsAffecting > 0)
 		this->killTarget = nullptr;
 
-	if (this->killTarget && !playerSeeMob(*this, *this->killTarget)) {
+	if (this->killTarget && !playerSeeCollideable(*this, *this->killTarget)) {
 		this->killTarget = nullptr;
 		this->targetPosition = b2g(this->body->GetPosition());
 	}
