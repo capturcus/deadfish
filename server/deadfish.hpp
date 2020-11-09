@@ -126,6 +126,7 @@ struct Civilian : public Mob {
 	std::string previousNavpoint;
 	int slowFrames = 0;
 	b2Vec2 lastPos;
+	bool seenAManip;
 
 	void handleKill(Player& killer) override;
 	void update() override;
@@ -213,6 +214,7 @@ struct Level {
 struct MobManipulator {
 	b2Vec2 pos;
 	bool dispersor;
+	uint16_t framesLeft;
 };
 
 struct GameState {

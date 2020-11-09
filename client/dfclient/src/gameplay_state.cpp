@@ -411,15 +411,15 @@ void GameplayState::ProcessWorldState(const void* ev) {
 			++it;
 	}
 
-	this->manipulators.clear();
 	// handle mob manipulators
+	this->manipulators.clear();
 	for (int i = 0; i < worldState->mobManipulators()->size(); i++) {
 		auto manipulator = worldState->mobManipulators()->Get(i);
 		auto manipTexture = manipulator->dispersor() ? "dispersor.png" : "attractor.png";
 		auto sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[manipTexture].get());
 		sprite->setLayer((unsigned short) Layers::MOB_MANIPULATORS);
 		sprite->setPosition({manipulator->pos()->x() * METERS2PIXELS, -manipulator->pos()->y() * METERS2PIXELS});
-		sprite->setScale(120./524.); // xd
+		sprite->setScale(manipulator->dispersor() ? 120./524. : 120./288.); // xd
 		this->manipulators.push_back(std::move(sprite));
 	}
 }

@@ -455,8 +455,6 @@ void executeSkill(Player& p, uint8_t skillPos, b2Vec2 mousePos) {
 		std::cout << "skillPos out of bounds\n";
 		return;
 	}
-	if (p.skills[skillPos] == (uint16_t) Skills::SKILL_NONE)
-		return;
 	Skills skill = (Skills) p.skills[skillPos];
 	auto skillHandler = skillHandlers[(uint16_t) skill];
 	if (skillHandler == nullptr) {
@@ -491,10 +489,6 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 		p->state = p->state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
 		p->killTarget = nullptr;
 		p->lastAttack = std::chrono::system_clock::from_time_t(0);
-		if (p->skills.size() == 0) {
-			p->skills.push_back((uint16_t) Skills::DISPERSOR);
-			p->sendSkillBarUpdate();
-		}
 	}
 	break;
 	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_CommandRun:
@@ -595,6 +589,14 @@ void gameThreadTick(int& civilianTimer)
 	}
 	else
 		civilianTimer = std::max(0, civilianTimer - 1);
+
+	for (auto it = gameState.mobManipulators.begin(); it != gameState.mobManipulators.end();) {
+		it->framesLeft--;
+		if (it->framesLeft == 0)
+			it = gameState.mobManipulators.erase(it);
+		else
+			it++;
+	}
 }
 
 void gameThread()

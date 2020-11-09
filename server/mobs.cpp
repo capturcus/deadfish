@@ -6,6 +6,7 @@
 
 #include "deadfish.hpp"
 #include "game_thread.hpp"
+#include "../common/geometry.hpp"
 
 std::ostream &operator<<(std::ostream &os, glm::vec2 &v)
 {
@@ -180,6 +181,28 @@ void Civilian::collisionResolution() {
 
 void Civilian::update()
 {
+	std::vector<MobManipulator> seenManips;
+	for (auto &m : gameState.mobManipulators) {
+		if (mobSeePoint(*this, m.pos, true))
+			seenManips.push_back(m);
+	}
+	if (seenManips.size() > 0) {
+		this->seenAManip = true;
+		auto last = seenManips.back();
+		if (!last.dispersor)
+			this->targetPosition = b2g(last.pos);
+		else {
+			auto toManip = this->body->GetPosition() - last.pos;
+			toManip.Normalize();
+			this->targetPosition = b2g(this->body->GetPosition() + toManip);
+		}
+		Mob::update();
+		return;
+	} else if (this->seenAManip) {
+		this->collisionResolution();
+		this->seenAManip = false;
+	}
+
 	if (this->bombsAffecting == 0 && b2Distance(this->body->GetPosition(), this->lastPos) < (WALK_SPEED/20) * 0.4f) {
 		slowFrames++;
 		if (slowFrames == CIV_SLOW_FRAMES) {
@@ -268,7 +291,7 @@ Mob::~Mob()
 void handleGoldfishKill(Player& killer) {
 	if (killer.skills.size() == MAX_SKILLS)
 		return;
-	uint16_t skill = (uint16_t) (rand() % 2 == 0 ? Skills::INK_BOMB : Skills::BLINK);
+	uint16_t skill = rand() % (uint16_t) Skills::SKILLS_MAX;
 	killer.skills.push_back(skill);
 	killer.sendSkillBarUpdate();
 }
