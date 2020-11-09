@@ -159,7 +159,6 @@ makePlayerIndicator(flatbuffers::FlatBufferBuilder &builder,
 flatbuffers::Offset<FlatBuffGenerated::Mob> createFBMob(flatbuffers::FlatBufferBuilder &builder,
 	Player& player, const Mob* m)
 {
-	auto distance = b2Distance(m->body->GetPosition(), player.body->GetPosition());
 	FlatBuffGenerated::PlayerRelation relation = FlatBuffGenerated::PlayerRelation_None;
 	if (player.killTarget == m)
 		relation = FlatBuffGenerated::PlayerRelation_Targeted;

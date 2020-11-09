@@ -87,6 +87,9 @@ float Player::calculateSpeed() {
 void Player::reset()
 {
 	gameState.b2world->DestroyBody(this->body);
+	for(auto& hspot : gameState.level->hidingspots) {
+		hspot->playersInside.erase(this);
+	}
 	this->killTarget = nullptr;
 	this->toBeDeleted = false;
 	this->state = MobState::WALKING;

@@ -23,6 +23,6 @@ def mapAnimKeys(key):
 
 # sort folders so that they are in the order accepted by the client
 folders = sorted(folders, key=lambda name: name.split(".")[0]+mapAnimKeys(name.split(".")[1]))
-folders = list(map(lambda x: FISHPATH+"/"+x, folders))
+folders = [FISHPATH + "/" + x for x in folders]
 
 subprocess.run(["./spritepacker.py", "--imgsinrow", "10", "--imgsize", "120", "--out", "fish.png", "--paths"] + folders)

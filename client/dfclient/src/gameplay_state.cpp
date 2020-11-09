@@ -60,7 +60,7 @@ ncine::Vector2i spriteCoords(int spriteNum) {
 	return {col * FISH_FRAME_WIDTH, row * FISH_FRAME_HEIGHT};
 }
 
-std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species, const std::string& spritesheet, uint16_t maxAnimations) {
+std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species, const std::string& spritesheet, uint16_t maxAnimations, Layers layer) {
 	std::unique_ptr<ncine::AnimatedSprite> ret = std::make_unique<ncine::AnimatedSprite>(parent, _resources.textures[spritesheet].get());
 	int currentImg = species * IMGS_PER_SPECIES;
 	for (int animNumber = 0; animNumber < maxAnimations; animNumber++) {
@@ -79,17 +79,17 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine:
 	ret->setAnimationIndex(0);
 	ret->setFrame(0);
 	ret->setPaused(false);
-	ret->setLayer((unsigned short)Layers::MOBS);
+	ret->setLayer((unsigned short)layer);
 	return std::move(ret);
 }
 
 std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewMobSprite(ncine::SceneNode* parent, uint16_t species) {
 	if (species == GOLDFISH_SPECIES) {
 		std::string goldfish("goldfish.png");
-		return this->CreateNewAnimSprite(parent, 0, goldfish, 1);
+		return this->CreateNewAnimSprite(parent, 0, goldfish, 1, Layers::MOBS);
 	}
 	std::string fish("fish.png");
-	return this->CreateNewAnimSprite(parent, species, fish, FISH_ANIMATIONS::MAX);
+	return this->CreateNewAnimSprite(parent, species, fish, FISH_ANIMATIONS::MAX, Layers::MOBS);
 }
 
 /**
@@ -414,7 +414,7 @@ void GameplayState::ProcessWorldState(const void* ev) {
 void GameplayState::ProcessSkillBarUpdate(const void* ev) {
 	std::cout << "skill bar update received\n";
 	auto skillBarUpdate = (const FlatBuffGenerated::SkillBarUpdate*) ev;
-	this->skillIcons.resize(0);
+	this->skillIcons.clear();
 	auto& rootNode = ncine::theApplication().rootNode();
 	for (int i = 0; i < skillBarUpdate->skills()->size(); i++) {
 		uint16_t skill = skillBarUpdate->skills()->Get(i);
