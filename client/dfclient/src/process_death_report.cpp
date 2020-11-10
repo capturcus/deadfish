@@ -33,7 +33,8 @@ static const char* multikillText[12] = {
 	"KILLHARMONIC"
 }; 
 
-void GameplayState::ProcessDeathReport(const FlatBuffGenerated::DeathReport* deathReport) {
+void GameplayState::ProcessDeathReport(void const* ev) {
+	auto deathReport = (const FlatBuffGenerated::DeathReport*) ev;
 	auto& rootNode = ncine::theApplication().rootNode();
 	std::vector<std::unique_ptr<ncine::TextNode>> texts;
 	const float screenWidth = ncine::theApplication().width();
