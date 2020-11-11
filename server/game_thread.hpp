@@ -18,3 +18,4 @@ bool mobSeePoint(Mob &m, b2Vec2 &point);
 void sendToAll(std::string &data);
 void sendHighscores();
 void sendGameAlreadyInProgress(dfws::Handle hdl);
+void physicsInitMob(Mob *m, glm::vec2 pos, float angle, float radius, uint16 categoryBits);

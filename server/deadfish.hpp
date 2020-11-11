@@ -1,5 +1,6 @@
 #pragma once
 #include <unordered_map>
+#include <map>
 #include <string>
 #include <mutex>
 #include <memory>
@@ -87,7 +88,7 @@ struct InkParticle :
 	uint16_t inkID;
 	uint16_t lifetimeFrames;
 
-	InkParticle(b2Body* b, Player& owner);
+	InkParticle(b2Body* b);
 
 	void handleCollision(Collideable& other) override;
 	void endCollision(Collideable& other) override;
@@ -219,7 +220,7 @@ public:
 
 	std::unique_ptr<b2World> b2world = nullptr;
 	std::vector<std::unique_ptr<Player>> players;
-	std::vector<std::unique_ptr<Civilian>> civilians;
+	std::map<uint16_t, std::unique_ptr<Civilian>> civilians;
 	std::vector<std::unique_ptr<InkParticle>> inkParticles;
 
 	inline std::unique_ptr<std::lock_guard<std::mutex>> lock() {

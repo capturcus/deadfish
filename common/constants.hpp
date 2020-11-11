@@ -38,3 +38,4 @@ enum class Skills {
 };
 
 const int MAX_SKILLS = 3;
+const float BLINK_RANGE = 10.f;
