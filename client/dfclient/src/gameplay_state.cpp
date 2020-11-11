@@ -419,7 +419,6 @@ void GameplayState::ProcessWorldState(const void* ev) {
 		auto sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[manipTexture].get());
 		sprite->setLayer((unsigned short) Layers::MOB_MANIPULATORS);
 		sprite->setPosition({manipulator->pos()->x() * METERS2PIXELS, -manipulator->pos()->y() * METERS2PIXELS});
-		sprite->setScale(manipulator->dispersor() ? 120./524. : 120./288.); // xd
 		this->manipulators.push_back(std::move(sprite));
 	}
 }

@@ -168,7 +168,7 @@ void Civilian::collisionResolution() {
 		auto spawnPos = g2b(navpoint->position);
 
 		// not where we were currently going but somewhere we can go immediately from here
-		if (this->currentNavpoint != spawnName && mobSeePoint(*this, spawnPos)) {
+		if (this->currentNavpoint != spawnName && mobSeePoint(*this, spawnPos, true)) {
 			this->previousNavpoint = "";
 			this->targetPosition = randFromCircle(navpoint->position, navpoint->radius);
 			std::cout << "resolved collision - changed direction\n";
