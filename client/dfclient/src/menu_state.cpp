@@ -17,8 +17,12 @@
 #include "game_data.hpp"
 #include "menu_state.hpp"
 #include "resources.hpp"
+<<<<<<< HEAD
 #include "util.hpp"
 #include "http_client.hpp"
+=======
+#include "text_creator.hpp"
+>>>>>>> dbcbfee (The glorious birth of TextCreator in its...)
 
 namespace nc = ncine;
 

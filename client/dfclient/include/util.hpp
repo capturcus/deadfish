@@ -18,7 +18,6 @@ bool IntersectsNode(float x, float y, nc::DrawableNode& node);
 void SendData(flatbuffers::FlatBufferBuilder& builder);
 nc::MeshSprite* createArc(nc::SceneNode& rootNode, nc::Texture* texture,
 	float x, float y, float outerRadius, float innerRadius, int degrees);
-tweeny::tween<int> CreateTextTween(ncine::TextNode* textPtr, int from = 255, int hold = 60, int decay = 60);
 
 namespace deadfish {
 
