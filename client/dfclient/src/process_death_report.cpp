@@ -39,19 +39,55 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 	std::vector<std::unique_ptr<ncine::TextNode>> texts;
 	const float screenWidth = ncine::theApplication().width();
 	const float screenHeight = ncine::theApplication().height();
+	const float textsXPos[] = {0.41f * screenWidth, 0.59f * screenWidth};
+	const float textsYPos = 0.5 * screenHeight;
 
+	// timing for "you killed <player>"
 	textCreator->setTweenParams(255, 45, 105);
 
 	if (deathReport->killer() == gameData.myPlayerID) {
 		// i killed someone
 		if (deathReport->victim() == (uint16_t)-1) {
 			// it was an npc
-			this->textNodes.push_back(textCreator->CreateText(
+			auto killtext = textCreator->CreateText(
 				"you killed a civilian",
 				ncine::Color(0, 0, 0),
 				screenWidth * 0.5f, screenHeight * 0.75f,
 				3.0f
-			));
+				);
+			// timing for score texts
+			textCreator->setTweenParams(200, 180, 30);
+			texts.push_back(textCreator->CreateText(
+				"civilian casualty",
+				std::nullopt,
+				textsXPos[0], textsYPos
+				));
+			texts.push_back(textCreator->CreateText(
+				std::to_string(CIVILIAN_PENALTY),
+				std::nullopt,
+				textsXPos[1], textsYPos
+				));
+
+			if (deathReport->multikill() || deathReport->killing_spree()) {
+				this->textNodes.push_back(textCreator->CreateText(
+					"killing spree stopped",
+					ncine::Color(70, 0, 0),
+					screenWidth * 0.5f, screenHeight * 0.75f - killtext->height(),
+					2.0f,
+					255, 30, 70
+					));
+			}
+			this->textNodes.push_back(std::move(killtext));
+
+		} else if (deathReport->victim() == (uint16_t)-2) {
+			// it was a goldfish!
+			this->textNodes.push_back(textCreator->CreateText(
+				"+1 skill!",
+				ncine::Color(150, 150, 0),
+				screenWidth * 0.5, screenHeight * 0.75,
+				2.5f,
+				255, 30, 60
+				));
 
 		} else {
 			// it was a player
@@ -60,16 +96,17 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 				ncine::Color(0, 80, 0),
 				screenWidth * 0.5f, screenHeight * 0.75f,
 				3.0f
-			);
+				);
 			auto score = textCreator->CreateText(
 				"[" + std::to_string(deathReport->killerKills()) + "  :  " + std::to_string(deathReport->victimKills()) + "]",
 				ncine::Color(0, 80, 0),
 				screenWidth * 0.5f, screenHeight * 0.75f - killtext->height(),
 				1.0f
-			);
+				);
 			this->textNodes.push_back(std::move(killtext));
 			this->textNodes.push_back(std::move(score));
 
+			// timing for score texts
 			textCreator->setTweenParams(200, 180, 30);
 
 			textCreator->setScale(1.0f);
@@ -82,6 +119,7 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 
 			textCreator->setTweenParams(200, 120, 60);
 			textCreator->setScale(0.9f);
+			textCreator->setPosition(screenWidth/2.f, textsYPos);
 			if (deathReport->multikill()) {
 				scoreBonus = deathReport->multikill() * MULTIKILL_REWARD;
 				totalScore += scoreBonus;
@@ -119,18 +157,18 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 				texts.push_back(textCreator->CreateText(std::to_string(scoreBonus)));
 			}
 			// place the texts from queue neatly under each other
-			const float xPos[] = {0.41f, 0.59f};
 			float heightOffset = 0;
 			for (int i = 0; i < texts.size(); ++i) {
 				auto text = texts[i].get();
 				if (i%2 == 0) {
-					text->setPosition(screenWidth * xPos[0] + text->width()/2.f, screenHeight * 0.5f - heightOffset);
+					text->setPosition(textsXPos[0] + text->width()/2.f, textsYPos - heightOffset);
 				} else {
-					text->setPosition(screenWidth * xPos[1] - text->width()/2.f, screenHeight * 0.5f - heightOffset);
+					text->setPosition(textsXPos[1] - text->width()/2.f, textsYPos - heightOffset);
 					heightOffset += texts[i]->height();
+					// create position tween to make the score fly to the total
 					this->_resources._floatTweens.push_back(
 						tweeny::from(text->position().y).to(text->position().y).during(120)
-						.to(screenHeight * 0.5f).during(60).via(tweeny::easing::circularOut).onStep(
+						.to(textsYPos).during(60).via(tweeny::easing::circularOut).onStep(
 							[text] (tweeny::tween<float>& t, float y) {
 								text->setPosition(text->position().x, y);
 								return false;
@@ -141,7 +179,7 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 			}
 
 			auto scoreNode = texts[1].get();
-
+			// create number tween to make the total go up to the value
 			this->_resources._intTweens.push_back(
 				tweeny::from(KILL_REWARD).to(KILL_REWARD).during(120)
 					.to(totalScore).during(20).onStep(
@@ -172,7 +210,7 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 			ncine::Color(0, 0, 0),
 			screenWidth * 0.8f, screenHeight * 0.8f,
 			0.5f
-		));
+			));
 	}
 	for (auto& text : texts) {
 		this->textNodes.push_back(std::move(text));
@@ -184,10 +222,24 @@ std::unique_ptr<ncine::TextNode> GameplayState::processMultikill(int multikillne
 	killstring = (multikillness <= 11) ? multikillText[multikillness] : multikillText[11];
 
 	// create floating texts
-	uint16_t redness = 20*(multikillness-1);
+	uint16_t redness = 60 + 20*(multikillness-1);
 	if (redness > 255) redness = 255;
 	ncine::Color color = ncine::Color(redness,0,0);
 
+	auto primaryFlash = textCreator->CreateText(killstring, color, std::nullopt, std::nullopt, 4.f, 130, 0, 120, Layers::ADDITIONAL_TEXT, tweeny::easing::quadraticOut);
+	auto secondaryFlash = textCreator->CreateText(killstring, color, std::nullopt, std::nullopt, 4.f, 100, 0, 150, Layers::ADDITIONAL_TEXT, tweeny::easing::quadraticOut);
+	auto secondaryFlashNode = secondaryFlash.get();
+	// create growing tween
+	this-> _resources._floatTweens.push_back(
+		tweeny::from(5.f).to(10.f).during(150).via(tweeny::easing::quadraticOut).onStep(
+			[secondaryFlashNode] (tweeny::tween<float> t, float v) {
+				secondaryFlashNode->setScale(v);
+				return false;
+			}
+		)
+	);
+	this->textNodes.push_back(std::move(primaryFlash));
+	this->textNodes.push_back(std::move(secondaryFlash));
 
 	if (multikillness > 5) {
 		killstring = "MULTIKILL [" + std::to_string(multikillness) + "]";

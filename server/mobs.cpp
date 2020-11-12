@@ -333,35 +333,30 @@ MultiplayerMechanicsInfo handleMultiplayerMechanics(Player& killer, Player& vict
 
 	// killing spree
 	if (killer.killingSpreeCounter >= KILLING_SPREE_THRESHOLD) {
-		// TODO: send message
 		std::cout << killer.name << " KILLING SPREE " << killer.killingSpreeCounter << std::endl;
 		killer.points += killer.killingSpreeCounter * KILLING_SPREE_REWARD;
 		ret.killing_spree = killer.killingSpreeCounter;
 	}
 	// shutdown
 	if (victim.killingSpreeCounter >= KILLING_SPREE_THRESHOLD) {
-		// TODO: send message
 		std::cout << killer.name << " ended " << victim.name << "'s killing spree" << std::endl;
 		killer.points += victim.killingSpreeCounter * SHUTDOWN_REWARD;
 		ret.shutdown = victim.killingSpreeCounter;
 	}
 	// domination
 	if (killer.dominationCounters[victim.playerID] >= DOMINATION_THRESHOLD) {
-		// TODO: send message
 		std::cout << killer.name << " is dominating " << victim.name << " [" << killer.dominationCounters[victim.playerID] << "]" << std::endl;
 		killer.points += killer.dominationCounters[victim.playerID] * DOMINATION_REWARD;
 		ret.domination = killer.dominationCounters[victim.playerID];
 	}
 	// revenge
 	if (victim.dominationCounters[killer.playerID] >= DOMINATION_THRESHOLD) {
-		// TODO: send message
 		std::cout << killer.name << " got revenge on " << victim.name << std::endl;
 		killer.points += victim.dominationCounters[killer.playerID] * REVENGE_REWARD;
 		ret.revenge = victim.dominationCounters[killer.playerID];
 	}
 	// comeback
 	if (killer.comebackCounter >= COMEBACK_THRESHOLD) {
-		// TODO: send message
 		std::cout << killer.name << " gets a comeback [" << killer.comebackCounter << std::endl;
 		killer.points += killer.comebackCounter * COMEBACK_REWARD;
 		ret.comeback = killer.comebackCounter;
@@ -381,17 +376,26 @@ void Civilian::handleKill(Player& killer) {
 	if (killer.isDead())
 		return;
 	this->toBeDeleted = true;
-	if (this->species == GOLDFISH_SPECIES) {
-		handleGoldfishKill(killer);
-		return;
-	}
-	killer.points += CIVILIAN_PENALTY;
-	killer.killingSpreeCounter = 0;
 
 	// send the deathreport killed npc message
 	flatbuffers::FlatBufferBuilder builder;
-	auto ev = FlatBuffGenerated::CreateDeathReport(builder, killer.playerID, -1);
+	auto ev = FlatBuffGenerated::CreateDeathReport(builder,
+		killer.playerID,
+		this->species == GOLDFISH_SPECIES ? -2 : -1,
+		0, 0,
+		killer.multikillCounter,	// information provided to let player know if his killing spree is stopped 
+		killer.killingSpreeCounter >= KILLING_SPREE_THRESHOLD ? killer.killingSpreeCounter : 0
+		);
 	sendServerMessage(killer, builder, FlatBuffGenerated::ServerMessageUnion_DeathReport, ev.Union());
+
+	if (this->species == GOLDFISH_SPECIES) {
+		handleGoldfishKill(killer);
+	} else {
+		killer.points += CIVILIAN_PENALTY;
+		killer.multikillCounter = 0;
+		killer.multikillTimer = 0;
+		killer.killingSpreeCounter = 0;
+	}
 
 	sendHighscores();
 }
