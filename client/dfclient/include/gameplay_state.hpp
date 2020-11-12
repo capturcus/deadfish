@@ -30,7 +30,9 @@ enum class Layers {
 	OBJECTS,
 	INK_PARTICLES,
 	HIDING_SPOTS,
-	SKILLS
+	SKILLS,
+	ADDITIONAL_TEXT,
+	TEXT
 };
 
 struct Mob {
