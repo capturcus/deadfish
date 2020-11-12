@@ -2,6 +2,7 @@
 
 #include <ncine/Sprite.h>
 #include "resources.hpp"
+#include "gameplay_state.hpp"
 
 class TextCreator {
     Resources& _resources;
@@ -14,6 +15,7 @@ public:
     float _pos_y;
     float _textScale;
     int _from, _hold, _decay;
+	Layers _layer;
 
     // existent for code clarity
     inline void setColor(ncine::Color color) { _textColor = color; }
@@ -25,7 +27,9 @@ public:
     inline void setHold(int hold) { _hold = hold; }
     inline void setDecay(int decay) { _decay = decay; }
     inline void setTweenParams(int from, int hold, int decay) { setFrom(from); setHold(hold); setDecay(decay); }
+	inline void setLayer(Layers layer) { _layer = layer; }
 
+	template <typename T = tweeny::easing::linearEasing>
     std::unique_ptr<ncine::TextNode> CreateText(
         std::string text,
         std::optional<ncine::Color> color = std::nullopt,
@@ -34,12 +38,20 @@ public:
         std::optional<float> scale = std::nullopt,
         std::optional<int> from = std::nullopt,
         std::optional<int> hold = std::nullopt,
-        std::optional<int> decay = std::nullopt
+		std::optional<int> decay = std::nullopt,
+		std::optional<Layers> layer = std::nullopt,
+		const T& easing = tweeny::easing::linear
         );
 
+	template <typename T = tweeny::easing::linearEasing>
+	tweeny::tween<int> CreateTextTween(ncine::TextNode* textPtr, int from = 255, int hold = 60, int decay = 60, const T& easing = tweeny::easing::linear);
+
 private:
+	template <typename T>
     std::unique_ptr<ncine::TextNode> doCreateText(std::string text, ncine::Color color,
-        float pos_x, float pos_y, float scale, int from, int hold, int decay);
+		float pos_x, float pos_y, float scale, int from, int hold, int decay, Layers layer, const T& easing);
 };
+
+#include "text_creator_templates.hpp"
 
 extern std::optional<TextCreator> textCreator;

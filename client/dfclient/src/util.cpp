@@ -42,16 +42,3 @@ nc::MeshSprite* createArc(nc::SceneNode& rootNode, nc::Texture* texture,
 	ret->setAnchorPoint(-100, -100); // for the love of god i have no idea why this should be like that
 	return ret;
 }
-
-tweeny::tween<int> CreateTextTween(ncine::TextNode* textPtr, int from, int hold, int decay) {
-	auto tween = tweeny::from(from)
-		.to(from).during(hold)
-		.to(0).during(decay).onStep(
-		[textPtr] (tweeny::tween<int>& t, int v) -> bool {
-			auto textColor = textPtr->color();
-			textPtr->setColor(textColor.r(), textColor.g(), textColor.b(), v);
-			return false;
-		}
-	);
-	return tween;
-}
