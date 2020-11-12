@@ -30,6 +30,9 @@ uint16_t newMobID()
 		if (it != gameState.civilians.end())
 			continue;
 
+		if (ret == 0)
+			continue;
+
 		return ret;
 	}
 }
@@ -166,7 +169,7 @@ flatbuffers::Offset<FlatBuffGenerated::Mob> createFBMob(flatbuffers::FlatBufferB
 	Player& player, const Mob* m)
 {
 	FlatBuffGenerated::PlayerRelation relation = FlatBuffGenerated::PlayerRelation_None;
-	if (player.killTarget == m)
+	if (player.killTargetID == m->mobID)
 		relation = FlatBuffGenerated::PlayerRelation_Targeted;
 	auto posVec = FlatBuffGenerated::Vec2(m->body->GetPosition().x, m->body->GetPosition().y);
 	return FlatBuffGenerated::CreateMob(builder,
@@ -398,18 +401,17 @@ void spawnPlayer(Player &player)
 	std::cout << "spawned player at " << maxSpawn << ", " << player.body->GetPosition() << "\n";
 }
 
-Mob &findMobById(uint16_t id)
+Mob *findMobById(uint16_t id)
 {
 	auto it = gameState.civilians.find(id);
 	if (it != gameState.civilians.end())
-		return *it->second;
+		return it->second.get();
 
 	auto it2 = std::find_if(gameState.players.begin(), gameState.players.end(),
 							[id](const auto &p) { return p->mobID == id; });
 	if (it2 != gameState.players.end())
-		return *(*it2);
-	std::cout << "could not find mob by id " << id << "\n";
-	abort();
+		return it2->get();
+	return nullptr;
 }
 
 void executeCommandKill(Player &player, uint16_t id)
@@ -417,22 +419,22 @@ void executeCommandKill(Player &player, uint16_t id)
 	if (player.bombsAffecting > 0)
 		return;
 	player.lastAttack = std::chrono::system_clock::now();
-	auto &m = findMobById(id);
-	try {
-		auto &otherPlayer = dynamic_cast<Player &>(m);
-		if (otherPlayer.killTarget && otherPlayer.killTarget->mobID == player.mobID) {
-			// they're already targeting us, abort
-			return;
-		}
-	} catch(...) {}
-	auto distance = b2Distance(m.body->GetPosition(), player.body->GetPosition());
+	auto m = findMobById(id);
+	if (!m)
+		return;
+	auto otherPlayer = dynamic_cast<Player *>(m);
+	if (otherPlayer && otherPlayer->killTargetID == player.mobID) {
+		// they're already targeting us, abort
+		return;
+	}
+	auto distance = b2Distance(m->body->GetPosition(), player.body->GetPosition());
 	if (distance < INSTA_KILL_DISTANCE)
 	{
 		player.setAttacking();
-		m.handleKill(player);
+		m->handleKill(player);
 		return;
 	}
-	player.killTarget = &m;
+	player.killTargetID = m->mobID;
 }
 
 void sendHighscores()
@@ -487,7 +489,7 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 		const auto event = clientMessage->event_as_CommandMove();
 		p->targetPosition = glm::vec2(event->target()->x(), event->target()->y());
 		p->state = p->state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
-		p->killTarget = nullptr;
+		p->killTargetID = 0;
 		p->lastAttack = std::chrono::system_clock::from_time_t(0);
 	}
 	break;

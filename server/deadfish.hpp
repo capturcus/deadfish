@@ -102,7 +102,7 @@ struct InkParticle :
 struct Player : public Mob {
 	std::string name;
 	bool ready = false;
-	Mob* killTarget = nullptr;
+	uint16_t killTargetID;
 	dfws::Handle wsHandle;
 	uint16_t attackTimeout = 0;
 	std::chrono::system_clock::time_point lastAttack;

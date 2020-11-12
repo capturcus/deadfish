@@ -80,7 +80,7 @@ float Player::calculateSpeed() {
 	float speed = WALK_SPEED;
 	if (this->state == MobState::RUNNING)
 		speed *= RUN_MODIFIER;
-	if (this->killTarget != nullptr)
+	if (this->killTargetID != 0)
 		speed *= CHASE_SPEED_BONUS;
 	return speed;
 }
@@ -91,7 +91,7 @@ void Player::reset()
 	for(auto& hspot : gameState.level->hidingspots) {
 		hspot->playersInside.erase(this);
 	}
-	this->killTarget = nullptr;
+	this->killTargetID = 0;
 	this->toBeDeleted = false;
 	this->state = MobState::WALKING;
 	this->lastAttack = std::chrono::system_clock::from_time_t(0);
@@ -129,15 +129,17 @@ void Player::update()
 		this->deathTimeout = DEATH_TIMEOUT;
 	}
 	if (this->bombsAffecting > 0)
-		this->killTarget = nullptr;
+		this->killTargetID = 0;
 
-	if (this->killTarget && !playerSeeCollideable(*this, *this->killTarget)) {
-		this->killTarget = nullptr;
+	auto killTarget = findMobById(this->killTargetID);
+	if (killTarget && !playerSeeCollideable(*this, *killTarget)) {
+		this->killTargetID = 0;
 		this->targetPosition = b2g(this->body->GetPosition());
 	}
 
-	if (this->killTarget)
-		this->targetPosition = b2g(this->killTarget->body->GetPosition());
+	killTarget = findMobById(this->killTargetID);
+	if (killTarget)
+		this->targetPosition = b2g(killTarget->body->GetPosition());
 	Mob::update();
 }
 
@@ -261,7 +263,7 @@ void Player::handleCollision(Collideable &other)
 	{
 		auto &mob = dynamic_cast<Mob &>(other);
 
-		if (this->killTarget && this->killTarget->mobID == mob.mobID)
+		if (this->killTargetID == mob.mobID)
 		{
 			this->setAttacking();
 			// the player wants to kill the mob and collided with him, execute the kill
@@ -274,7 +276,7 @@ void Player::handleCollision(Collideable &other)
 }
 
 void Player::setAttacking() {
-	this->killTarget = nullptr;
+	this->killTargetID = 0;
 	this->state = MobState::ATTACKING;
 	this->attackTimeout = 40;
 }
@@ -317,16 +319,6 @@ void Civilian::handleKill(Player& killer) {
 void Player::handleKill(Player& killer) {
 	if (killer.isDead())
 		return;
-	// did i kill him first?
-	if (this->killTarget &&
-		this->killTarget->mobID == killer.mobID &&
-		this->lastAttack < killer.lastAttack)
-	{
-		// i did kill him first
-		std::cout << "uno reverse card\n";
-		killer.handleKill(*this);
-		return;
-	}
 
 	this->toBeDeleted = true;
 	killer.points += KILL_REWARD;

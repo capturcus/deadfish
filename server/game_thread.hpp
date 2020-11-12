@@ -19,3 +19,4 @@ void sendToAll(std::string &data);
 void sendHighscores();
 void sendGameAlreadyInProgress(dfws::Handle hdl);
 void physicsInitMob(Mob *m, glm::vec2 pos, float angle, float radius, uint16 categoryBits);
+Mob *findMobById(uint16_t id);
