@@ -47,6 +47,8 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 
 	if (deathReport->killer() == gameData.myPlayerID) {
 		// i killed someone
+		_resources.playSound(SoundType::KILL);
+
 		if (deathReport->victim() == (uint16_t)-1) {
 			// it was an npc
 			auto killtext = textCreator->CreateText(
@@ -88,6 +90,7 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 				2.5f,
 				255, 30, 60
 				));
+			_resources.playSound(SoundType::GOLDFISH);	// !
 
 		} else {
 			// it was a player
@@ -189,12 +192,11 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 						}
 					));
 		}
-		_resources.playKillSound();
 		
 	} else if (deathReport->victim() == gameData.myPlayerID) {
 		// i died :c
-		_resources.playKillSound(0.4f);
-		_resources.playRandomDeathSound();
+		_resources.playSound(SoundType::KILL, 0.4f);
+		_resources.playSound(SoundType::DEATH);
 
 		this->textNodes.push_back(textCreator->CreateText(
 			"you have been killed by " + gameData.players[deathReport->killer()].name,
