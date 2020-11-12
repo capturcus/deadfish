@@ -19,15 +19,24 @@ void Resources::UpdateTweens()
 	}
 }
 
-void Resources::playKillSound(float gain) {
-	_killSound->setGain(gain);
-	_killSound->play();
+void Resources::playSound(SoundType soundType, float gain) {
+	ncine::AudioBufferPlayer* soundPlayer;
+	switch (soundType)
+	{
+	case SoundType::KILL:
+		soundPlayer = _killSound.get();
+		break;
+	case SoundType::GOLDFISH:
+		soundPlayer = _goldfishSound.get();
+		break;
+	case SoundType::DEATH:
+		auto randIndex = rand()%_sounds.size();
+		auto it = _sounds.begin();
+		for(auto i=0; i<randIndex; ++i) ++it;
+		_deathSound = std::make_unique<ncine::AudioBufferPlayer>(it->second.get());
+		break;
+	}
+	soundPlayer->setGain(gain);
+	soundPlayer->play();
 }
 
-void Resources::playRandomDeathSound() {
-	auto randIndex = rand()%_sounds.size();
-	std::map<std::string, std::unique_ptr<ncine::AudioBuffer>>::iterator it = _sounds.begin();
-	for(auto i=0; i<randIndex; ++i) ++it;
-	_deathSound = std::make_unique<ncine::AudioBufferPlayer>(it->second.get());
-	_deathSound->play();
-}
