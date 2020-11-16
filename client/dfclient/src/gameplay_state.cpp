@@ -28,6 +28,19 @@ const int IMGS_PER_SPECIES = 80;
 const int MAX_HIDING_SPOT_OPACITY = 255;
 const int MIN_HIDING_SPOT_OPACITY = 128;
 
+const int MOB_FADEIN_TIME = 5;
+const int MOB_FADEOUT_TIME = 7;
+
+std::map<uint16_t, std::string> skillTextures = {
+	{(uint16_t) Skills::INK_BOMB, "skill_ink.png"},
+	{(uint16_t) Skills::ATTRACTOR, "skill_attractor.png"},
+	{(uint16_t) Skills::DISPERSOR, "skill_dispersor.png"},
+	{(uint16_t) Skills::BLINK, "skill_blink.png"},
+};
+
+using handler_t = void (GameplayState::*)(const void*);
+static handler_t messageHandlers[FlatBuffGenerated::ServerMessageUnion_MAX + 1];
+
 enum FISH_ANIMATIONS {
 	WALK = 0,
 	RUN,
@@ -53,10 +66,10 @@ ncine::Vector2i causticSpriteCoords(int spriteNum) {
 	return {col * 768, row * 768};
 }
 
-std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species) {
-	std::unique_ptr<ncine::AnimatedSprite> ret = std::make_unique<ncine::AnimatedSprite>(parent, _resources.textures["fish.png"].get());
+std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species, const std::string& spritesheet, uint16_t maxAnimations, Layers layer) {
+	std::unique_ptr<ncine::AnimatedSprite> ret = std::make_unique<ncine::AnimatedSprite>(parent, _resources.textures[spritesheet].get());
 	int currentImg = species * IMGS_PER_SPECIES;
-	for (int animNumber = 0; animNumber < FISH_ANIMATIONS::MAX; animNumber++) {
+	for (int animNumber = 0; animNumber < maxAnimations; animNumber++) {
 		nctl::UniquePtr<ncine::RectAnimation> animation =
 		nctl::makeUnique<ncine::RectAnimation>(1./ANIMATION_FPS,
 			ncine::RectAnimation::LoopMode::ENABLED,
@@ -69,10 +82,10 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine:
 		ret->addAnimation(nctl::move(animation));
 	}
 
-	ret->setAnimationIndex(FISH_ANIMATIONS::WALK);
+	ret->setAnimationIndex(0);
 	ret->setFrame(0);
 	ret->setPaused(false);
-	ret->setLayer(MOBS_LAYER);
+	ret->setLayer((unsigned short)layer);
 	return std::move(ret);
 }
 
@@ -95,19 +108,36 @@ void GameplayState::InitializeCaustics(const FlatBuffGenerated::Level& level) {
 			caustics->setAnimationIndex(0);
 			caustics->setFrame(0);
 			caustics->setPaused(false);
-			caustics->setLayer(CAUSTICS_LAYER);
+			caustics->setLayer((unsigned short)Layers::CAUSTICS);
 			caustics->setAlpha(110);
 			this->caustics.push_back(std::move(caustics));
 		}
 	}
 }
 
-tweeny::tween<int>
-CreateHidingSpotTween(ncine::DrawableNode* hspot, int from, int to, int during) {
+std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewMobSprite(ncine::SceneNode* parent, uint16_t species) {
+	if (species == GOLDFISH_SPECIES) {
+		std::string goldfish("goldfish.png");
+		return this->CreateNewAnimSprite(parent, 0, goldfish, 1, Layers::MOBS);
+	}
+	std::string fish("fish.png");
+	return this->CreateNewAnimSprite(parent, species, fish, FISH_ANIMATIONS::MAX, Layers::MOBS);
+}
+
+/**
+ * Creates a tween making a sprite fade through from one alpha value to another (specified on a 0-255 scale)
+ * @param sprite	the sprite to change
+ * @param from 		the initial alpha value
+ * @param to 		the final alpha value
+ * @param during	time it takes
+ * @return 			the created tween
+*/
+static tweeny::tween<int>
+CreateAlphaTransitionTween(ncine::DrawableNode* sprite, int from, int to, int during) {
 	auto tween = tweeny::from(from)
 		.to(to).during(during).onStep(
-		[hspot] (tweeny::tween<int>& t, int v) -> bool {
-			hspot->setAlpha(v);
+		[sprite] (tweeny::tween<int>& t, int v) -> bool {
+			sprite->setAlpha(v);
 			return false;
 		}
 	);
@@ -139,7 +169,7 @@ void GameplayState::LoadLevel() {
 				auto tileSprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[spritename].get(),
 					j * tilewidth, -i * tileheight);
 				tileSprite->setAnchorPoint(0, 1);
-				tileSprite->setLayer(TILE_LAYER);
+				tileSprite->setLayer((unsigned short)Layers::TILE);
 				this->nodes.push_back(std::move(tileSprite));
 			}
 		}
@@ -153,7 +183,7 @@ void GameplayState::LoadLevel() {
 		decorationSprite->setAnchorPoint(0, 1);
 		decorationSprite->setRotation(-decoration->rotation());
 		decorationSprite->setSize(decoration->size()->x(), decoration->size()->y());
-		decorationSprite->setLayer(DECORATION_LAYER);
+		decorationSprite->setLayer((unsigned short)Layers::DECORATION);
 		this->nodes.push_back(std::move(decorationSprite));
 	}
 	
@@ -165,11 +195,11 @@ void GameplayState::LoadLevel() {
 		objectSprite->setAnchorPoint(0, 1);
 		objectSprite->setRotation(-object->rotation());
 		objectSprite->setSize(object->size()->x(), object->size()->y());
-		if(object->hspotname()->str().empty()){
-			objectSprite->setLayer(OBJECTS_LAYER);
+		if (object->hspotname()->str().empty()){
+			objectSprite->setLayer((unsigned short)Layers::OBJECTS);
 			this->nodes.push_back(std::move(objectSprite));
 		} else {
-			objectSprite->setLayer(HIDING_SPOTS_LAYER);
+			objectSprite->setLayer((unsigned short)Layers::HIDING_SPOTS);
 			auto hspotgroup = this->hiding_spots.find(object->hspotname()->str());
 			if (hspotgroup != this->hiding_spots.end()) { // if found group, add to group
 				hspotgroup->second.push_back(std::move(objectSprite));
@@ -185,7 +215,8 @@ void GameplayState::LoadLevel() {
 }
 
 // this whole thing should probably be refactored
-void GameplayState::ProcessDeathReport(const FlatBuffGenerated::DeathReport* deathReport) {
+void GameplayState::ProcessDeathReport(const void* ev) {
+	auto deathReport = (const FlatBuffGenerated::DeathReport*) ev;
 	auto& rootNode = ncine::theApplication().rootNode();
 	auto text = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic"].get());
 	const float screenWidth = ncine::theApplication().width();
@@ -206,10 +237,13 @@ void GameplayState::ProcessDeathReport(const FlatBuffGenerated::DeathReport* dea
 		text->setPosition(screenWidth * 0.5f, screenHeight * 0.75f);
 		text->setScale(3.0f);
 		_resources._tweens.push_back(CreateTextTween(text.get()));
+
+		_resources.playKillSound();
 		
 	} else if (deathReport->killed() == gameData.myPlayerID) {
 		// i died :c
-		_resources._wilhelmSound->play();
+		_resources.playKillSound(0.4f);
+		_resources.playRandomDeathSound();
 
 		text->setString(("you have been killed by " + gameData.players[deathReport->killer()].name).c_str());
 		text->setColor(255, 0, 0, 255);
@@ -228,7 +262,8 @@ void GameplayState::ProcessDeathReport(const FlatBuffGenerated::DeathReport* dea
 	this->nodes.push_back(std::move(text));
 }
 
-void GameplayState::ProcessHighscoreUpdate(const FlatBuffGenerated::HighscoreUpdate* highscoreUpdate) {
+void GameplayState::ProcessHighscoreUpdate(const void* ev) {
+	auto highscoreUpdate = (const FlatBuffGenerated::HighscoreUpdate*) ev;
 	for (int i = 0; i < highscoreUpdate->players()->size(); i++) {
 		auto highscoreEntry = highscoreUpdate->players()->Get(i);
 		// this is ugly, i know
@@ -251,7 +286,7 @@ nc::MeshSprite* GameplayState::CreateIndicator(float angle, float force, int ind
 	auto arc = createArc(*this->mySprite, _resources.textures["pixel.png"].get(), 0, 0,
 		INDICATOR_OFFSET + indicatorNum * INDICATOR_WIDTH,
 		INDICATOR_OFFSET + (indicatorNum+1) * INDICATOR_WIDTH, force * 360.f);
-	arc->setLayer(INDICATOR_LAYER);
+	arc->setLayer((unsigned short)Layers::INDICATOR);
 	arc->setRotation(-this->mySprite->rotation() - angle * TO_DEGREES - force * 180.f + 180.f);
 	if (visible)
 		arc->setColor(255, 255, 255, INDICATOR_OPACITY * 255);
@@ -260,35 +295,16 @@ nc::MeshSprite* GameplayState::CreateIndicator(float angle, float force, int ind
 	return arc;
 }
 
-void GameplayState::OnMessage(const std::string& data) {
-	lastMessageReceivedTime = ncine::TimeStamp::now();
-
-	auto highscoreUpdate = FBUtilGetServerEvent(data, HighscoreUpdate);
-	if (highscoreUpdate) {
-		this->ProcessHighscoreUpdate(highscoreUpdate);
-		return;
+void GameplayState::ProcessSimpleServerEvent(const void* ev) {
+	auto event = (const FlatBuffGenerated::SimpleServerEvent*) ev;
+	if (event->type() == FlatBuffGenerated::SimpleServerEventType_GameEnded) {
+		gameEnded = true;
+		updateRemainingText(0);
 	}
+}
 
-	auto deathReport = FBUtilGetServerEvent(data, DeathReport);
-	if (deathReport) {
-		this->ProcessDeathReport(deathReport);
-		return;
-	}
-
-	auto simpleServerEvent = FBUtilGetServerEvent(data, SimpleServerEvent);
-	if (simpleServerEvent) {
-		if (simpleServerEvent->type() == FlatBuffGenerated::SimpleServerEventType_GameEnded) {
-			gameEnded = true;
-			updateRemainingText(0);
-		}
-
-		return;
-	}
-
-	auto worldState = FBUtilGetServerEvent(data, WorldState);
-	if (!worldState)
-		return;
-
+void GameplayState::ProcessWorldState(const void* ev) {
+	auto worldState = (const FlatBuffGenerated::WorldState*) ev;
 	// reset seen status of mobs
 	for (auto& p : this->mobs)
 		p.second.seen = false;
@@ -300,7 +316,10 @@ void GameplayState::OnMessage(const std::string& data) {
 		if (mobItr == this->mobs.end()) {
 			// this is the first time we see this mob, create it
 			Mob newMob;
-			newMob.sprite = CreateNewAnimSprite(this->cameraNode.get(), mobData->species());
+			newMob.sprite = CreateNewMobSprite(this->cameraNode.get(), mobData->species());
+			newMob.sprite->setAlpha(1);
+			//fade in
+			_resources._mobTweens[mobData->mobID()] = CreateAlphaTransitionTween(newMob.sprite.get(), 1, 255, MOB_FADEIN_TIME);
 			this->mobs[mobData->mobID()] = std::move(newMob);
 			mobItr = this->mobs.find(mobData->mobID());
 			firstUpdate = true;
@@ -308,6 +327,11 @@ void GameplayState::OnMessage(const std::string& data) {
 		Mob& mob = mobItr->second;
 		mob.setupLocRot(*mobData, firstUpdate);
 		mob.seen = true;
+		if (mob.isAfterimage) {
+			//re-fade in
+			_resources._mobTweens[mobData->mobID()] = CreateAlphaTransitionTween(mob.sprite.get(), mob.sprite->alpha(), 255, MOB_FADEIN_TIME*(1 - mob.sprite->alpha()/255));
+			mob.isAfterimage = false;
+		}
 		if (mobData->state() != mob.state) {
 			mob.state = mobData->state();
 			mob.sprite->setAnimationIndex(mobData->state());
@@ -322,23 +346,27 @@ void GameplayState::OnMessage(const std::string& data) {
 
 		if (mobData->relation() == FlatBuffGenerated::PlayerRelation_None) {
 			mob.relationMarker.reset(nullptr);
-		} else if (mobData->relation() == FlatBuffGenerated::PlayerRelation_Close) {
-			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), _resources.textures["bluecircle.png"].get());
-			mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
-			mob.relationMarker->setLayer(INDICATOR_LAYER);
 		} else if (mobData->relation() == FlatBuffGenerated::PlayerRelation_Targeted) {
 			mob.relationMarker = std::make_unique<ncine::Sprite>(mob.sprite.get(), _resources.textures["redcircle.png"].get());
 			mob.relationMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
-			mob.relationMarker->setLayer(INDICATOR_LAYER);
+			mob.relationMarker->setLayer((unsigned short)Layers::INDICATOR);
 		}
 	}
 	std::vector<int> deletedIDs;
 	for (auto& mob : this->mobs) {
-		if (!mob.second.seen)
-			deletedIDs.push_back(mob.first);
+		if (!mob.second.seen) { // not seen
+			if (!mob.second.isAfterimage) {	// not seen and not afterimage
+				// fade out
+				_resources._mobTweens[mob.first] = CreateAlphaTransitionTween(mob.second.sprite.get(), mob.second.sprite->alpha(), 0, MOB_FADEOUT_TIME*(mob.second.sprite->alpha()/255));
+				mob.second.isAfterimage = true;
+			} else if (mob.second.sprite->alpha() == 0) { // not seen and afterimage and alpha == 0
+				deletedIDs.push_back(mob.first);
+			}
+		}
 	}
 	for (auto id : deletedIDs) {
 		this->mobs.erase(id);
+		_resources._mobTweens.erase(id);
 		if (id == gameData.myMobID)
 			this->mySprite = nullptr;
 	}
@@ -367,11 +395,11 @@ void GameplayState::OnMessage(const std::string& data) {
 	updateRemainingText(worldState->stepsRemaining());
 
 	// make current hidingspot transparent
-	if(worldState->currentHidingSpot()->str() != "") {
+	if (worldState->currentHidingSpot()->str() != "") {
 		auto &hspotSprites = this->hiding_spots[worldState->currentHidingSpot()->str()];
 		if (!hspotSprites.empty() && hspotSprites[0]->alpha() == MAX_HIDING_SPOT_OPACITY) {
 			for (auto &hsSprite : hspotSprites) {
-				auto tween = CreateHidingSpotTween(hsSprite.get(), MAX_HIDING_SPOT_OPACITY, MIN_HIDING_SPOT_OPACITY, 10);
+				auto tween = CreateAlphaTransitionTween(hsSprite.get(), MAX_HIDING_SPOT_OPACITY, MIN_HIDING_SPOT_OPACITY, 10);
 				_resources._tweens.push_back(tween);
 			}
 		}
@@ -379,11 +407,75 @@ void GameplayState::OnMessage(const std::string& data) {
 	if (worldState->currentHidingSpot()->str() != this->currentHidingSpot) {
 		auto &hspotSprites = this->hiding_spots[this->currentHidingSpot];
 		for (auto &hsSprite : hspotSprites) {
-			auto tween = CreateHidingSpotTween(hsSprite.get(), MIN_HIDING_SPOT_OPACITY, MAX_HIDING_SPOT_OPACITY, 20);
+			auto tween = CreateAlphaTransitionTween(hsSprite.get(), MIN_HIDING_SPOT_OPACITY, MAX_HIDING_SPOT_OPACITY, 20);
 			_resources._tweens.push_back(tween);
 		}
 	}
 	this->currentHidingSpot = worldState->currentHidingSpot()->str();
+
+	for (auto& i : this->inkParticles)
+		i.second.seen = false;
+
+	for (int i = 0; i < worldState->inkParticles()->size(); i++) {
+		auto ink = worldState->inkParticles()->Get(i);
+		auto inkItr = inkParticles.find(ink->inkID());
+		if (inkItr == inkParticles.end()) {
+			// not found, make a new one
+			InkParticle newInk;
+			int inkNum = rand() % 3 + 1;
+			std::string inkTexName = std::string("ink") + std::to_string(inkNum) + ".png";
+			newInk.sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[inkTexName].get());
+			newInk.sprite->setLayer((unsigned short) Layers::INK_PARTICLES);
+			newInk.sprite->setScale(120./330.); // todo: fix my life
+
+			inkParticles.insert({ink->inkID(), std::move(newInk)});
+			inkItr = inkParticles.find(ink->inkID());
+		}
+		inkItr->second.sprite->setPosition(ink->pos()->x() * METERS2PIXELS, -ink->pos()->y() * METERS2PIXELS);
+		inkItr->second.seen = true;
+	}
+
+	for (auto it = this->inkParticles.begin(); it != this->inkParticles.end();) {
+		if (!it->second.seen)
+			it = this->inkParticles.erase(it);
+		else
+			++it;
+	}
+}
+
+void GameplayState::ProcessSkillBarUpdate(const void* ev) {
+	std::cout << "skill bar update received\n";
+	auto skillBarUpdate = (const FlatBuffGenerated::SkillBarUpdate*) ev;
+	this->skillIcons.clear();
+	auto& rootNode = ncine::theApplication().rootNode();
+	for (int i = 0; i < skillBarUpdate->skills()->size(); i++) {
+		uint16_t skill = skillBarUpdate->skills()->Get(i);
+		auto skillTexture = skillTextures[skill];
+		auto skillSprite = std::make_unique<ncine::Sprite>(&rootNode, _resources.textures[skillTexture].get(),
+			i * 150 + 100, 100);
+		skillSprite->setScale(0.4f);
+		skillSprite->setLayer((unsigned short) Layers::SKILLS);
+		this->skillIcons.push_back(std::move(skillSprite));
+	}
+}
+
+void GameplayState::OnMessage(const std::string& data) {
+	lastMessageReceivedTime = ncine::TimeStamp::now();
+
+	auto serverMessage = flatbuffers::GetRoot<FlatBuffGenerated::ServerMessage>(data.data());
+	auto type = serverMessage->event_type();
+	if (type < 0 || type > FlatBuffGenerated::ServerMessageUnion_MAX) {
+		std::cout << "wrong message type " << type << "\n";
+		return;
+	}
+
+	auto handler = messageHandlers[type];
+	if (!handler) {
+		std::cout << "could not find a handler for type " << type << "\n";
+		return;
+	}
+	// this is the ugliest cpp line i've ever written
+	(this->*handler)(serverMessage->event());
 }
 
 void Mob::setupLocRot(const FlatBuffGenerated::Mob& msg, bool firstUpdate) {
@@ -401,6 +493,8 @@ void Mob::setupLocRot(const FlatBuffGenerated::Mob& msg, bool firstUpdate) {
 }
 
 void Mob::updateLocRot(float subDelta) {
+	if (this->isAfterimage) return;
+
 	float angleDelta = currRotation - prevRotation;
 	if (angleDelta > M_PI) {
 		angleDelta -= 2.f * M_PI;
@@ -421,6 +515,17 @@ GameplayState::GameplayState(Resources& r) : _resources(r) {
 	timeLeftNode = new ncine::TextNode(&rootNode, _resources.fonts["comic"].get());
 
 	lastMessageReceivedTime = ncine::TimeStamp::now();
+
+	messageHandlers[FlatBuffGenerated::ServerMessageUnion_HighscoreUpdate] =
+		&GameplayState::ProcessHighscoreUpdate;
+	messageHandlers[FlatBuffGenerated::ServerMessageUnion_DeathReport] =
+		&GameplayState::ProcessDeathReport;
+	messageHandlers[FlatBuffGenerated::ServerMessageUnion_SimpleServerEvent] =
+		&GameplayState::ProcessSimpleServerEvent;
+	messageHandlers[FlatBuffGenerated::ServerMessageUnion_WorldState] =
+		&GameplayState::ProcessWorldState;
+	messageHandlers[FlatBuffGenerated::ServerMessageUnion_SkillBarUpdate] =
+		&GameplayState::ProcessSkillBarUpdate;
 }
 
 GameplayState::~GameplayState() {
@@ -467,7 +572,7 @@ StateType GameplayState::Update(Messages m) {
 		ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(7.0f, 0.0f, 0.6f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(7.0f, 0.0f, 0.7f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(7.0f, 0.0f, 0.8f));
-		if(ImGui::Button("No")) {
+		if (ImGui::Button("No")) {
 			this->showQuitDialog = false;
 		}
 		ImGui::PopStyleColor(3);
@@ -527,7 +632,7 @@ StateType GameplayState::Update(Messages m) {
 	if (closestMob && smallestNorm < radiusSquared) {
 		closestMob->hoverMarker = std::make_unique<ncine::Sprite>(closestMob->sprite.get(), _resources.textures["graycircle.png"].get());
 		closestMob->hoverMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
-		closestMob->hoverMarker->setLayer(INDICATOR_LAYER);
+		closestMob->hoverMarker->setLayer((unsigned short)Layers::INDICATOR);
 	}
 
 	return StateType::Gameplay;
@@ -552,6 +657,7 @@ void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {
 	if (event.isRightButton()) {
 		// kill
 		for (auto& mob : this->mobs) {
+			if (mob.second.isAfterimage) continue;
 			if (mob.second.hoverMarker.get()) {
 				// if it is hovered kill it
 				flatbuffers::FlatBufferBuilder builder;
@@ -573,12 +679,35 @@ void SendCommandRun(bool run) {
 	SendData(builder);
 }
 
+void GameplayState::TryUseSkill(uint8_t skillPos) {
+	if (skillPos >= skillIcons.size())
+		return;
+	const float screenWidth = ncine::theApplication().width();
+	const float screenHeight = ncine::theApplication().height();
+	auto &mouseState = ncine::theApplication().inputManager().mouseState();
+	const float serverX = (this->mySprite->position().x + (mouseState.x - screenWidth / 2) * 1.5f) * PIXELS2METERS;
+	const float serverY = -(this->mySprite->position().y - (mouseState.y - screenHeight / 2) * 1.5f) * PIXELS2METERS;
+	flatbuffers::FlatBufferBuilder builder;
+	FlatBuffGenerated::Vec2 mousePos{serverX, serverY};
+	auto cmdSkill = FlatBuffGenerated::CreateCommandSkill(builder, skillPos, &mousePos);
+	auto message = FlatBuffGenerated::CreateClientMessage(builder, FlatBuffGenerated::ClientMessageUnion_CommandSkill, cmdSkill.Union());
+	builder.Finish(message);
+	SendData(builder);
+}
+
 void GameplayState::OnKeyPressed(const ncine::KeyboardEvent &event) {
 	if (event.sym == ncine::KeySym::Q)
 		SendCommandRun(true);
 	
 	if (event.sym == ncine::KeySym::TAB)
 		this->showHighscores = true;
+	
+	if (event.sym == ncine::KeySym::N1)
+		this->TryUseSkill(0);
+	if (event.sym == ncine::KeySym::N2)
+		this->TryUseSkill(1);
+	if (event.sym == ncine::KeySym::N3)
+		this->TryUseSkill(2);
 
 	if (event.sym == ncine::KeySym::ESCAPE)
 		this->showQuitDialog = !this->showQuitDialog;

@@ -1,25 +1,27 @@
 #pragma once
 #include <unordered_map>
+#include <map>
 #include <string>
 #include <mutex>
 #include <memory>
+#include <iostream>
+#include <thread>
 #include <Box2D/Box2D.h>
-#include <websocketpp/config/asio_no_tls.hpp>
-#include <websocketpp/server.hpp>
 #include <glm/vec2.hpp>
 #include <boost/program_options.hpp>
 #include "../common/deadfish_generated.h"
 #include "../common/constants.hpp"
+#include "websocket.hpp"
 
 namespace boost_po = boost::program_options;
 
 #define UNUSED __attribute__((unused)) 
 
-typedef websocketpp::server<websocketpp::config::asio> server;
-
 std::ostream& operator<<(std::ostream &os, glm::vec2 &v);
 std::ostream& operator<<(std::ostream &os, b2Vec2 v);
 std::ostream& operator<<(std::ostream& os, std::vector<std::string>& v);
+
+const float INK_BOMB_SPEED_MODIFIER = 0.2f;
 
 struct Player;
 
@@ -29,6 +31,10 @@ static inline glm::vec2 b2g(b2Vec2 v) {
 
 static inline b2Vec2 g2b(glm::vec2 v) {
 	return b2Vec2(v.x, v.y);
+}
+
+static inline FlatBuffGenerated::Vec2 b2f(b2Vec2 v) {
+	return FlatBuffGenerated::Vec2(v.x, v.y);
 }
 
 enum class GamePhase {
@@ -45,9 +51,15 @@ enum class MobState {
 struct Collideable {
 	bool toBeDeleted = false;
 	virtual void handleCollision(UNUSED Collideable& other) {}
+	virtual void endCollision(UNUSED Collideable& other) {}
+
 	virtual bool obstructsSight(Player*) = 0;
 
-	virtual ~Collideable(){}
+	b2Body* body = nullptr;
+
+	virtual ~Collideable() {}
+
+	virtual void update() {}
 
 	Collideable(){}
 	Collideable(const Collideable&) = delete;
@@ -56,36 +68,57 @@ struct Collideable {
 struct Mob : public Collideable {
 	uint16_t mobID = 0;
 	uint16_t species = 0;
-	b2Body* body = nullptr;
 	MobState state = MobState::WALKING;
 	virtual void handleCollision(UNUSED Collideable& other) override {}
 	virtual void handleKill(Player& killer) = 0;
 	virtual bool isDead() { return false; }
 	virtual bool obstructsSight(Player*) override { return false; }
+	virtual void update() override;
+	virtual float calculateSpeed();
 
 	glm::vec2 targetPosition;
+	uint32_t bombsAffecting = 0;
 
-	virtual void update();
 	virtual ~Mob();
+};
+
+struct InkParticle :
+	public Collideable {
+	
+	uint16_t inkID;
+	uint16_t lifetimeFrames;
+
+	InkParticle(b2Body* b);
+
+	void handleCollision(Collideable& other) override;
+	void endCollision(Collideable& other) override;
+	bool obstructsSight(Player*) override;
+
+	virtual void update() override;
+
+	~InkParticle();
 };
 
 struct Player : public Mob {
 	std::string name;
-	websocketpp::connection_hdl conn_hdl;
 	bool ready = false;
 	Mob* killTarget = nullptr;
+	dfws::Handle wsHandle;
 	uint16_t attackTimeout = 0;
 	std::chrono::system_clock::time_point lastAttack;
 	int points = 0;
 	uint16_t deathTimeout = 0;
 	uint16_t playerID = 0;
+	std::vector<uint16_t> skills;
 
+	float calculateSpeed() override;
 	void handleCollision(Collideable& other) override;
 	void handleKill(Player& killer) override;
 	void update() override;
 	void reset();
 	bool isDead() override;
 	void setAttacking();
+	void sendSkillBarUpdate();
 };
 
 struct Civilian : public Mob {
@@ -132,7 +165,7 @@ struct Decoration {
 // just a data container to be able to send it later to clients
 struct Tilelayer {
 	Tilelayer(const FlatBuffGenerated::Tilelayer* fb_Tl) : width(fb_Tl->width()), height(fb_Tl->height()),
-	    tilesize(fb_Tl->tilesize()->x(), fb_Tl->tilesize()->y()), tiledata(fb_Tl->tiledata()->begin(), fb_Tl->tiledata()->end()) {}
+		tilesize(fb_Tl->tilesize()->x(), fb_Tl->tilesize()->y()), tiledata(fb_Tl->tiledata()->begin(), fb_Tl->tiledata()->end()) {}
 	uint16_t width;
 	uint16_t height;
 	glm::vec2 tilesize;
@@ -142,20 +175,18 @@ struct Tilelayer {
 struct HidingSpot : public Collideable {
 	HidingSpot(const FlatBuffGenerated::HidingSpot*);
 	std::string name;
-	b2Body* body = nullptr;
 	std::set<Player*> playersInside;
 	virtual void handleCollision(Collideable& other) override;
+	virtual void endCollision(Collideable& other) override;
 	virtual bool obstructsSight(Player* p) override;
 };
 
 struct CollisionMask : public Collideable {
 	CollisionMask(const FlatBuffGenerated::CollisionMask*);
-	b2Body* body = nullptr;
 	virtual bool obstructsSight(Player*) override { return true; }
 };
 
 struct PlayerWall : public Collideable {
-	b2Body* body = nullptr;
 	virtual bool obstructsSight(Player*) override { return false; }
 };
 
@@ -189,7 +220,8 @@ public:
 
 	std::unique_ptr<b2World> b2world = nullptr;
 	std::vector<std::unique_ptr<Player>> players;
-	std::vector<std::unique_ptr<Civilian>> civilians;
+	std::map<uint16_t, std::unique_ptr<Civilian>> civilians;
+	std::vector<std::unique_ptr<InkParticle>> inkParticles;
 
 	inline std::unique_ptr<std::lock_guard<std::mutex>> lock() {
 		return std::make_unique<std::lock_guard<std::mutex>>(mut);
@@ -199,4 +231,3 @@ public:
 };
 
 extern GameState gameState;
-extern server websocket_server;

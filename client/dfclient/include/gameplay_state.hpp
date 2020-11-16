@@ -22,17 +22,22 @@ namespace nc = ncine;
 
 const float PIXELS2METERS = 0.01f;
 const float METERS2PIXELS = 100.f;
-const unsigned short TILE_LAYER = 4096;
-const unsigned short DECORATION_LAYER = 8192;
-const unsigned short INDICATOR_LAYER = 12288;
-const unsigned short MOBS_LAYER = 16384;
-const unsigned short OBJECTS_LAYER = 20480;
-const unsigned short HIDING_SPOTS_LAYER = 24576;
-const unsigned short CAUSTICS_LAYER = 28672;
+enum class Layers {
+	TILE = 0,
+	DECORATION,
+	INDICATOR,
+	MOBS,
+	OBJECTS,
+	INK_PARTICLES,
+	HIDING_SPOTS,
+	CAUSTICS,
+	SKILLS
+};
 
 struct Mob {
 	std::unique_ptr<ncine::AnimatedSprite> sprite;
 	bool seen;
+	bool isAfterimage = false;
 	FlatBuffGenerated::MobState state = FlatBuffGenerated::MobState_Walk;
 	std::unique_ptr<ncine::Sprite> hoverMarker;
 	std::unique_ptr<ncine::Sprite> relationMarker;
@@ -48,6 +53,11 @@ struct Mob {
 
 class Resources;
 
+struct InkParticle {
+	std::unique_ptr<ncine::DrawableNode> sprite;
+	bool seen = false;
+};
+
 struct GameplayState
 	: public GameState
 {
@@ -60,6 +70,12 @@ struct GameplayState
 	void OnKeyPressed(const ncine::KeyboardEvent &event) override;
 	void OnKeyReleased(const ncine::KeyboardEvent &event) override;
 
+	void ProcessDeathReport(const void* deathReport);
+	void ProcessHighscoreUpdate(const void* highscoreUpdate);
+	void ProcessSimpleServerEvent(const void* simpleServerEvent);
+	void ProcessWorldState(const void* worldState);
+	void ProcessSkillBarUpdate(const void* worldState);
+
 private:
 	void OnMessage(const std::string& data);
 
@@ -69,9 +85,10 @@ private:
 	void ProcessHighscoreUpdate(const FlatBuffGenerated::HighscoreUpdate* highscoreUpdate);
 	void CreateHidingSpotShowingTween(ncine::DrawableNode* hspot);
 	void CreateHidingSpotHidingTween(ncine::DrawableNode* hspot);
-	std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species);
-	void ToggleHighscores();
+	std::unique_ptr<ncine::AnimatedSprite> CreateNewMobSprite(ncine::SceneNode* parent, uint16_t species);
+	std::unique_ptr<ncine::AnimatedSprite> CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species, const std::string& spritesheet, uint16_t maxAnimations, Layers layer);
 	nc::MeshSprite* CreateIndicator(float angle, float force, int indicatorNum, bool visible);
+	void TryUseSkill(uint8_t skillPos);
 
 	void updateRemainingText(uint64_t remainingFrames);
 
@@ -81,6 +98,7 @@ private:
 	std::vector<std::unique_ptr<ncine::AnimatedSprite>> caustics;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
 	std::map<uint16_t, Mob> mobs;
+	std::map<uint16_t, InkParticle> inkParticles;
 	ncine::Sprite* mySprite = nullptr;
 	uint32_t lastNodeID = 0;
 	bool showHighscores = false;
@@ -89,6 +107,8 @@ private:
 	std::vector<nc::DrawableNode*> indicators;
 	ncine::TextNode* timeLeftNode = nullptr;
 	std::string currentHidingSpot = "";
+
+	std::vector<std::unique_ptr<ncine::DrawableNode>> skillIcons;
 
 	ncine::TimeStamp lastMessageReceivedTime;
 

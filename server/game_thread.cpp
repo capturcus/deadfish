@@ -1,4 +1,3 @@
-#include <iostream>
 #include <limits>
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -10,11 +9,9 @@
 #include "deadfish.hpp"
 #include "game_thread.hpp"
 #include "level_loader.hpp"
+#include "skills.hpp"
 
-bool operator==(websocketpp::connection_hdl &a, websocketpp::connection_hdl &b)
-{
-	return a.lock().get() == b.lock().get();
-}
+const float GOLDFISH_CHANCE = 0.05f;
 
 uint16_t newMobID()
 {
@@ -28,11 +25,9 @@ uint16_t newMobID()
 				continue;
 		}
 
-		for (auto &n : gameState.civilians)
-		{
-			if (n->mobID == ret)
-				continue;
-		}
+		auto it = gameState.civilians.find(ret);
+		if (it != gameState.civilians.end())
+			continue;
 
 		return ret;
 	}
@@ -53,7 +48,7 @@ std::string makeServerMessage(flatbuffers::FlatBufferBuilder &builder,
 }
 
 
-void sendGameAlreadyInProgress(const websocketpp::connection_hdl& hdl)
+void sendGameAlreadyInProgress(dfws::Handle hdl)
 {
 	std::cout << "sending game already in progress";
 	flatbuffers::FlatBufferBuilder builder;
@@ -61,7 +56,7 @@ void sendGameAlreadyInProgress(const websocketpp::connection_hdl& hdl)
 		FlatBuffGenerated::SimpleServerEventType_GameAlreadyInProgress);
 	auto str = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_SimpleServerEvent,
 		offset.Union());
-	websocket_server.send(hdl, str, websocketpp::frame::opcode::binary);
+	dfws::SendData(hdl, str);
 }
 
 void sendServerMessage(Player &player,
@@ -70,32 +65,23 @@ void sendServerMessage(Player &player,
 					   flatbuffers::Offset<void> offset)
 {
 	auto str = makeServerMessage(builder, type, offset);
-	websocket_server.send(player.conn_hdl, str, websocketpp::frame::opcode::binary);
+	dfws::SendData(player.wsHandle, str);
 }
 
 void sendToAll(std::string &data)
 {
 	for (auto &p : gameState.players)
 	{
-		websocket_server.send(p->conn_hdl, data, websocketpp::frame::opcode::binary);
+		dfws::SendData(p->wsHandle, data);
 	}
 }
 
-void stopAll()
-{
-	websocket_server.stop_perpetual();
-	for (auto& p : gameState.players)
-	{
-		websocket_server.close(p->conn_hdl, websocketpp::close::status::normal, "goodbye");
-	}
-}
-
-Player* getPlayerByConnHdl(websocketpp::connection_hdl &hdl)
+Player* getPlayerByConnHdl(dfws::Handle hdl)
 {
 	auto player = gameState.players.begin();
 	while (player != gameState.players.end())
 	{
-		if ((*player)->conn_hdl == hdl)
+		if ((*player)->wsHandle == hdl)
 		{
 			return player->get();
 		}
@@ -173,10 +159,7 @@ makePlayerIndicator(flatbuffers::FlatBufferBuilder &builder,
 flatbuffers::Offset<FlatBuffGenerated::Mob> createFBMob(flatbuffers::FlatBufferBuilder &builder,
 	Player& player, const Mob* m)
 {
-	auto distance = b2Distance(m->body->GetPosition(), player.body->GetPosition());
 	FlatBuffGenerated::PlayerRelation relation = FlatBuffGenerated::PlayerRelation_None;
-	if (distance < KILL_DISTANCE && player.mobID != m->mobID)
-		relation = FlatBuffGenerated::PlayerRelation_Close;
 	if (player.killTarget == m)
 		relation = FlatBuffGenerated::PlayerRelation_Targeted;
 	auto posVec = FlatBuffGenerated::Vec2(m->body->GetPosition().x, m->body->GetPosition().y);
@@ -193,8 +176,9 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 {
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::Mob>> mobs;
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::Indicator>> indicators;
-	for (auto &c : gameState.civilians)
+	for (auto &p : gameState.civilians)
 	{
+		auto &c = p.second;
 		if (!playerSeeMob(player, *c))
 			continue;
 		auto mob = createFBMob(builder, player, c.get());
@@ -223,7 +207,7 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 	std::string hspotname = ""; // name of the hidingspot that the player is in
 	for(auto &hspot : gameState.level->hidingspots) {
 		auto playerInHspot = hspot->playersInside.find(&player);
-		if(playerInHspot != hspot->playersInside.end()) {
+		if (playerInHspot != hspot->playersInside.end()) {
 			hspotname = hspot->name;
 			break;
 		}
@@ -232,7 +216,17 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 	auto indicatorsOffset = builder.CreateVector(indicators);
 	auto hidingspot = builder.CreateString(hspotname);
 
-	auto worldState = FlatBuffGenerated::CreateWorldState(builder, mobsOffset, indicatorsOffset, framesRemaining, hidingspot);
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::InkParticle>> inkParticles;
+	std::vector<FlatBuffGenerated::Vec2> inkVecs;
+	for (auto& ink : gameState.inkParticles) {
+		FlatBuffGenerated::Vec2 pos = b2f(ink->body->GetPosition());
+		auto inkOffset = FlatBuffGenerated::CreateInkParticle(builder, ink->inkID, &pos);
+		inkParticles.push_back(inkOffset);
+	}
+
+	auto inkParticlesOffset = builder.CreateVector(inkParticles);
+
+	auto worldState = FlatBuffGenerated::CreateWorldState(builder, mobsOffset, indicatorsOffset, inkParticlesOffset, framesRemaining, hidingspot);
 
 	return worldState.Union();
 }
@@ -260,11 +254,8 @@ class TestContactListener : public b2ContactListener
 		if (collideableA && !collideableA->toBeDeleted &&
 			collideableB && !collideableB->toBeDeleted)
 		{
-			if (auto hidingSpot = dynamic_cast<HidingSpot*>(collideableA)) {
-				hidingSpot->playersInside.erase(dynamic_cast<Player*>(collideableB));
-			} else if ((hidingSpot = dynamic_cast<HidingSpot*>(collideableB))) {
-				hidingSpot->playersInside.erase(dynamic_cast<Player*>(collideableA));
-			}
+			collideableA->endCollision(*collideableB);
+			collideableB->endCollision(*collideableA);
 		}
 	}
 };
@@ -293,54 +284,61 @@ std::vector<int> civiliansSpeciesCount()
 {
 	std::vector<int> ret;
 	ret.resize(gameState.players.size());
-	for (auto &c : gameState.civilians)
+	for (auto &p : gameState.civilians)
 	{
-		ret[c->species]++;
+		auto &c = p.second;
+		if (c->species != GOLDFISH_SPECIES)
+			ret[c->species]++;
 	}
 	return ret;
 }
 
-void spawnCivilian()
+void spawnCivilian(std::string spawnName, NavPoint* spawn) {
+	auto c = std::make_unique<Civilian>();
+
+	int species = 0;
+
+	float goldfishBet = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+	if (goldfishBet < GOLDFISH_CHANCE)
+		species = GOLDFISH_SPECIES;
+	else {
+		// find species with lowest count of civilians
+		auto civCounts = civiliansSpeciesCount();
+		int lowestSpecies = 0;
+		int lowestSpeciesCount = INT_MAX;
+		for (size_t i = 0; i < civCounts.size(); i++)
+		{
+			if (civCounts[i] < lowestSpeciesCount)
+			{
+				lowestSpecies = i;
+				lowestSpeciesCount = civCounts[i];
+			}
+		}
+		species = lowestSpecies;
+	}
+
+	c->mobID = newMobID();
+	c->species = species;
+	c->previousNavpoint = spawnName;
+	c->currentNavpoint = spawnName;
+	physicsInitMob(c.get(), spawn->position, 0, 0.3f);
+	c->setNextNavpoint();
+	gameState.civilians[c->mobID] = std::move(c);
+	std::cout << "spawning civilian of species " << species <<
+		" at " << spawnName << " to a total of " << gameState.civilians.size() << "\n";
+}
+
+void spawnCivilians()
 {
-	// find spawns
+	// spawn on all spawnpoints
 	std::vector<std::string> spawns;
 	for (auto &p : gameState.level->navpoints)
 	{
 		if (p.second->isspawn)
 		{
-			spawns.push_back(p.first);
+			spawnCivilian(p.first, p.second.get());
 		}
 	}
-	if (spawns.size() == 0) {
-		std::cout << "could not find any civilian spawns\n";
-		exit(1);
-	}
-	auto &spawnName = spawns[random() % spawns.size()];
-	auto spawn = gameState.level->navpoints[spawnName].get();
-	auto c = std::make_unique<Civilian>();
-
-	// find species with lowest count of civilians
-	auto civCounts = civiliansSpeciesCount();
-	int lowestSpecies = 0;
-	int lowestSpeciesCount = INT_MAX;
-	for (size_t i = 0; i < civCounts.size(); i++)
-	{
-		if (civCounts[i] < lowestSpeciesCount)
-		{
-			lowestSpecies = i;
-			lowestSpeciesCount = civCounts[i];
-		}
-	}
-
-	c->mobID = newMobID();
-	c->species = lowestSpecies;
-	c->previousNavpoint = spawnName;
-	c->currentNavpoint = spawnName;
-	physicsInitMob(c.get(), spawn->position, 0, 0.3f);
-	c->setNextNavpoint();
-	gameState.civilians.push_back(std::move(c));
-	std::cout << "spawning civilian of species " << lowestSpecies <<
-		" at " << spawnName << " to a total of " << gameState.civilians.size() << "\n";
 }
 
 void spawnPlayer(Player &player)
@@ -383,10 +381,9 @@ void spawnPlayer(Player &player)
 
 Mob &findMobById(uint16_t id)
 {
-	auto it = std::find_if(gameState.civilians.begin(), gameState.civilians.end(),
-						   [id](const auto &c) { return c->mobID == id; });
+	auto it = gameState.civilians.find(id);
 	if (it != gameState.civilians.end())
-		return *(*it);
+		return *it->second;
 
 	auto it2 = std::find_if(gameState.players.begin(), gameState.players.end(),
 							[id](const auto &p) { return p->mobID == id; });
@@ -398,8 +395,17 @@ Mob &findMobById(uint16_t id)
 
 void executeCommandKill(Player &player, uint16_t id)
 {
+	if (player.bombsAffecting > 0)
+		return;
 	player.lastAttack = std::chrono::system_clock::now();
 	auto &m = findMobById(id);
+	try {
+		auto &otherPlayer = dynamic_cast<Player &>(m);
+		if (otherPlayer.killTarget && otherPlayer.killTarget->mobID == player.mobID) {
+			// they're already targeting us, abort
+			return;
+		}
+	} catch(...) {}
 	auto distance = b2Distance(m.body->GetPosition(), player.body->GetPosition());
 	if (distance < INSTA_KILL_DISTANCE)
 	{
@@ -407,15 +413,7 @@ void executeCommandKill(Player &player, uint16_t id)
 		m.handleKill(player);
 		return;
 	}
-	if (distance < KILL_DISTANCE)
-	{
-		player.killTarget = &m;
-		return;
-	}
-	// send message too far
-	flatbuffers::FlatBufferBuilder builder(1);
-	auto ev = FlatBuffGenerated::CreateSimpleServerEvent(builder, FlatBuffGenerated::SimpleServerEventType_TooFarToKill);
-	sendServerMessage(player, builder, FlatBuffGenerated::ServerMessageUnion_SimpleServerEvent, ev.Union());
+	player.killTarget = &m;
 }
 
 void sendHighscores()
@@ -433,9 +431,27 @@ void sendHighscores()
 	sendToAll(data);
 }
 
-void gameOnMessage(websocketpp::connection_hdl hdl, const server::message_ptr& msg)
+void executeSkill(Player& p, uint8_t skillPos, b2Vec2 mousePos) {
+	if (skillPos >= p.skills.size()) {
+		std::cout << "skillPos out of bounds\n";
+		return;
+	}
+	if (p.skills[skillPos] == (uint16_t) Skills::SKILL_NONE)
+		return;
+	Skills skill = (Skills) p.skills[skillPos];
+	auto skillHandler = skillHandlers[(uint16_t) skill];
+	if (skillHandler == nullptr) {
+		std::cout << "no such skill handler " << (uint16_t) skill << "\n";
+	}
+	bool used = skillHandler(p, skill, mousePos);
+	if (used) {
+		p.skills.erase(p.skills.begin() + skillPos);
+		p.sendSkillBarUpdate();
+	}
+}
+
+void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 {
-	const auto payload = msg->get_payload();
 	const auto clientMessage = flatbuffers::GetRoot<FlatBuffGenerated::ClientMessage>(payload.c_str());
 	const auto guard = gameState.lock();
 
@@ -470,11 +486,30 @@ void gameOnMessage(websocketpp::connection_hdl hdl, const server::message_ptr& m
 		executeCommandKill(*p, event->mobID());
 	}
 	break;
+	case FlatBuffGenerated::ClientMessageUnion::ClientMessageUnion_CommandSkill:
+	{
+		const auto event = clientMessage->event_as_CommandSkill();
+		executeSkill(*p, event->skill(), {event->mousePos()->x(), event->mousePos()->y()});
+	}
+	break;
 
 	default:
 		std::cout << "gameOnMessage: some other message type received\n";
 		break;
 	}
+}
+
+template<typename C>
+void updateCollideables(std::vector<std::unique_ptr<C>>& collideables) {
+	std::vector<int> despawns;
+	for (size_t i = 0; i < collideables.size(); i++)
+	{
+		collideables[i]->update();
+		if (collideables[i]->toBeDeleted)
+			despawns.push_back(i);
+	}
+	for (int i = despawns.size() - 1; i >= 0; i--)
+		collideables.erase(collideables.begin() + despawns[i]);
 }
 
 void gameThread()
@@ -537,17 +572,15 @@ void gameThread()
 		// update physics
 		gameState.b2world->Step(1 / 20.0, 8, 3);
 
+		updateCollideables(gameState.inkParticles);
+
 		// update civilians
-		std::vector<int> despawns;
-		for (size_t i = 0; i < gameState.civilians.size(); i++)
-		{
-			gameState.civilians[i]->update();
-			if (gameState.civilians[i]->toBeDeleted)
-				despawns.push_back(i);
-		}
-		for (int i = despawns.size() - 1; i >= 0; i--)
-		{
-			gameState.civilians.erase(gameState.civilians.begin() + despawns[i]);
+		for (auto it = gameState.civilians.cbegin(); it != gameState.civilians.cend();) {
+			it->second->update();
+			if (it->second->toBeDeleted)
+				it = gameState.civilians.erase(it);
+			else
+				++it;
 		}
 
 		// update players
@@ -557,7 +590,7 @@ void gameThread()
 		// spawn civilians if need be
 		if (!gameState.options["ghosttown"].as<bool>() && civilianTimer == 0 && gameState.civilians.size() < MAX_CIVILIANS)
 		{
-			spawnCivilian();
+			spawnCivilians();
 			civilianTimer = CIVILIAN_TIME;
 		}
 		else
