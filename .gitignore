@@ -6,4 +6,5 @@ client/data
 client/imgui.ini
 levelpacker/FlatBuffGenerated/
 levels/*.bin
-*.tsbin
+
+server/build-prod
