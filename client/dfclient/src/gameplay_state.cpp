@@ -31,6 +31,8 @@ const int MIN_HIDING_SPOT_OPACITY = 128;
 const int MOB_FADEIN_TIME = 5;
 const int MOB_FADEOUT_TIME = 7;
 
+const int CAUSTIC_SIZE = 768;
+
 std::map<uint16_t, std::string> skillTextures = {
 	{(uint16_t) Skills::INK_BOMB, "skill_ink.png"},
 	{(uint16_t) Skills::ATTRACTOR, "skill_attractor.png"},
@@ -61,9 +63,9 @@ ncine::Vector2i fishSpriteCoords(int spriteNum) {
 }
 
 ncine::Vector2i causticSpriteCoords(int spriteNum) {
-	int row = spriteNum / 8;
-	int col = spriteNum % 8;
-	return {col * 768, row * 768};
+	int row = spriteNum / 10;
+	int col = spriteNum % 10;
+	return {col * CAUSTIC_SIZE, row * CAUSTIC_SIZE};
 }
 
 std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine::SceneNode* parent, uint16_t species, const std::string& spritesheet, uint16_t maxAnimations, Layers layer) {
@@ -92,18 +94,19 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine:
 void GameplayState::InitializeCaustics(const FlatBuffGenerated::Level& level) {
 	float levelwidth = level.tilelayer()->width() * level.tilelayer()->tilesize()->x();
 	float levelheight = level.tilelayer()->height() * level.tilelayer()->tilesize()->y();
-	for (int i = 0; i<(levelwidth / 768)+1; ++i) {
-		for (int j = 0; j<(levelheight / 768)+1; ++j) {
-			std::unique_ptr<ncine::AnimatedSprite> caustics = std::make_unique<ncine::AnimatedSprite>(this->cameraNode.get(), _resources.textures["caustics.png"].get());
-			nctl::UniquePtr<ncine::RectAnimation> caustAnim = nctl::makeUnique<ncine::RectAnimation>(1./25,
+	for (int i = 0; i<(levelwidth / CAUSTIC_SIZE)+1; ++i) {
+		for (int j = 0; j<(levelheight / CAUSTIC_SIZE)+1; ++j) {
+			std::unique_ptr<ncine::AnimatedSprite> caustics = std::make_unique<ncine::AnimatedSprite>(this->cameraNode.get(),
+					_resources.textures["caustics" + std::to_string(CAUSTIC_SIZE) + ".png"].get());
+			nctl::UniquePtr<ncine::RectAnimation> caustAnim = nctl::makeUnique<ncine::RectAnimation>(1./20,
 				ncine::RectAnimation::LoopMode::ENABLED,
 				ncine::RectAnimation::RewindMode::FROM_START);
-			for (int currentImg=0; currentImg < 128; ++currentImg) {
+			for (int currentImg=0; currentImg < 20; ++currentImg) {
 				auto coords = causticSpriteCoords(currentImg);
-				caustAnim->addRect(coords.x, coords.y, 768, 768);
+				caustAnim->addRect(coords.x, coords.y, CAUSTIC_SIZE, CAUSTIC_SIZE);
 			}
-			caustics->setPosition(i*768, -j*768);
-			std::cout << i*768 << " " <<  j*768 << std::endl;
+			caustics->setPosition(i*CAUSTIC_SIZE, -j*CAUSTIC_SIZE);
+			// std::cout << i*768 << " " <<  j*768 << std::endl;
 			caustics->addAnimation(nctl::move(caustAnim));
 			caustics->setAnimationIndex(0);
 			caustics->setFrame(0);
