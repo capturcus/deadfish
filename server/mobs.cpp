@@ -191,9 +191,10 @@ void Civilian::update()
 	if (seenManips.size() > 0) {
 		this->seenAManip = true;
 		auto last = seenManips.back();
-		if (!last.dispersor)
+		if (last.type == FlatBuffGenerated::MobManipulatorType_Attractor)
 			this->targetPosition = b2g(last.pos);
 		else {
+			// dispersor
 			auto toManip = this->body->GetPosition() - last.pos;
 			toManip.Normalize();
 			this->targetPosition = b2g(this->body->GetPosition() + toManip);

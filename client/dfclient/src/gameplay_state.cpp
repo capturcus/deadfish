@@ -415,7 +415,8 @@ void GameplayState::ProcessWorldState(const void* ev) {
 	this->manipulators.clear();
 	for (int i = 0; i < worldState->mobManipulators()->size(); i++) {
 		auto manipulator = worldState->mobManipulators()->Get(i);
-		auto manipTexture = manipulator->dispersor() ? "dispersor.png" : "attractor.png";
+		auto manipTexture = manipulator->type() == FlatBuffGenerated::MobManipulatorType_Dispersor ?
+			"dispersor.png" : "attractor.png";
 		auto sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[manipTexture].get());
 		sprite->setLayer((unsigned short) Layers::MOB_MANIPULATORS);
 		sprite->setPosition({manipulator->pos()->x() * METERS2PIXELS, -manipulator->pos()->y() * METERS2PIXELS});

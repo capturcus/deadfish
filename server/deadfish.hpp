@@ -213,7 +213,7 @@ struct Level {
 
 struct MobManipulator {
 	b2Vec2 pos;
-	bool dispersor;
+	FlatBuffGenerated::MobManipulatorType type;
 	uint16_t framesLeft;
 };
 

@@ -242,7 +242,7 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 		if (!mobSeePoint(player, manipulator.pos, true))
 			continue;
 		FlatBuffGenerated::Vec2 pos = {manipulator.pos.x, manipulator.pos.y};
-		auto manOffset = FlatBuffGenerated::CreateMobManipulator(builder, &pos, manipulator.dispersor);
+		auto manOffset = FlatBuffGenerated::CreateMobManipulator(builder, &pos, manipulator.type);
 		manipulators.push_back(manOffset);
 	}
 
