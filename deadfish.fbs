@@ -151,11 +151,22 @@ table InkParticle {
   pos:Vec2;
 }
 
+enum MobManipulatorType: byte {
+  Attractor,
+  Dispersor
+}
+
+table MobManipulator {
+  pos:Vec2;
+  type:MobManipulatorType;
+}
+
 table WorldState {
   mobs:[Mob];
   indicators:[Indicator];
   inkParticles:[InkParticle];
   stepsRemaining:uint64;
+  mobManipulators:[MobManipulator];
   currentHidingSpot:string;
 }
 

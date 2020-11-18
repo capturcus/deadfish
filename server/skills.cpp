@@ -100,8 +100,16 @@ bool InkParticle::obstructsSight(UNUSED Player* p) {
 	return true;
 }
 
+const uint16_t MANIPULATOR_FRAMES = 60;
+
 bool executeSkillMobManipulator(UNUSED Player& p, UNUSED Skills skill, UNUSED b2Vec2 mousePos) {
 	std::cout << "mob manipulator " << (uint16_t) skill << "\n";
+	MobManipulator manipulator;
+	manipulator.pos = p.body->GetPosition();
+	manipulator.type = skill == Skills::DISPERSOR ? FlatBuffGenerated::MobManipulatorType_Dispersor
+		: FlatBuffGenerated::MobManipulatorType_Attractor;
+	manipulator.framesLeft = MANIPULATOR_FRAMES;
+	gameState.mobManipulators.push_back(manipulator);
 	return true;
 }
 
