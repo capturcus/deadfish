@@ -9,8 +9,7 @@
 #include "fb_util.hpp"
 #include "resources.hpp"
 #include "util.hpp"
-
-static const float scale = 0.5f;
+#include "text_creator.hpp"
 
 StateType LobbyState::OnMessage(const std::string& data) {
 	std::cout << "lobby received data\n";
@@ -63,17 +62,21 @@ LobbyState::LobbyState(Resources& r) : _resources(r) {
 	const float screenWidth = ncine::theApplication().width();
 	const float screenHeight = ncine::theApplication().height();
 
-	auto text = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic"].get());
-	text->setScale(scale);
-	text->setString("players in lobby:");
-	text->setPosition(screenWidth * 0.3f, screenHeight * 0.8f);
-	text->setColor(0, 0, 0, 255);
-	this->sceneNodes.push_back(std::move(text));
+	this->sceneNodes.push_back(textCreator->CreateText(
+		"players in lobby:",
+		ncine::Color::Black,
+		screenWidth * 0.3f, screenHeight * 0.8f,
+		1.1f,
+		255, 0, -1 // permanent
+	));
 
-	this->readyButton = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic"].get());
-	this->readyButton->setScale(scale);
-	this->readyButton->setString("READY");
-	this->readyButton->setPosition(screenWidth * 0.5f, screenHeight * 0.2f);
+	this->readyButton = textCreator->CreateText(
+		"READY",
+		std::nullopt,
+		screenWidth * 0.5f, screenHeight * 0.2f,
+		1.3f,
+		255, 0, -1
+	);
 }
 
 StateType LobbyState::Update(Messages m) {
@@ -106,15 +109,14 @@ void LobbyState::RedrawPlayers() {
 	const float screenWidth = ncine::theApplication().width();
 	const float screenHeight = ncine::theApplication().height();
 	for (auto& p : gameData.players) {
-		auto text = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic"].get());
-		text->setScale(scale);
-		text->setString(p.name.c_str());
-		text->setPosition(screenWidth * 0.3f, screenHeight * 0.75f - 40*playerNum);
-		if (p.ready)
-			text->setColor(0, 128, 0, 255);
-		else
-			text->setColor(0, 0, 0, 255);
-		this->textNodes.push_back(std::move(text));
+		auto color = p.ready ? ncine::Color(0, 128, 0) : ncine::Color::Black;
+		this->textNodes.push_back(textCreator->CreateText(
+			p.name.c_str(),
+			color,
+			screenWidth * 0.3f, screenHeight * 0.75f - 40*playerNum,
+			1.1f,
+			255, 0, -1
+		));
 		playerNum++;
 	}
 }
