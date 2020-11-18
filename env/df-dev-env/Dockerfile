@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y git build-essential clang libbox2d-dev 
     ln -s /opt/cmake/bin/cmake /usr/bin/cmake && rm -rf cmake-3.18.3-Linux-x86_64.sh && \
     git clone https://github.com/google/flatbuffers && cd flatbuffers && \
     mkdir build && cd build && cmake .. && make install -j5 && cd / && rm -rf flatbuffers && \
+    cd / && mkdir agones && cd agones && wget https://github.com/googleforgames/agones/releases/download/v1.10.0/agonessdk-1.10.0-linux-arch_64.tar.gz && \
+    tar xvf agonessdk-1.10.0-linux-arch_64.tar.gz && rm -rf agonessdk-1.10.0-linux-arch_64.tar.gz && \
+    mv * /usr/local/ && cd / && rm -rf agones && \
     mkdir /emsdk && chmod -R 777 /emsdk && \
     rm -rf /usr/bin/python && ln -s /usr/bin/python3 /usr/bin/python && \
     adduser --disabled-password --gecos "" ubuntu

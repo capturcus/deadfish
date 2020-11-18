@@ -2,6 +2,7 @@
 #include <utility>
 #include "flatbuffers/flatbuffers.h"
 
+#include "agones.hpp"
 #include "deadfish.hpp"
 #include "game_thread.hpp"
 #include "websocket.hpp"
@@ -158,6 +159,7 @@ bool handleCliOptions(int argc, const char* const argv[]) {
 		("level,l", boost_po::value<std::string>(), "level flatbuffer file to be loaded by the server")
 		("numplayers,n", boost_po::value<unsigned long>(), "the server will launch the game after the specified amount of players will appear in lobby, not when everybody is ready")
 		("ghosttown,g", boost_po::value<bool>()->default_value(false)->implicit_value(true), "no mobs mode" )
+		("agones", boost_po::value<bool>()->default_value(false)->implicit_value(true), "run the server with agones sdk thread" )
 	;
 
 	boost_po::store(boost_po::parse_command_line(argc, argv, desc), gameState.options);
@@ -186,6 +188,9 @@ int main(int argc, const char* const argv[])
 	dfws::SetOnClose(&mainOnClose);
 
 	std::cout << "server started\n";
+
+	if (gameState.options["agones"].as<bool>())
+		new std::thread(agonesThread);
 
 	int port = gameState.options["port"].as<int>();
 
