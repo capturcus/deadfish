@@ -48,9 +48,12 @@ std::unique_ptr<ncine::TextNode> TextCreator::doCreateText(std::string text, nci
 	auto ret = std::make_unique<ncine::TextNode>(&ncine::theApplication().rootNode(), _resources.fonts["comic"].get());
 	ret->setString(text.c_str());
 	ret->setColor(color);
+	ret->setAlpha(from);
 	ret->setPosition(pos_x, pos_y);
-	ret->setScale(scale);
+	ret->setScale(scale*0.5f); // because the font was made 2x bigger on font_upgrade
 	ret->setLayer((unsigned short int)layer);
+	if (decay >= 0) {	// decay < 0 makes the text permanent
 	_resources._intTweens.push_back(CreateTextTween(ret.get(), from, hold, decay, easing));
+	}
 	return std::move(ret);
 }
