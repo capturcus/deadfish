@@ -27,6 +27,9 @@ include_directories("/snap/flatbuffers/current/include")
 find_package(Boost COMPONENTS system program_options REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Box2D REQUIRED)
+find_package(agones CONFIG REQUIRED)
+
+include_directories(${agones_INCLUDE_DIRS})
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -43,4 +46,5 @@ target_link_libraries(deadfishserver
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   Threads::Threads
   ${BOX2D_LIBRARY}
+  agones
 )
