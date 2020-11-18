@@ -27,7 +27,8 @@ StateManager::StateManager() {
 		file = textureDir.readNext();
 	}
 	textureDir.close();
-	_resources.fonts["comic"] = std::make_unique<ncine::Font>((rootPath + "fonts/comic.fnt").data(), (rootPath + "fonts/comic.png").data());
+	_resources.fonts["comic_outline"] = std::make_unique<ncine::Font>((rootPath + "fonts/comic_outline.fnt").data());
+	_resources.fonts["comic"] = std::make_unique<ncine::Font>((rootPath + "fonts/comic.fnt").data());
 
 	// load sounds
 	auto soundDir = ncine::FileSystem::Directory((rootPath + SOUNDS_PATH).data());

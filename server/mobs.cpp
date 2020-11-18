@@ -6,6 +6,7 @@
 
 #include "deadfish.hpp"
 #include "game_thread.hpp"
+#include "../common/geometry.hpp"
 
 std::ostream &operator<<(std::ostream &os, glm::vec2 &v)
 {
@@ -79,7 +80,7 @@ float Player::calculateSpeed() {
 	float speed = WALK_SPEED;
 	if (this->state == MobState::RUNNING)
 		speed *= RUN_MODIFIER;
-	if (this->killTarget != nullptr)
+	if (this->killTargetID != 0)
 		speed *= CHASE_SPEED_BONUS;
 	return speed;
 }
@@ -90,7 +91,7 @@ void Player::reset()
 	for(auto& hspot : gameState.level->hidingspots) {
 		hspot->playersInside.erase(this);
 	}
-	this->killTarget = nullptr;
+	this->killTargetID = 0;
 	this->toBeDeleted = false;
 	this->state = MobState::WALKING;
 	this->lastAttack = std::chrono::system_clock::from_time_t(0);
@@ -134,15 +135,17 @@ void Player::update()
 		this->deathTimeout = DEATH_TIMEOUT;
 	}
 	if (this->bombsAffecting > 0)
-		this->killTarget = nullptr;
+		this->killTargetID = 0;
 
-	if (this->killTarget && !playerSeeMob(*this, *this->killTarget)) {
-		this->killTarget = nullptr;
+	auto killTarget = findMobById(this->killTargetID);
+	if (killTarget && !playerSeeCollideable(*this, *killTarget)) {
+		this->killTargetID = 0;
 		this->targetPosition = b2g(this->body->GetPosition());
 	}
 
-	if (this->killTarget)
-		this->targetPosition = b2g(this->killTarget->body->GetPosition());
+	killTarget = findMobById(this->killTargetID);
+	if (killTarget)
+		this->targetPosition = b2g(killTarget->body->GetPosition());
 	Mob::update();
 }
 
@@ -173,7 +176,7 @@ void Civilian::collisionResolution() {
 		auto spawnPos = g2b(navpoint->position);
 
 		// not where we were currently going but somewhere we can go immediately from here
-		if (this->currentNavpoint != spawnName && mobSeePoint(*this, spawnPos)) {
+		if (this->currentNavpoint != spawnName && mobSeePoint(*this, spawnPos, true)) {
 			this->previousNavpoint = "";
 			this->targetPosition = randFromCircle(navpoint->position, navpoint->radius);
 			std::cout << "resolved collision - changed direction\n";
@@ -186,6 +189,29 @@ void Civilian::collisionResolution() {
 
 void Civilian::update()
 {
+	std::vector<MobManipulator> seenManips;
+	for (auto &m : gameState.mobManipulators) {
+		if (mobSeePoint(*this, m.pos, true))
+			seenManips.push_back(m);
+	}
+	if (seenManips.size() > 0) {
+		this->seenAManip = true;
+		auto last = seenManips.back();
+		if (last.type == FlatBuffGenerated::MobManipulatorType_Attractor)
+			this->targetPosition = b2g(last.pos);
+		else {
+			// dispersor
+			auto toManip = this->body->GetPosition() - last.pos;
+			toManip.Normalize();
+			this->targetPosition = b2g(this->body->GetPosition() + toManip);
+		}
+		Mob::update();
+		return;
+	} else if (this->seenAManip) {
+		this->collisionResolution();
+		this->seenAManip = false;
+	}
+
 	if (this->bombsAffecting == 0 && b2Distance(this->body->GetPosition(), this->lastPos) < (WALK_SPEED/20) * 0.4f) {
 		slowFrames++;
 		if (slowFrames == CIV_SLOW_FRAMES) {
@@ -244,7 +270,7 @@ void Player::handleCollision(Collideable &other)
 	{
 		auto &mob = dynamic_cast<Mob &>(other);
 
-		if (this->killTarget && this->killTarget->mobID == mob.mobID)
+		if (this->killTargetID == mob.mobID)
 		{
 			this->setAttacking();
 			// the player wants to kill the mob and collided with him, execute the kill
@@ -257,7 +283,7 @@ void Player::handleCollision(Collideable &other)
 }
 
 void Player::setAttacking() {
-	this->killTarget = nullptr;
+	this->killTargetID = 0;
 	this->state = MobState::ATTACKING;
 	this->attackTimeout = 40;
 }
@@ -340,7 +366,7 @@ MultiplayerMechanicsInfo handleMultiplayerMechanics(Player& killer, Player& vict
 void handleGoldfishKill(Player& killer) {
 	if (killer.skills.size() == MAX_SKILLS)
 		return;
-	uint16_t skill = (int) Skills::INK_BOMB; // all skills are ink bombs bc it's the only working skill for now
+	uint16_t skill = rand() % (uint16_t) Skills::SKILLS_MAX;
 	killer.skills.push_back(skill);
 	killer.sendSkillBarUpdate();
 }
@@ -360,7 +386,6 @@ void Civilian::handleKill(Player& killer) {
 		killer.killingSpreeCounter >= KILLING_SPREE_THRESHOLD ? killer.killingSpreeCounter : 0
 		);
 	sendServerMessage(killer, builder, FlatBuffGenerated::ServerMessageUnion_DeathReport, ev.Union());
-	std::cout << "sent a death report\n";
 
 	if (this->species == GOLDFISH_SPECIES) {
 		handleGoldfishKill(killer);
@@ -377,16 +402,6 @@ void Civilian::handleKill(Player& killer) {
 void Player::handleKill(Player& killer) {
 	if (killer.isDead())
 		return;
-	// did i kill him first?
-	if (this->killTarget &&
-		this->killTarget->mobID == killer.mobID &&
-		this->lastAttack < killer.lastAttack)
-	{
-		// i did kill him first
-		std::cout << "uno reverse card\n";
-		killer.handleKill(*this);
-		return;
-	}
 
 	auto mmInfo = handleMultiplayerMechanics(killer, *this);
 	this->toBeDeleted = true;

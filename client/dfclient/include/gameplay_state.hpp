@@ -26,6 +26,7 @@ enum class Layers {
 	TILE = 0,
 	DECORATION,
 	INDICATOR,
+	MOB_MANIPULATORS,
 	MOBS,
 	OBJECTS,
 	INK_PARTICLES,
@@ -109,6 +110,7 @@ private:
 	bool showQuitDialog = false;
 	bool gameEnded = false;
 	std::vector<nc::DrawableNode*> indicators;
+	std::vector<std::unique_ptr<ncine::Sprite>> manipulators;
 	ncine::TextNode* timeLeftNode = nullptr;
 	std::string currentHidingSpot = "";
 

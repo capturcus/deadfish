@@ -1,5 +1,6 @@
 #pragma once
 #include <unordered_map>
+#include <map>
 #include <string>
 #include <mutex>
 #include <memory>
@@ -87,7 +88,7 @@ struct InkParticle :
 	uint16_t inkID;
 	uint16_t lifetimeFrames;
 
-	InkParticle(b2Body* b, Player& owner);
+	InkParticle(b2Body* b);
 
 	void handleCollision(Collideable& other) override;
 	void endCollision(Collideable& other) override;
@@ -101,7 +102,7 @@ struct InkParticle :
 struct Player : public Mob {
 	std::string name;
 	bool ready = false;
-	Mob* killTarget = nullptr;
+	uint16_t killTargetID;
 	dfws::Handle wsHandle;
 	uint16_t attackTimeout = 0;
 	std::chrono::system_clock::time_point lastAttack;
@@ -137,6 +138,7 @@ struct Civilian : public Mob {
 	std::string previousNavpoint;
 	int slowFrames = 0;
 	b2Vec2 lastPos;
+	bool seenAManip;
 
 	void handleKill(Player& killer) override;
 	void update() override;
@@ -221,6 +223,12 @@ struct Level {
 	glm::vec2 size;
 };
 
+struct MobManipulator {
+	b2Vec2 pos;
+	FlatBuffGenerated::MobManipulatorType type;
+	uint16_t framesLeft;
+};
+
 struct GameState {
 private:
 	std::mutex mut;
@@ -231,8 +239,9 @@ public:
 
 	std::unique_ptr<b2World> b2world = nullptr;
 	std::vector<std::unique_ptr<Player>> players;
-	std::vector<std::unique_ptr<Civilian>> civilians;
+	std::map<uint16_t, std::unique_ptr<Civilian>> civilians;
 	std::vector<std::unique_ptr<InkParticle>> inkParticles;
+	std::vector<MobManipulator> mobManipulators;
 
 	inline std::unique_ptr<std::lock_guard<std::mutex>> lock() {
 		return std::make_unique<std::lock_guard<std::mutex>>(mut);

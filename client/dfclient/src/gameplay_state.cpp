@@ -333,6 +333,7 @@ void GameplayState::ProcessWorldState(const void* ev) {
 	}
 	this->currentHidingSpot = worldState->currentHidingSpot()->str();
 
+	// handle ink particles
 	for (auto& i : this->inkParticles)
 		i.second.seen = false;
 
@@ -360,6 +361,18 @@ void GameplayState::ProcessWorldState(const void* ev) {
 			it = this->inkParticles.erase(it);
 		else
 			++it;
+	}
+
+	// handle mob manipulators
+	this->manipulators.clear();
+	for (int i = 0; i < worldState->mobManipulators()->size(); i++) {
+		auto manipulator = worldState->mobManipulators()->Get(i);
+		auto manipTexture = manipulator->type() == FlatBuffGenerated::MobManipulatorType_Dispersor ?
+			"dispersor.png" : "attractor.png";
+		auto sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[manipTexture].get());
+		sprite->setLayer((unsigned short) Layers::MOB_MANIPULATORS);
+		sprite->setPosition({manipulator->pos()->x() * METERS2PIXELS, -manipulator->pos()->y() * METERS2PIXELS});
+		this->manipulators.push_back(std::move(sprite));
 	}
 }
 
@@ -614,7 +627,7 @@ void GameplayState::TryUseSkill(uint8_t skillPos) {
 	const float screenHeight = ncine::theApplication().height();
 	auto &mouseState = ncine::theApplication().inputManager().mouseState();
 	const float serverX = (this->mySprite->position().x + (mouseState.x - screenWidth / 2) * 1.5f) * PIXELS2METERS;
-	const float serverY = -(this->mySprite->position().y + (mouseState.y - screenHeight / 2) * 1.5f) * PIXELS2METERS;
+	const float serverY = -(this->mySprite->position().y - (mouseState.y - screenHeight / 2) * 1.5f) * PIXELS2METERS;
 	flatbuffers::FlatBufferBuilder builder;
 	FlatBuffGenerated::Vec2 mousePos{serverX, serverY};
 	auto cmdSkill = FlatBuffGenerated::CreateCommandSkill(builder, skillPos, &mousePos);

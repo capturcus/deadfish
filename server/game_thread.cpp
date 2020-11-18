@@ -12,6 +12,7 @@
 #include "skills.hpp"
 
 const float GOLDFISH_CHANCE = 0.05f;
+const uint32_t PRESIMULATE_TICKS = 1000;
 
 uint16_t newMobID()
 {
@@ -25,11 +26,12 @@ uint16_t newMobID()
 				continue;
 		}
 
-		for (auto &n : gameState.civilians)
-		{
-			if (n->mobID == ret)
-				continue;
-		}
+		auto it = gameState.civilians.find(ret);
+		if (it != gameState.civilians.end())
+			continue;
+
+		if (ret == 0)
+			continue;
 
 		return ret;
 	}
@@ -100,6 +102,9 @@ struct FOVCallback
 	{
 		auto data = (Collideable *)fixture->GetBody()->GetUserData();
 		// on return 1.f the currently reported fixture will be ignored and the raycast will continue
+		if (ignoreMobs && dynamic_cast<Mob*>(data))
+			return 1.f;
+
 		if (data && data != target && player && !data->obstructsSight(player))
 			return 1.f;
 		if (fraction < minfraction)
@@ -111,26 +116,28 @@ struct FOVCallback
 	}
 	float minfraction = 1.f;
 	b2Fixture *closest = nullptr;
-	Mob *target = nullptr;
+	Collideable *target = nullptr;
 	Player *player = nullptr;
+	bool ignoreMobs = false;
 };
 
-bool playerSeeMob(Player &p, Mob &m)
+bool playerSeeCollideable(Player &p, Collideable &c)
 {
-	if (m.isDead())
-		return false; // can't see dead ppl lol
 	FOVCallback fovCallback;
-	fovCallback.target = &m;
+	fovCallback.target = &c;
 	fovCallback.player = &p;
 	auto ppos = p.deathTimeout > 0 ? g2b(p.targetPosition) : p.body->GetPosition();
-	auto mpos = m.body->GetPosition();
-	gameState.b2world->RayCast(&fovCallback, ppos, mpos);
-	return fovCallback.closest && fovCallback.closest->GetBody() == m.body;
+	auto cpos = c.body->GetPosition();
+	gameState.b2world->RayCast(&fovCallback, ppos, cpos);
+	return fovCallback.closest && fovCallback.closest->GetBody() == c.body;
 }
 
-bool mobSeePoint(Mob &m, b2Vec2 &point)
+bool mobSeePoint(Mob &m, const b2Vec2 &point, bool ignoreMobs)
 {
+	if (b2Distance(m.body->GetPosition(), point) == 0.0f)
+		return true;
 	FOVCallback fovCallback;
+	fovCallback.ignoreMobs = ignoreMobs;
 	gameState.b2world->RayCast(&fovCallback, m.body->GetPosition(), point);
 	return fovCallback.minfraction == 1.f;
 }
@@ -155,14 +162,14 @@ makePlayerIndicator(flatbuffers::FlatBufferBuilder &builder,
 	if (force != 0)
 		angle = angleFromVector(toTarget);
 	return FlatBuffGenerated::CreateIndicator(builder, angle,
-		force, playerSeeMob(rootPlayer, otherPlayer));
+		force, playerSeeCollideable(rootPlayer, otherPlayer));
 }
 
 flatbuffers::Offset<FlatBuffGenerated::Mob> createFBMob(flatbuffers::FlatBufferBuilder &builder,
 	Player& player, const Mob* m)
 {
 	FlatBuffGenerated::PlayerRelation relation = FlatBuffGenerated::PlayerRelation_None;
-	if (player.killTarget == m)
+	if (player.killTargetID == m->mobID)
 		relation = FlatBuffGenerated::PlayerRelation_Targeted;
 	auto posVec = FlatBuffGenerated::Vec2(m->body->GetPosition().x, m->body->GetPosition().y);
 	return FlatBuffGenerated::CreateMob(builder,
@@ -178,9 +185,10 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 {
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::Mob>> mobs;
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::Indicator>> indicators;
-	for (auto &c : gameState.civilians)
+	for (auto &p : gameState.civilians)
 	{
-		if (!playerSeeMob(player, *c))
+		auto &c = p.second;
+		if (!playerSeeCollideable(player, *c))
 			continue;
 		auto mob = createFBMob(builder, player, c.get());
 		mobs.push_back(mob);
@@ -196,7 +204,7 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 		bool canSeeOther;
 		if (differentPlayer)
 		{
-			canSeeOther = playerSeeMob(player, *p);
+			canSeeOther = playerSeeCollideable(player, *p);
 			auto indicator = makePlayerIndicator(builder, player, *p);
 			indicators.push_back(indicator);
 		}
@@ -220,6 +228,8 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::InkParticle>> inkParticles;
 	std::vector<FlatBuffGenerated::Vec2> inkVecs;
 	for (auto& ink : gameState.inkParticles) {
+		if (!playerSeeCollideable(player, *ink))
+			continue;
 		FlatBuffGenerated::Vec2 pos = b2f(ink->body->GetPosition());
 		auto inkOffset = FlatBuffGenerated::CreateInkParticle(builder, ink->inkID, &pos);
 		inkParticles.push_back(inkOffset);
@@ -227,7 +237,18 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 
 	auto inkParticlesOffset = builder.CreateVector(inkParticles);
 
-	auto worldState = FlatBuffGenerated::CreateWorldState(builder, mobsOffset, indicatorsOffset, inkParticlesOffset, framesRemaining, hidingspot);
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::MobManipulator>> manipulators;
+	for (auto& manipulator : gameState.mobManipulators) {
+		if (!mobSeePoint(player, manipulator.pos, true))
+			continue;
+		FlatBuffGenerated::Vec2 pos = {manipulator.pos.x, manipulator.pos.y};
+		auto manOffset = FlatBuffGenerated::CreateMobManipulator(builder, &pos, manipulator.type);
+		manipulators.push_back(manOffset);
+	}
+
+	auto manipulatorsOffset = builder.CreateVector(manipulators);
+
+	auto worldState = FlatBuffGenerated::CreateWorldState(builder, mobsOffset, indicatorsOffset, inkParticlesOffset, framesRemaining, manipulatorsOffset, hidingspot);
 
 	return worldState.Union();
 }
@@ -285,8 +306,9 @@ std::vector<int> civiliansSpeciesCount()
 {
 	std::vector<int> ret;
 	ret.resize(gameState.players.size());
-	for (auto &c : gameState.civilians)
+	for (auto &p : gameState.civilians)
 	{
+		auto &c = p.second;
 		if (c->species != GOLDFISH_SPECIES)
 			ret[c->species]++;
 	}
@@ -323,7 +345,7 @@ void spawnCivilian(std::string spawnName, NavPoint* spawn) {
 	c->currentNavpoint = spawnName;
 	physicsInitMob(c.get(), spawn->position, 0, 0.3f);
 	c->setNextNavpoint();
-	gameState.civilians.push_back(std::move(c));
+	gameState.civilians[c->mobID] = std::move(c);
 	std::cout << "spawning civilian of species " << species <<
 		" at " << spawnName << " to a total of " << gameState.civilians.size() << "\n";
 }
@@ -379,19 +401,17 @@ void spawnPlayer(Player &player)
 	std::cout << "spawned player at " << maxSpawn << ", " << player.body->GetPosition() << "\n";
 }
 
-Mob &findMobById(uint16_t id)
+Mob *findMobById(uint16_t id)
 {
-	auto it = std::find_if(gameState.civilians.begin(), gameState.civilians.end(),
-						   [id](const auto &c) { return c->mobID == id; });
+	auto it = gameState.civilians.find(id);
 	if (it != gameState.civilians.end())
-		return *(*it);
+		return it->second.get();
 
 	auto it2 = std::find_if(gameState.players.begin(), gameState.players.end(),
 							[id](const auto &p) { return p->mobID == id; });
 	if (it2 != gameState.players.end())
-		return *(*it2);
-	std::cout << "could not find mob by id " << id << "\n";
-	abort();
+		return it2->get();
+	return nullptr;
 }
 
 void executeCommandKill(Player &player, uint16_t id)
@@ -399,22 +419,22 @@ void executeCommandKill(Player &player, uint16_t id)
 	if (player.bombsAffecting > 0)
 		return;
 	player.lastAttack = std::chrono::system_clock::now();
-	auto &m = findMobById(id);
-	try {
-		auto &otherPlayer = dynamic_cast<Player &>(m);
-		if (otherPlayer.killTarget && otherPlayer.killTarget->mobID == player.mobID) {
-			// they're already targeting us, abort
-			return;
-		}
-	} catch(...) {}
-	auto distance = b2Distance(m.body->GetPosition(), player.body->GetPosition());
+	auto m = findMobById(id);
+	if (!m)
+		return;
+	auto otherPlayer = dynamic_cast<Player *>(m);
+	if (otherPlayer && otherPlayer->killTargetID == player.mobID) {
+		// they're already targeting us, abort
+		return;
+	}
+	auto distance = b2Distance(m->body->GetPosition(), player.body->GetPosition());
 	if (distance < INSTA_KILL_DISTANCE)
 	{
 		player.setAttacking();
-		m.handleKill(player);
+		m->handleKill(player);
 		return;
 	}
-	player.killTarget = &m;
+	player.killTargetID = m->mobID;
 }
 
 void sendHighscores()
@@ -437,17 +457,16 @@ void executeSkill(Player& p, uint8_t skillPos, b2Vec2 mousePos) {
 		std::cout << "skillPos out of bounds\n";
 		return;
 	}
-	if (p.skills[skillPos] == (uint16_t) Skills::SKILL_NONE)
-		return;
 	Skills skill = (Skills) p.skills[skillPos];
 	auto skillHandler = skillHandlers[(uint16_t) skill];
 	if (skillHandler == nullptr) {
 		std::cout << "no such skill handler " << (uint16_t) skill << "\n";
 	}
-	skillHandler(p, skill, mousePos);
-	std::cout << "skills size " << p.skills.size() << "\n";
-	p.skills.erase(p.skills.begin() + skillPos);
-	p.sendSkillBarUpdate();
+	bool used = skillHandler(p, skill, mousePos);
+	if (used) {
+		p.skills.erase(p.skills.begin() + skillPos);
+		p.sendSkillBarUpdate();
+	}
 }
 
 void gameOnMessage(dfws::Handle hdl, const std::string& payload)
@@ -470,7 +489,7 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 		const auto event = clientMessage->event_as_CommandMove();
 		p->targetPosition = glm::vec2(event->target()->x(), event->target()->y());
 		p->state = p->state == MobState::RUNNING ? MobState::RUNNING : MobState::WALKING;
-		p->killTarget = nullptr;
+		p->killTargetID = 0;
 		p->lastAttack = std::chrono::system_clock::from_time_t(0);
 	}
 	break;
@@ -512,43 +531,89 @@ void updateCollideables(std::vector<std::unique_ptr<C>>& collideables) {
 		collideables.erase(collideables.begin() + despawns[i]);
 }
 
+void initGameThread(TestContactListener& tcl)
+{
+	flatbuffers::FlatBufferBuilder builder(1);
+	const auto guard = gameState.lock();
+
+	// init physics
+	gameState.b2world = std::make_unique<b2World>(b2Vec2(0, 0));
+	gameState.b2world->SetContactListener(&tcl);
+
+	// load level
+	gameState.level = std::make_unique<Level>();
+	auto path = gameState.options["level"].as<std::string>();
+	loadLevel(path);
+
+	// send level to clients
+	auto levelOffset = serializeLevel(builder);
+	auto data = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_Level, levelOffset.Union());
+	sendToAll(data);
+
+	// shuffle the players to give them random species unless it's a test
+	if (gameState.options.count("test") == 0)
+		std::shuffle(gameState.players.begin(), gameState.players.end(), std::mt19937(std::random_device()()));
+
+	uint8_t lastSpecies = 0;
+	for (auto &player : gameState.players)
+	{
+		player->species = lastSpecies;
+		lastSpecies++;
+		spawnPlayer(*player);
+	}
+}
+
+void gameThreadTick(int& civilianTimer)
+{
+	// update physics
+	gameState.b2world->Step(1 / 20.0, 8, 3);
+
+	updateCollideables(gameState.inkParticles);
+
+	// update civilians
+	for (auto it = gameState.civilians.cbegin(); it != gameState.civilians.cend();) {
+		it->second->update();
+		if (it->second->toBeDeleted)
+			it = gameState.civilians.erase(it);
+		else
+			++it;
+	}
+
+	// update players
+	for (auto &p : gameState.players)
+		p->update();
+
+	// spawn civilians if need be
+	if (!gameState.options["ghosttown"].as<bool>() && civilianTimer == 0 && gameState.civilians.size() < MAX_CIVILIANS)
+	{
+		spawnCivilians();
+		civilianTimer = CIVILIAN_TIME;
+	}
+	else
+		civilianTimer = std::max(0, civilianTimer - 1);
+
+	for (auto it = gameState.mobManipulators.begin(); it != gameState.mobManipulators.end();) {
+		it->framesLeft--;
+		if (it->framesLeft == 0)
+			it = gameState.mobManipulators.erase(it);
+		else
+			it++;
+	}
+}
+
 void gameThread()
 {
 	TestContactListener tcl;
 	flatbuffers::FlatBufferBuilder builder(1);
 
-	{
-		const auto guard = gameState.lock();
-
-		// init physics
-		gameState.b2world = std::make_unique<b2World>(b2Vec2(0, 0));
-		gameState.b2world->SetContactListener(&tcl);
-
-		// load level
-		gameState.level = std::make_unique<Level>();
-		auto path = gameState.options["level"].as<std::string>();
-		loadLevel(path);
-
-		// send level to clients
-		auto levelOffset = serializeLevel(builder);
-		auto data = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_Level, levelOffset.Union());
-		sendToAll(data);
-
-		// shuffle the players to give them random species unless it's a test
-		if (gameState.options.count("test") == 0)
-			std::shuffle(gameState.players.begin(), gameState.players.end(), std::mt19937(std::random_device()()));
-
-		uint8_t lastSpecies = 0;
-		for (auto &player : gameState.players)
-		{
-			player->species = lastSpecies;
-			lastSpecies++;
-			spawnPlayer(*player);
-		}
-	}
-
 	int civilianTimer = 0;
 	uint64_t roundTimer = ROUND_LENGTH;
+
+	initGameThread(tcl);
+
+	for (uint32_t i = 0; i < PRESIMULATE_TICKS; i++) {
+		gameThreadTick(civilianTimer);
+	}
 
 	// game loop
 	while (true)
@@ -569,24 +634,7 @@ void gameThread()
 			exit(0);
 		}
 
-		// update physics
-		gameState.b2world->Step(1 / 20.0, 8, 3);
-
-		updateCollideables(gameState.civilians);
-		updateCollideables(gameState.inkParticles);
-
-		// update players
-		for (auto &p : gameState.players)
-			p->update();
-
-		// spawn civilians if need be
-		if (!gameState.options["ghosttown"].as<bool>() && civilianTimer == 0 && gameState.civilians.size() < MAX_CIVILIANS)
-		{
-			spawnCivilians();
-			civilianTimer = CIVILIAN_TIME;
-		}
-		else
-			civilianTimer = std::max(0, civilianTimer - 1);
+		gameThreadTick(civilianTimer);
 
 		// send data to everyone
 		for (auto &p : gameState.players)
