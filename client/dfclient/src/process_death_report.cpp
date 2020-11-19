@@ -77,6 +77,7 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 					255, 30, 70
 					));
 				this->textNodes.push_back(textCreator->CreateOutline());
+				this->endKillingSpree();
 			}
 			this->textNodes.push_back(std::move(killtext));
 
@@ -152,7 +153,24 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 				texts.push_back(textCreator->CreateOutline());
 				texts.push_back(textCreator->CreateText(std::to_string(scoreBonus)));
 				texts.push_back(textCreator->CreateOutline());
-				// TODO: killing spree blinking text
+				if (!_resources._killingSpreeTween.has_value()) {
+					this->killingSpreeText = textCreator->CreateText(
+						"KILLING SPREE",
+						ncine::Color(240, 0, 0),
+						textsXPos[1], screenHeight * 0.8f,
+						6.0f,
+						200, 0, -1,
+						Layers::ADDITIONAL_TEXT
+						);
+					auto killingSpreeTextNode = killingSpreeText.get();
+					_resources._killingSpreeTween =
+						tweeny::from((int)this->killingSpreeText->alpha()).to(40).during(45).via(tweeny::easing::sinusoidalInOut).onStep(
+							[killingSpreeTextNode] (tweeny::tween<int> & t, int v) {
+								killingSpreeTextNode->setAlpha(v);
+								return false;
+							}
+						);
+				}
 			}
 			if (deathReport->shutdown()) {
 				scoreBonus = deathReport->shutdown() * SHUTDOWN_REWARD;
@@ -274,6 +292,7 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 				255, 30, 70
 				));
 			this->textNodes.push_back(textCreator->CreateOutline());
+			this->endKillingSpree();
 		}
 		if (deathReport->domination()) {
 			this->textNodes.push_back(textCreator->CreateText(
@@ -323,6 +342,7 @@ std::unique_ptr<ncine::TextNode> GameplayState::processMultikill(int multikillne
 	if (redness > 255) redness = 255;
 	ncine::Color color = ncine::Color(redness,0,0);
 
+	const auto screenWidth = ncine::theApplication().width();
 	const float floatingTextFadeout = 150;
 	const auto easing = tweeny::easing::circularOut;
 
@@ -331,7 +351,7 @@ std::unique_ptr<ncine::TextNode> GameplayState::processMultikill(int multikillne
 	auto secondaryFlashNode = secondaryFlash.get();
 	// create growing tween
 	this-> _resources._floatTweens.push_back(
-		tweeny::from(5.f).to(10.f).during(floatingTextFadeout).via(easing).onStep(
+		tweeny::from(5.f).to(10.f * screenWidth/1800.f).during(floatingTextFadeout).via(easing).onStep(
 			[secondaryFlashNode] (tweeny::tween<float> t, float v) {
 				secondaryFlashNode->setScale(v);
 				return false;
@@ -345,4 +365,25 @@ std::unique_ptr<ncine::TextNode> GameplayState::processMultikill(int multikillne
 		killstring = "MULTIKILL [" + std::to_string(multikillness) + "]";
 	}
 	return textCreator->CreateText(killstring);
+}
+
+void GameplayState::endKillingSpree() {
+	auto killingSpreeTextNode = this->killingSpreeText.get();
+	_resources._killingSpreeTween.reset(); // remove the neverending tween
+	_resources._intTweens.push_back(textCreator->CreateTextTween(
+		killingSpreeTextNode,
+		(int)this->killingSpreeText->alpha(), 0, 12,
+		tweeny::easing::sinusoidalOut
+	));
+	_resources._floatTweens.push_back(
+		tweeny::from(this->killingSpreeText->scale().x)
+			.to(10.f * ncine::theApplication().width()/1800.f)
+			.during(12)
+			.via(tweeny::easing::quarticIn)
+			.onStep([killingSpreeTextNode](tweeny::tween<float> & t, float v) {
+				killingSpreeTextNode->setScale(v);
+				return false;
+			})
+	);
+	this->textNodes.push_back(std::move(this->killingSpreeText));	// textNodes are cleared when alpha reaches 0
 }

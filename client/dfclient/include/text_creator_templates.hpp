@@ -65,13 +65,14 @@ std::unique_ptr<ncine::TextNode> TextCreator::CreateOutline(const T& easing) {
 template <typename T>
 std::unique_ptr<ncine::TextNode> TextCreator::doCreateText(std::string text, ncine::Color color,
         float pos_x, float pos_y, float scale, int from, int hold, int decay, Layers layer, const T& easing, bool isOutline) {
+	auto screenWidth = ncine::theApplication().width();
 	std::string fontName = isOutline ? "comic_outline" : "comic";
 	auto ret = std::make_unique<ncine::TextNode>(&ncine::theApplication().rootNode(), _resources.fonts[fontName].get());
 	ret->setString(text.c_str());
 	ret->setColor(color);
 	ret->setAlpha(from);
 	ret->setPosition(pos_x, pos_y);
-	ret->setScale(scale*0.5f); // because the font was made 2x bigger on font_upgrade
+	ret->setScale(scale * 0.5f * screenWidth/1800.f); // font upgrade compensation and window size scaling
 	ret->setLayer((unsigned short int)layer);
 	if (decay >= 0) {	// decay < 0 makes the text permanent
 		_resources._intTweens.push_back(CreateTextTween(ret.get(), from, hold, decay, easing));
