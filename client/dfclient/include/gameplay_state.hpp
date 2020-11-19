@@ -88,6 +88,7 @@ private:
 	void LoadLevel();
 	void ProcessDeathReport(const FlatBuffGenerated::DeathReport* deathReport);
 	std::unique_ptr<ncine::TextNode> processMultikill(int multikillness);
+	void endKillingSpree();
 	void ProcessHighscoreUpdate(const FlatBuffGenerated::HighscoreUpdate* highscoreUpdate);
 	void CreateHidingSpotShowingTween(ncine::DrawableNode* hspot);
 	void CreateHidingSpotHidingTween(ncine::DrawableNode* hspot);
@@ -115,6 +116,7 @@ private:
 	typedef std::vector<std::unique_ptr<ncine::DrawableNode>> DrawableNodeVector;
 	DrawableNodeVector nodes;
 	DrawableNodeVector textNodes;
+	std::unique_ptr<ncine::TextNode> killingSpreeText;
 	std::map<std::string, DrawableNodeVector> hiding_spots;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
 	ncine::Sprite* mySprite = nullptr;

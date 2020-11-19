@@ -37,6 +37,7 @@ struct Resources {
 	std::vector<tweeny::tween<int>> _intTweens;
 	std::unordered_map<uint16_t, tweeny::tween<int>> _mobTweens;
 	std::vector<tweeny::tween<float>> _floatTweens;
+	std::optional<tweeny::tween<int>> _killingSpreeTween;
 
 	void UpdateTweens();
 

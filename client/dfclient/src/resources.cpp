@@ -17,6 +17,15 @@ void Resources::UpdateTweens()
 			--it;
 		}
 	}
+	if (_killingSpreeTween.has_value()){
+		_killingSpreeTween->step(1);
+		if (_killingSpreeTween->progress() == 1.f) {
+			_killingSpreeTween->backward();
+		}
+		if (_killingSpreeTween->progress() == 0.f) {
+			_killingSpreeTween->forward();
+		}
+	}
 }
 
 void Resources::playSound(SoundType soundType, float gain) {
