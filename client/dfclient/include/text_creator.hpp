@@ -5,7 +5,7 @@
 #include "gameplay_state.hpp"
 
 class TextCreator {
-    Resources& _resources;
+    std::reference_wrapper<Resources> _resources;
 public:
     TextCreator(Resources& resources);
 
