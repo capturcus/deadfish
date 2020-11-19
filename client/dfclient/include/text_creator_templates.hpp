@@ -39,13 +39,34 @@ std::unique_ptr<ncine::TextNode> TextCreator::CreateText(
 			hold.value_or(_hold),
 			decay.value_or(_decay),
 			layer.value_or(_layer),
-			easing);
+			easing,
+			false);
 	}
 
 template <typename T>
+std::unique_ptr<ncine::TextNode> TextCreator::CreateOutline(const T& easing) {
+	if(_lastColor == ncine::Color::Black) return nullptr;
+	return doCreateText(
+		_lastText,
+		ncine::Color::Black,
+		_last_x,
+		_last_y,
+		_lastScale,
+		_last_from,
+		_last_hold,
+		_last_decay,
+		Layers::TEXT_OUTLINES,
+		easing,
+		true
+	);
+}
+
+
+template <typename T>
 std::unique_ptr<ncine::TextNode> TextCreator::doCreateText(std::string text, ncine::Color color,
-        float pos_x, float pos_y, float scale, int from, int hold, int decay, Layers layer, const T& easing) {
-	auto ret = std::make_unique<ncine::TextNode>(&ncine::theApplication().rootNode(), _resources.fonts["comic"].get());
+        float pos_x, float pos_y, float scale, int from, int hold, int decay, Layers layer, const T& easing, bool isOutline) {
+	std::string fontName = isOutline ? "comic_outline" : "comic";
+	auto ret = std::make_unique<ncine::TextNode>(&ncine::theApplication().rootNode(), _resources.fonts[fontName].get());
 	ret->setString(text.c_str());
 	ret->setColor(color);
 	ret->setAlpha(from);
@@ -53,7 +74,18 @@ std::unique_ptr<ncine::TextNode> TextCreator::doCreateText(std::string text, nci
 	ret->setScale(scale*0.5f); // because the font was made 2x bigger on font_upgrade
 	ret->setLayer((unsigned short int)layer);
 	if (decay >= 0) {	// decay < 0 makes the text permanent
-	_resources._intTweens.push_back(CreateTextTween(ret.get(), from, hold, decay, easing));
+		_resources._intTweens.push_back(CreateTextTween(ret.get(), from, hold, decay, easing));
+	}
+
+	if (!isOutline) {
+		_lastText = text;
+		_lastColor = color;
+		_last_x = pos_x;
+		_last_y = pos_y;
+		_lastScale = scale;
+		_last_from = from;
+		_last_hold = hold;
+		_last_decay = decay;
 	}
 	return std::move(ret);
 }
