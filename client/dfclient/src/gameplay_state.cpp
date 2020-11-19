@@ -675,13 +675,13 @@ void GameplayState::updateRemainingText(uint64_t remainingFrames) {
 		timeLeftNode->setPosition(screenWidth, screenHeight);
 		timeLeftNode->setAnchorPoint(1.f, 1.f);
 		timeLeftNode->setAlpha(127);
-		timeLeftNode->setScale(2.0f);
+		timeLeftNode->setScale(1.0f);
 	} else {
 		timeLeftNode->setString("Game over");
 		timeLeftNode->setColor(255, 0, 0, 255);
 		timeLeftNode->setPosition(screenWidth * 0.5f, screenHeight * 0.875f);
 		timeLeftNode->setAnchorPoint(0.5f, 0.5f);
 		timeLeftNode->setAlpha(255);
-		timeLeftNode->setScale(4.0f);
+		timeLeftNode->setScale(2.0f);
 	}
 }
