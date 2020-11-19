@@ -55,10 +55,11 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 void GameplayState::processKill(const FlatBuffGenerated::DeathReport* deathReport) {
 		_resources.playSound(SoundType::KILL);
 
+		// a text buffer to manage the position before putting everything into this->textNodes
 		std::vector<std::unique_ptr<ncine::TextNode>> texts;
 
 		if (deathReport->victim() == (uint16_t)-1) {
-			// it was an npc
+			// it was a CIVILIAN
 			auto killtext = theTextCreator->CreateText(
 				"you killed a civilian",
 				ncine::Color::Black,
@@ -93,7 +94,7 @@ void GameplayState::processKill(const FlatBuffGenerated::DeathReport* deathRepor
 			this->textNodes.push_back(std::move(killtext));
 
 		} else if (deathReport->victim() == (uint16_t)-2) {
-			// it was a goldfish!
+			// it was a GOLDFISH!
 			this->textNodes.push_back(theTextCreator->CreateText(
 				"+1 skill!",
 				ncine::Color(230, 230, 0),
@@ -105,9 +106,10 @@ void GameplayState::processKill(const FlatBuffGenerated::DeathReport* deathRepor
 			_resources.playSound(SoundType::GOLDFISH);	// !
 
 		} else {
-			// it was a player
-			// timing for "you killed <player>"
-			theTextCreator->setTweenParams(255, 45, 90);
+			// it was a PLAYER
+
+			// display "you killed <player>!" and score tally against that player
+			theTextCreator->setTweenParams(255, 45, 90); // timing for "you killed <player>"
 			theTextCreator->setColor(0, 220, 0);
 			auto killtext = theTextCreator->CreateText(
 				"you killed " + gameData.players[deathReport->victim()].name + "!",
@@ -131,8 +133,8 @@ void GameplayState::processKill(const FlatBuffGenerated::DeathReport* deathRepor
 			this->textNodes.push_back(std::move(score));
 			this->textNodes.push_back(std::move(scoreOutline));
 
-			// timing for total score
-			theTextCreator->setTweenParams(200, 180, 30);
+			// display score summary: base score and bonuses
+			theTextCreator->setTweenParams(200, 180, 30); // timing for total score
 
 			theTextCreator->setScale(1.2f);
 			theTextCreator->setColor(0, 200, 0);
@@ -145,8 +147,7 @@ void GameplayState::processKill(const FlatBuffGenerated::DeathReport* deathRepor
 			int totalScore = KILL_REWARD;
 			int scoreBonus;
 
-			// timing for score texts
-			theTextCreator->setTweenParams(200, 120, 60);
+			theTextCreator->setTweenParams(200, 120, 60); // timing for score texts
 			theTextCreator->setScale(1.1f);
 			theTextCreator->setPosition(textsXPos[1], textsYPos[1]);
 			if (deathReport->multikill()) {
@@ -165,6 +166,7 @@ void GameplayState::processKill(const FlatBuffGenerated::DeathReport* deathRepor
 				texts.push_back(theTextCreator->CreateText(std::to_string(scoreBonus)));
 				texts.push_back(theTextCreator->CreateOutline());
 				if (!_resources._killingSpreeTween.has_value()) {
+					// create giant red indicator text
 					this->killingSpreeText = theTextCreator->CreateText(
 						"KILLING SPREE",
 						ncine::Color(240, 0, 0),
@@ -247,7 +249,7 @@ void GameplayState::processKill(const FlatBuffGenerated::DeathReport* deathRepor
 					text->setPosition(textsXPos[0] + text->width()/2.f, textsYPos[1] - heightOffset);
 				} else {
 					text->setPosition(textsXPos[2] - text->width()/2.f, textsYPos[1] - heightOffset);
-					// create position tween to make the score fly to the total
+					// create position tween to make the score fly up to the total
 					this->_resources._floatTweens.push_back(
 						tweeny::from(text->position().y).to(text->position().y).during(120)
 						.to(textsYPos[1]).during(60).via(tweeny::easing::circularOut).onStep(
@@ -263,7 +265,7 @@ void GameplayState::processKill(const FlatBuffGenerated::DeathReport* deathRepor
 
 			auto scoreNode = texts[2].get();
 			auto scoreOutlineNode = texts[3].get();
-			// create number tween to make the total go up to the value
+			// create number tween to make the total go up to the final value
 			this->_resources._intTweens.push_back(
 				tweeny::from(KILL_REWARD).to(KILL_REWARD).during(120)
 					.to(totalScore).during(20).onStep(
@@ -295,13 +297,18 @@ static const char* multikillText[12] = {
 	"KILLHARMONIC"
 }; 
 
-
+/** Manage everything regarding multikill:
+ * - create flash texts
+ * - return the appropriate text (with the number, if necessary) for the summary
+ */
 std::unique_ptr<ncine::TextNode> GameplayState::processMultikill(int multikillness) {
 	std::string killstring;
 	killstring = (multikillness <= 11) ? multikillText[multikillness] : multikillText[11];
 
 	// create floating texts
-	uint16_t redness = 60 + 20*(multikillness-1);
+
+	// determine the flashtext color (red with growing intensity the higher the multikill)
+	uint16_t redness = 40 + 20*multikillness; // starting from 80
 	if (redness > 255) redness = 255;
 	ncine::Color color = ncine::Color(redness,0,0);
 
@@ -324,15 +331,27 @@ std::unique_ptr<ncine::TextNode> GameplayState::processMultikill(int multikillne
 	this->textNodes.push_back(std::move(primaryFlash));
 	this->textNodes.push_back(std::move(secondaryFlash));
 
+	// standardizing text over "penta kill" in order to:
+	// - make clear at what number we're on
+	// - fit into summary table xd
 	if (multikillness > 5) {
 		killstring = "MULTIKILL [" + std::to_string(multikillness) + "]";
 	}
 	return theTextCreator->CreateText(killstring);
 }
 
+/** Handle the killing spree end:
+ *	- add a transition effect for the giant indicator text to get it off the screen
+ *	- make sure the tweens and text are properly managed memory-wise
+ *		- remove the neverending tween from its own, unmanaged place
+ *		- add a tween to reduce text alpha to 0 and place the tween in civilized _intTweens,
+ *			from where it will be removed once it reaches its end
+ *		- std::move the text to textNodes, so it will be removed once the abovementioned tween
+ *			gets the text's alpha to 0
+ */
 void GameplayState::endKillingSpree() {
 	auto killingSpreeTextNode = this->killingSpreeText.get();
-	_resources._killingSpreeTween.reset(); // remove the neverending tween
+	_resources._killingSpreeTween.reset();
 	_resources._intTweens.push_back(theTextCreator->CreateTextTween(
 		killingSpreeTextNode,
 		(int)this->killingSpreeText->alpha(), 0, 12,
@@ -348,7 +367,7 @@ void GameplayState::endKillingSpree() {
 				return false;
 			})
 	);
-	this->textNodes.push_back(std::move(this->killingSpreeText));	// textNodes are cleared when alpha reaches 0
+	this->textNodes.push_back(std::move(this->killingSpreeText));
 }
 
 /* ----------- I GOT KILLED ------------ */
@@ -359,6 +378,7 @@ void GameplayState::processDeath(const FlatBuffGenerated::DeathReport* deathRepo
 	_resources.playSound(SoundType::KILL, 0.4f);
 	_resources.playSound(SoundType::DEATH);
 
+	// display the sad message about the unfortunate event (and score tally, to make it even worse)
 	theTextCreator->setColor(230, 0, 0);
 	auto killtext = theTextCreator->CreateText(
 		"you have been killed by " + gameData.players[deathReport->killer()].name,
@@ -373,6 +393,7 @@ void GameplayState::processDeath(const FlatBuffGenerated::DeathReport* deathRepo
 	score->setPosition(textsXPos[1], killtext->position().y + killtext->height()/2.f + score->height()/2);
 	scoreOutline->setPosition(score->position().x, score->position().y);
 
+	// display additional texts to put some salt onto the wound
 	if (deathReport->shutdown()) {
 		this->textNodes.push_back(theTextCreator->CreateText(
 			"killing spree stopped",
@@ -408,11 +429,13 @@ void GameplayState::processDeath(const FlatBuffGenerated::DeathReport* deathRepo
 	this->textNodes.push_back(std::move(killtextOutline));
 	this->textNodes.push_back(std::move(score));
 	this->textNodes.push_back(std::move(scoreOutline));
-
 }
 
 /* ----------- SOMEBODY GOT KILLED ------------ */
 
+/** Inform the player that somebody somewhere said goodbye to this world
+ * TODO: a proper message queue with proper event descriptions ("asd is dominating asdd!")
+ */
 void GameplayState::processObituary(const FlatBuffGenerated::DeathReport* deathReport){
 	auto killer = gameData.players[deathReport->killer()].name;
 	auto victim = gameData.players[deathReport->victim()].name;
@@ -420,7 +443,7 @@ void GameplayState::processObituary(const FlatBuffGenerated::DeathReport* deathR
 		killer + " killed " + victim,
 		ncine::Color::Black,
 		screenWidth * 0.8f, screenHeight * 0.8f,
-		0.5f
+		0.5f,
+		255, 120, 90
 		));
-
 }
