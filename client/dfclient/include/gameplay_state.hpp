@@ -86,10 +86,6 @@ private:
 	void OnMessage(const std::string& data);
 
 	void LoadLevel();
-	void ProcessDeathReport(const FlatBuffGenerated::DeathReport* deathReport);
-	std::unique_ptr<ncine::TextNode> processMultikill(int multikillness);
-	void endKillingSpree();
-	void ProcessHighscoreUpdate(const FlatBuffGenerated::HighscoreUpdate* highscoreUpdate);
 	void CreateHidingSpotShowingTween(ncine::DrawableNode* hspot);
 	void CreateHidingSpotHidingTween(ncine::DrawableNode* hspot);
 	std::unique_ptr<ncine::AnimatedSprite> CreateNewMobSprite(ncine::SceneNode* parent, uint16_t species);
@@ -110,6 +106,13 @@ private:
 	std::map<uint16_t, Manipulator> manipulators;
 	std::map<uint16_t, Mob> mobs;
 	std::map<uint16_t, InkParticle> inkParticles;
+
+	void processKill(const FlatBuffGenerated::DeathReport* deathReport);
+	void processDeath(const FlatBuffGenerated::DeathReport* deathReport);
+	void processObituary(const FlatBuffGenerated::DeathReport* deathReport);
+	std::unique_ptr<ncine::TextNode> processMultikill(int multikillness);
+	void endKillingSpree();
+
 
 	friend class TextCreator;
 

@@ -18,87 +18,98 @@
 #include "resources.hpp"
 #include "text_creator.hpp"
 
-static const char* multikillText[12] = {
-	"",
-	"",
-	"DOUBLE KILL",
-	"TRIPLE KILL",
-	"QUADRA KILL",
-	"PENTA KILL",
-	"OVERKILL",
-	"KILLIMANJARO",
-	"KILLANTHROPIST",
-	"KILLICIOUS",
-	"KILLIONAIRE",
-	"KILLHARMONIC"
-}; 
+// translation-unit-local variables used throughout the code in this file
+static std::optional<TextCreator> theTextCreator;	// instanced here for potential future thread-safety
+static ncine::SceneNode& rootNode = ncine::theApplication().rootNode();
+static float screenWidth;
+static float screenHeight;
+static std::array<float, 3> textsXPos;
+static std::array<float, 4> textsYPos;
+
 
 void GameplayState::ProcessDeathReport(void const* ev) {
 	auto deathReport = (const FlatBuffGenerated::DeathReport*) ev;
-	auto& rootNode = ncine::theApplication().rootNode();
-	std::vector<std::unique_ptr<ncine::TextNode>> texts;
-	const float screenWidth = ncine::theApplication().width();
-	const float screenHeight = ncine::theApplication().height();
-	const float textsXPos[] = {0.41f * screenWidth, 0.5f * screenWidth, 0.59f * screenWidth};
-	const float textsYPos[] = {0.75f * screenHeight, 0.5f * screenHeight, 0.30f * screenHeight, 0.25f * screenHeight};
+	
+	theTextCreator = textCreator.value();
+
+	screenWidth = ncine::theApplication().width();
+	screenHeight = ncine::theApplication().height();
+	textsXPos = {0.41f * screenWidth, 0.5f * screenWidth, 0.59f * screenWidth};
+	textsYPos = {0.75f * screenHeight, 0.5f * screenHeight, 0.30f * screenHeight, 0.25f * screenHeight};
 
 	if (deathReport->killer() == gameData.myPlayerID) {
 		// i killed someone
+		processKill(deathReport);
+		
+	} else if (deathReport->victim() == gameData.myPlayerID) {
+		// i died :c
+		processDeath(deathReport);
+	} else {
+		// somebody died
+		processObituary(deathReport);
+	}
+}
+
+/* ----------- I KILLED SOMEBODY ------------ */
+
+void GameplayState::processKill(const FlatBuffGenerated::DeathReport* deathReport) {
 		_resources.playSound(SoundType::KILL);
+
+		std::vector<std::unique_ptr<ncine::TextNode>> texts;
 
 		if (deathReport->victim() == (uint16_t)-1) {
 			// it was an npc
-			auto killtext = textCreator->CreateText(
+			auto killtext = theTextCreator->CreateText(
 				"you killed a civilian",
 				ncine::Color::Black,
 				textsXPos[1], textsXPos[0],
 				3.0f
 				);
 			
-			textCreator->setTweenParams(200, 180, 30);
-			texts.push_back(textCreator->CreateText(
+			theTextCreator->setTweenParams(200, 180, 30);
+			texts.push_back(theTextCreator->CreateText(
 				"civilian casualty",
 				ncine::Color::Black,
 				textsXPos[0], textsYPos[1]
 				));
 			texts.back()->setPosition(textsXPos[0]+texts.back()->width()/2, textsYPos[1]);
-			texts.push_back(textCreator->CreateText(
+			texts.push_back(theTextCreator->CreateText(
 				std::to_string(CIVILIAN_PENALTY),
 				ncine::Color::Black,
 				textsXPos[2], textsYPos[1]
 				));
 
 			if (deathReport->multikill() >= 2 || deathReport->killing_spree()) {
-				this->textNodes.push_back(textCreator->CreateText(
+				this->textNodes.push_back(theTextCreator->CreateText(
 					"killing spree stopped",
 					ncine::Color(140, 0, 0),
 					textsXPos[1], textsYPos[0] - killtext->height(),
 					2.0f,
 					255, 30, 70
 					));
-				this->textNodes.push_back(textCreator->CreateOutline());
+				this->textNodes.push_back(theTextCreator->CreateOutline());
 				this->endKillingSpree();
 			}
 			this->textNodes.push_back(std::move(killtext));
 
 		} else if (deathReport->victim() == (uint16_t)-2) {
 			// it was a goldfish!
-			this->textNodes.push_back(textCreator->CreateText(
+			this->textNodes.push_back(theTextCreator->CreateText(
 				"+1 skill!",
 				ncine::Color(230, 230, 0),
 				textsXPos[1], textsYPos[0],
 				2.5f,
 				255, 30, 60
 				));
-			this->textNodes.push_back(textCreator->CreateOutline());
+			this->textNodes.push_back(theTextCreator->CreateOutline());
 			_resources.playSound(SoundType::GOLDFISH);	// !
 
 		} else {
 			// it was a player
 			// timing for "you killed <player>"
-			textCreator->setTweenParams(255, 45, 90);
-			textCreator->setColor(0, 220, 0);
-			auto killtext = textCreator->CreateText(
+			theTextCreator->setTweenParams(255, 45, 90);
+			theTextCreator->setColor(0, 220, 0);
+			auto killtext = theTextCreator->CreateText(
 				"you killed " + gameData.players[deathReport->victim()].name + "!",
 				std::nullopt,
 				textsXPos[1], textsYPos[0],
@@ -107,11 +118,11 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 				std::nullopt,
 				tweeny::easing::sinusoidalIn
 				);
-			auto killtextOutline = textCreator->CreateOutline(tweeny::easing::sinusoidalIn);
+			auto killtextOutline = theTextCreator->CreateOutline(tweeny::easing::sinusoidalIn);
 
-			auto score = textCreator->CreateText(
+			auto score = theTextCreator->CreateText(
 				"[" + std::to_string(deathReport->killerKills()) + "  :  " + std::to_string(deathReport->victimKills()) + "]");
-			auto scoreOutline = textCreator->CreateOutline();
+			auto scoreOutline = theTextCreator->CreateOutline();
 			score->setPosition(textsXPos[1], killtext->position().y + killtext->height()/2.f + score->height()/2);
 			scoreOutline->setPosition(score->position().x, score->position().y);
 			
@@ -121,40 +132,40 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 			this->textNodes.push_back(std::move(scoreOutline));
 
 			// timing for total score
-			textCreator->setTweenParams(200, 180, 30);
+			theTextCreator->setTweenParams(200, 180, 30);
 
-			textCreator->setScale(1.2f);
-			textCreator->setColor(0, 200, 0);
-			texts.push_back(textCreator->CreateText("enemy killed"));
-			texts.push_back(textCreator->CreateOutline());
+			theTextCreator->setScale(1.2f);
+			theTextCreator->setColor(0, 200, 0);
+			texts.push_back(theTextCreator->CreateText("enemy killed"));
+			texts.push_back(theTextCreator->CreateOutline());
 
-			texts.push_back(textCreator->CreateText(std::to_string(KILL_REWARD)));
-			texts.push_back(textCreator->CreateOutline());
+			texts.push_back(theTextCreator->CreateText(std::to_string(KILL_REWARD)));
+			texts.push_back(theTextCreator->CreateOutline());
 
 			int totalScore = KILL_REWARD;
 			int scoreBonus;
 
 			// timing for score texts
-			textCreator->setTweenParams(200, 120, 60);
-			textCreator->setScale(1.1f);
-			textCreator->setPosition(textsXPos[1], textsYPos[1]);
+			theTextCreator->setTweenParams(200, 120, 60);
+			theTextCreator->setScale(1.1f);
+			theTextCreator->setPosition(textsXPos[1], textsYPos[1]);
 			if (deathReport->multikill()) {
 				scoreBonus = deathReport->multikill() * MULTIKILL_REWARD;
 				totalScore += scoreBonus;
 				texts.push_back(processMultikill(deathReport->multikill()));
-				texts.push_back(textCreator->CreateOutline());
-				texts.push_back(textCreator->CreateText(std::to_string(scoreBonus)));
-				texts.push_back(textCreator->CreateOutline());
+				texts.push_back(theTextCreator->CreateOutline());
+				texts.push_back(theTextCreator->CreateText(std::to_string(scoreBonus)));
+				texts.push_back(theTextCreator->CreateOutline());
 			}
 			if (deathReport->killing_spree()) {
 				scoreBonus = deathReport->killing_spree() * KILLING_SPREE_REWARD;
 				totalScore += scoreBonus;
-				texts.push_back(textCreator->CreateText("killing spree [" + std::to_string(deathReport->killing_spree()) + "]"));
-				texts.push_back(textCreator->CreateOutline());
-				texts.push_back(textCreator->CreateText(std::to_string(scoreBonus)));
-				texts.push_back(textCreator->CreateOutline());
+				texts.push_back(theTextCreator->CreateText("killing spree [" + std::to_string(deathReport->killing_spree()) + "]"));
+				texts.push_back(theTextCreator->CreateOutline());
+				texts.push_back(theTextCreator->CreateText(std::to_string(scoreBonus)));
+				texts.push_back(theTextCreator->CreateOutline());
 				if (!_resources._killingSpreeTween.has_value()) {
-					this->killingSpreeText = textCreator->CreateText(
+					this->killingSpreeText = theTextCreator->CreateText(
 						"KILLING SPREE",
 						ncine::Color(240, 0, 0),
 						textsXPos[1], screenHeight * 0.8f,
@@ -175,58 +186,58 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 			if (deathReport->shutdown()) {
 				scoreBonus = deathReport->shutdown() * SHUTDOWN_REWARD;
 				totalScore += scoreBonus;
-				texts.push_back(textCreator->CreateText("shutdown [" + std::to_string(deathReport->shutdown()) + "]"));
-				texts.push_back(textCreator->CreateOutline());
-				texts.push_back(textCreator->CreateText(std::to_string(scoreBonus)));
-				texts.push_back(textCreator->CreateOutline());
-				this->textNodes.push_back(textCreator->CreateText(
+				texts.push_back(theTextCreator->CreateText("shutdown [" + std::to_string(deathReport->shutdown()) + "]"));
+				texts.push_back(theTextCreator->CreateOutline());
+				texts.push_back(theTextCreator->CreateText(std::to_string(scoreBonus)));
+				texts.push_back(theTextCreator->CreateOutline());
+				this->textNodes.push_back(theTextCreator->CreateText(
 					"you ended " + gameData.players[deathReport->victim()].name + "'s killing spree!",
 					ncine::Color(255, 70, 0),
 					textsXPos[1], textsYPos[2],
 					1.5f,
 					255, 60, 120
 				));
-				this->textNodes.push_back(textCreator->CreateOutline());
+				this->textNodes.push_back(theTextCreator->CreateOutline());
 			}
 			if (deathReport->domination()) {
 				scoreBonus = deathReport->domination() * DOMINATION_REWARD;
 				totalScore += scoreBonus;
-				texts.push_back(textCreator->CreateText("domination[" + std::to_string(deathReport->domination())+ "]"));
-				texts.push_back(textCreator->CreateOutline());
-				texts.push_back(textCreator->CreateText(std::to_string(scoreBonus)));
-				texts.push_back(textCreator->CreateOutline());
-				this->textNodes.push_back(textCreator->CreateText(
+				texts.push_back(theTextCreator->CreateText("domination[" + std::to_string(deathReport->domination())+ "]"));
+				texts.push_back(theTextCreator->CreateOutline());
+				texts.push_back(theTextCreator->CreateText(std::to_string(scoreBonus)));
+				texts.push_back(theTextCreator->CreateOutline());
+				this->textNodes.push_back(theTextCreator->CreateText(
 					"you are dominating " + gameData.players[deathReport->victim()].name + "!",
 					ncine::Color(240, 0, 0),
 					textsXPos[1], textsYPos[3],
 					1.5f,
 					255, 60, 120
 				));
-				this->textNodes.push_back(textCreator->CreateOutline());
+				this->textNodes.push_back(theTextCreator->CreateOutline());
 			}
 			if (deathReport->revenge()) {
 				scoreBonus = deathReport->revenge() * REVENGE_REWARD;
 				totalScore += scoreBonus;
-				texts.push_back(textCreator->CreateText("revenge [" + std::to_string(deathReport->revenge())+ "]"));
-				texts.push_back(textCreator->CreateOutline());
-				texts.push_back(textCreator->CreateText(std::to_string(scoreBonus)));
-				texts.push_back(textCreator->CreateOutline());
-				this->textNodes.push_back(textCreator->CreateText(
+				texts.push_back(theTextCreator->CreateText("revenge [" + std::to_string(deathReport->revenge())+ "]"));
+				texts.push_back(theTextCreator->CreateOutline());
+				texts.push_back(theTextCreator->CreateText(std::to_string(scoreBonus)));
+				texts.push_back(theTextCreator->CreateOutline());
+				this->textNodes.push_back(theTextCreator->CreateText(
 					"you got revenge on " + gameData.players[deathReport->victim()].name + "!",
 					ncine::Color(255, 70, 0),
 					textsXPos[1], textsYPos[3],
 					1.5f,
 					255, 60, 120
 				));
-				this->textNodes.push_back(textCreator->CreateOutline());
+				this->textNodes.push_back(theTextCreator->CreateOutline());
 			}
 			if (deathReport->comeback()) {
 				scoreBonus = deathReport->comeback() * COMEBACK_REWARD;
 				totalScore += scoreBonus;
-				texts.push_back(textCreator->CreateText("comeback [" + std::to_string(deathReport->revenge())+ "]"));
-				texts.push_back(textCreator->CreateOutline());
-				texts.push_back(textCreator->CreateText(std::to_string(scoreBonus)));
-				texts.push_back(textCreator->CreateOutline());
+				texts.push_back(theTextCreator->CreateText("comeback [" + std::to_string(deathReport->revenge())+ "]"));
+				texts.push_back(theTextCreator->CreateOutline());
+				texts.push_back(theTextCreator->CreateText(std::to_string(scoreBonus)));
+				texts.push_back(theTextCreator->CreateOutline());
 			}
 			// place the texts from queue neatly under each other
 			float heightOffset = 0;
@@ -263,75 +274,27 @@ void GameplayState::ProcessDeathReport(void const* ev) {
 						}
 					));
 		}
-		
-	} else if (deathReport->victim() == gameData.myPlayerID) {
-		// i died :c
-		_resources.playSound(SoundType::KILL, 0.4f);
-		_resources.playSound(SoundType::DEATH);
-
-		textCreator->setColor(230, 0, 0);
-		auto killtext = textCreator->CreateText(
-			"you have been killed by " + gameData.players[deathReport->killer()].name,
-			std::nullopt,
-			textsXPos[1], screenHeight * 0.6f,
-			2.0f
-			);
-		auto killtextOutline = textCreator->CreateOutline();
-		auto score = textCreator->CreateText(
-			"[" + std::to_string(deathReport->killerKills()) + "  :  " + std::to_string(deathReport->victimKills()) + "]");
-		auto scoreOutline = textCreator->CreateOutline();
-		score->setPosition(textsXPos[1], killtext->position().y + killtext->height()/2.f + score->height()/2);
-		scoreOutline->setPosition(score->position().x, score->position().y);
-
-		if (deathReport->shutdown()) {
-			this->textNodes.push_back(textCreator->CreateText(
-				"killing spree stopped",
-				ncine::Color(140, 0, 0),
-				textsXPos[1], killtext->position().y - killtext->height(),
-				2.0f,
-				255, 30, 70
-				));
-			this->textNodes.push_back(textCreator->CreateOutline());
-			this->endKillingSpree();
-		}
-		if (deathReport->domination()) {
-			this->textNodes.push_back(textCreator->CreateText(
-				gameData.players[deathReport->killer()].name + " is dominating you!",
-				ncine::Color(200, 0, 0),
-				textsXPos[1], textsYPos[3],
-				2.0f,
-				255, 60, 40
-			));
-			this->textNodes.push_back(textCreator->CreateOutline());
-		}
-		if (deathReport->revenge()) {
-			this->textNodes.push_back(textCreator->CreateText(
-				gameData.players[deathReport->killer()].name + " got revenge!",
-				ncine::Color(50, 0, 0),
-				textsXPos[1], textsYPos[3],
-				2.0f,
-				255, 60, 90
-			));
-			this->textNodes.push_back(textCreator->CreateOutline());
-		}
-		this->textNodes.push_back(std::move(killtext));
-		this->textNodes.push_back(std::move(killtextOutline));
-		this->textNodes.push_back(std::move(score));
-		this->textNodes.push_back(std::move(scoreOutline));
-	} else {
-		auto killer = gameData.players[deathReport->killer()].name;
-		auto victim = gameData.players[deathReport->victim()].name;
-		this->textNodes.push_back(textCreator->CreateText(
-			killer + " killed " + victim,
-			ncine::Color::Black,
-			screenWidth * 0.8f, screenHeight * 0.8f,
-			0.5f
-			));
-	}
-	for (auto& text : texts) {
+		for (auto& text : texts) {
 		this->textNodes.push_back(std::move(text));
-	}
+		}
+
 }
+
+static const char* multikillText[12] = {
+	"",
+	"",
+	"DOUBLE KILL",
+	"TRIPLE KILL",
+	"QUADRA KILL",
+	"PENTA KILL",
+	"OVERKILL",
+	"KILLIMANJARO",
+	"KILLANTHROPIST",
+	"KILLICIOUS",
+	"KILLIONAIRE",
+	"KILLHARMONIC"
+}; 
+
 
 std::unique_ptr<ncine::TextNode> GameplayState::processMultikill(int multikillness) {
 	std::string killstring;
@@ -346,8 +309,8 @@ std::unique_ptr<ncine::TextNode> GameplayState::processMultikill(int multikillne
 	const float floatingTextFadeout = 150;
 	const auto easing = tweeny::easing::circularOut;
 
-	auto primaryFlash = textCreator->CreateText(killstring, color, std::nullopt, std::nullopt, 5.f, 180, 0, floatingTextFadeout, Layers::ADDITIONAL_TEXT, easing);
-	auto secondaryFlash = textCreator->CreateText(killstring, color, std::nullopt, std::nullopt, 5.f, 100, 0, floatingTextFadeout, Layers::ADDITIONAL_TEXT, easing);
+	auto primaryFlash = theTextCreator->CreateText(killstring, color, std::nullopt, std::nullopt, 5.f, 180, 0, floatingTextFadeout, Layers::ADDITIONAL_TEXT, easing);
+	auto secondaryFlash = theTextCreator->CreateText(killstring, color, std::nullopt, std::nullopt, 5.f, 100, 0, floatingTextFadeout, Layers::ADDITIONAL_TEXT, easing);
 	auto secondaryFlashNode = secondaryFlash.get();
 	// create growing tween
 	this-> _resources._floatTweens.push_back(
@@ -364,13 +327,13 @@ std::unique_ptr<ncine::TextNode> GameplayState::processMultikill(int multikillne
 	if (multikillness > 5) {
 		killstring = "MULTIKILL [" + std::to_string(multikillness) + "]";
 	}
-	return textCreator->CreateText(killstring);
+	return theTextCreator->CreateText(killstring);
 }
 
 void GameplayState::endKillingSpree() {
 	auto killingSpreeTextNode = this->killingSpreeText.get();
 	_resources._killingSpreeTween.reset(); // remove the neverending tween
-	_resources._intTweens.push_back(textCreator->CreateTextTween(
+	_resources._intTweens.push_back(theTextCreator->CreateTextTween(
 		killingSpreeTextNode,
 		(int)this->killingSpreeText->alpha(), 0, 12,
 		tweeny::easing::sinusoidalOut
@@ -386,4 +349,78 @@ void GameplayState::endKillingSpree() {
 			})
 	);
 	this->textNodes.push_back(std::move(this->killingSpreeText));	// textNodes are cleared when alpha reaches 0
+}
+
+/* ----------- I GOT KILLED ------------ */
+
+/** Manage the fact that somebody just killed the player
+ */
+void GameplayState::processDeath(const FlatBuffGenerated::DeathReport* deathReport) {
+	_resources.playSound(SoundType::KILL, 0.4f);
+	_resources.playSound(SoundType::DEATH);
+
+	theTextCreator->setColor(230, 0, 0);
+	auto killtext = theTextCreator->CreateText(
+		"you have been killed by " + gameData.players[deathReport->killer()].name,
+		std::nullopt,
+		textsXPos[1], screenHeight * 0.6f,
+		2.0f
+		);
+	auto killtextOutline = theTextCreator->CreateOutline();
+	auto score = theTextCreator->CreateText(
+		"[" + std::to_string(deathReport->killerKills()) + "  :  " + std::to_string(deathReport->victimKills()) + "]");
+	auto scoreOutline = theTextCreator->CreateOutline();
+	score->setPosition(textsXPos[1], killtext->position().y + killtext->height()/2.f + score->height()/2);
+	scoreOutline->setPosition(score->position().x, score->position().y);
+
+	if (deathReport->shutdown()) {
+		this->textNodes.push_back(theTextCreator->CreateText(
+			"killing spree stopped",
+			ncine::Color(140, 0, 0),
+			textsXPos[1], killtext->position().y - killtext->height(),
+			2.0f,
+			255, 30, 70
+			));
+		this->textNodes.push_back(theTextCreator->CreateOutline());
+		this->endKillingSpree();
+	}
+	if (deathReport->domination()) {
+		this->textNodes.push_back(theTextCreator->CreateText(
+			gameData.players[deathReport->killer()].name + " is dominating you!",
+			ncine::Color(200, 0, 0),
+			textsXPos[1], textsYPos[3],
+			2.0f,
+			255, 60, 40
+		));
+		this->textNodes.push_back(theTextCreator->CreateOutline());
+	}
+	if (deathReport->revenge()) {
+		this->textNodes.push_back(theTextCreator->CreateText(
+			gameData.players[deathReport->killer()].name + " got revenge!",
+			ncine::Color(50, 0, 0),
+			textsXPos[1], textsYPos[3],
+			2.0f,
+			255, 60, 90
+		));
+		this->textNodes.push_back(theTextCreator->CreateOutline());
+	}
+	this->textNodes.push_back(std::move(killtext));
+	this->textNodes.push_back(std::move(killtextOutline));
+	this->textNodes.push_back(std::move(score));
+	this->textNodes.push_back(std::move(scoreOutline));
+
+}
+
+/* ----------- SOMEBODY GOT KILLED ------------ */
+
+void GameplayState::processObituary(const FlatBuffGenerated::DeathReport* deathReport){
+	auto killer = gameData.players[deathReport->killer()].name;
+	auto victim = gameData.players[deathReport->victim()].name;
+	this->textNodes.push_back(theTextCreator->CreateText(
+		killer + " killed " + victim,
+		ncine::Color::Black,
+		screenWidth * 0.8f, screenHeight * 0.8f,
+		0.5f
+		));
+
 }
