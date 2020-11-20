@@ -298,15 +298,7 @@ Mob::~Mob()
 	}
 }
 
-void handleGoldfishKill(Player& killer) {
-	if (killer.skills.size() == MAX_SKILLS)
-		return;
-	uint16_t skill = rand() % (uint16_t) Skills::SKILLS_MAX;
-	killer.skills.push_back(skill);
-	killer.sendSkillBarUpdate();
-}
-
-struct MultiplayerMechanicsInfo {
+struct KillcountMechanicsInfo {
 	uint16_t multikill = 0;
 	uint16_t killing_spree = 0;
 	uint16_t shutdown = 0;
@@ -315,7 +307,7 @@ struct MultiplayerMechanicsInfo {
 	uint16_t comeback = 0;
 };
 
-MultiplayerMechanicsInfo handleMultiplayerMechanics(Player& killer, Player& victim) {
+KillcountMechanicsInfo handleKillcountMechanics(Player& killer, Player& victim) {
 	killer.kills++;
 	victim.deaths++;
 	killer.killingSpreeCounter++;
@@ -324,7 +316,7 @@ MultiplayerMechanicsInfo handleMultiplayerMechanics(Player& killer, Player& vict
 	killer.dominationCounters[victim.playerID]++;
 	victim.comebackCounter++;
 
-	MultiplayerMechanicsInfo ret;
+	KillcountMechanicsInfo ret;
 
 	if (killer.multikillTimer && killer.multikillCounter > 1) {
 		killer.points += killer.multikillCounter * MULTIKILL_REWARD;
@@ -404,7 +396,7 @@ void Player::handleKill(Player& killer) {
 	if (killer.isDead())
 		return;
 
-	auto mmInfo = handleMultiplayerMechanics(killer, *this);
+	auto mmInfo = handleKillcountMechanics(killer, *this);
 	this->toBeDeleted = true;
 	killer.points += KILL_REWARD;
 

@@ -42,8 +42,6 @@ StateManager::StateManager() {
 		file = soundDir.readNext();
 	}
 
-	_resources._sounds.erase("you-failed.wav"); // temporary disable, it will be useful as a gameover sound effect
-
 	_resources._killSoundBuffer = std::move(_resources._sounds["amongus-kill.wav"]);
 	_resources._sounds.erase("amongus-kill.wav");
 	_resources._killSound = std::make_unique<ncine::AudioBufferPlayer>(_resources._killSoundBuffer.get());
