@@ -11,8 +11,9 @@ void DoHealth(std::shared_ptr<agones::SDK> sdk)
 	while (true)
 	{
 		bool ok = sdk->Health();
-		std::cout << "Health ping " << (ok ? "sent" : "failed") << "\n"
-				  << std::flush;
+		if (!ok) {
+			std::cout << "health ping failed\n";
+		}
 		std::this_thread::sleep_for(std::chrono::seconds(2));
 	}
 }
@@ -96,4 +97,7 @@ void agonesThread()
 
 	std::cout << "GameServer name: " << gameserver.object_meta().name() << "\n"
 			  << std::flush;
+
+	health.join();
+	watch.join();
 }
