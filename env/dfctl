@@ -1,5 +1,12 @@
 #!/bin/bash
 
+if [ -z "${DEADFISH_DOCKER_NOSUDO+x}" ]
+then
+    export dockercmd=sudo docker
+else
+    export dockercmd=docker
+fi
+
 if [ "$1" == "install" ]
 then
     sudo cp $0 /usr/bin/dfctl
@@ -9,13 +16,13 @@ fi
 
 if [ "$1" == "startct" ]
 then
-    sudo docker start deadfish-env
+    ${dockercmd} start deadfish-env
     exit 0
 fi
 
 if [ "$1" == "stopct" ]
 then
-    sudo docker stop deadfish-env
+    ${dockercmd} stop deadfish-env
     exit 0
 fi
 
@@ -47,50 +54,50 @@ fi
 
 if [ "$1" == "ct" ]
 then
-    sudo docker exec --user ubuntu -it deadfish-env /bin/bash
+    ${dockercmd} exec --user ubuntu -it deadfish-env /bin/bash
     exit 0
 fi
 
 if [ "$1" == "ctroot" ]
 then
-    sudo docker exec -it deadfish-env /bin/bash
+    ${dockercmd} exec -it deadfish-env /bin/bash
     exit 0
 fi
 
 if [ "$1" == "makeserver" ]
 then
-    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/server && ./build.sh --keep'
+    ${dockercmd} exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/server && ./build.sh --keep'
     exit 0
 fi
 
 if [ "$1" == "makenative" ]
 then
-    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/client && ./recmake_dfclient_native.sh --keep'
+    ${dockercmd} exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/client && ./recmake_dfclient_native.sh --keep'
     exit 0
 fi
 
 if [ "$1" == "makewasm" ]
 then
-    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'source /emsdk/emsdk_env.sh && cd /deadfish/client && ./recmake_dfclient_wasm.sh --keep'
+    ${dockercmd} exec --user ubuntu -it deadfish-env /bin/bash -c 'source /emsdk/emsdk_env.sh && cd /deadfish/client && ./recmake_dfclient_wasm.sh --keep'
     exit 0
 fi
 
 
 if [ "$1" == "recmakeserver" ]
 then
-    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/server && ./build.sh'
+    ${dockercmd} exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/server && ./build.sh'
     exit 0
 fi
 
 if [ "$1" == "recmakenative" ]
 then
-    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/client && ./recmake_dfclient_native.sh'
+    ${dockercmd} exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/client && ./recmake_dfclient_native.sh'
     exit 0
 fi
 
 if [ "$1" == "recmakewasm" ]
 then
-    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'source /emsdk/emsdk_env.sh && cd /deadfish/client && ./recmake_dfclient_wasm.sh'
+    ${dockercmd} exec --user ubuntu -it deadfish-env /bin/bash -c 'source /emsdk/emsdk_env.sh && cd /deadfish/client && ./recmake_dfclient_wasm.sh'
     exit 0
 fi
 
@@ -108,13 +115,13 @@ fi
 
 if [ "$1" == "levelpacker" ]
 then
-    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/levelpacker && ./levelpacker.py'
+    ${dockercmd} exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish/levelpacker && ./levelpacker.py'
     exit 0
 fi
 
 if [ "$1" == "generate" ]
 then
-    sudo docker exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish && ./generate.sh'
+    ${dockercmd} exec --user ubuntu -it deadfish-env /bin/bash -c 'cd /deadfish && ./generate.sh'
     exit 0
 fi
 
