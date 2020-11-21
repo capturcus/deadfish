@@ -5,8 +5,10 @@
 #include <iostream>
 #include <thread>
 
+static std::shared_ptr<agones::SDK> sdk;
+
 // send health check pings
-void DoHealth(std::shared_ptr<agones::SDK> sdk)
+void DoHealth()
 {
 	while (true)
 	{
@@ -19,7 +21,7 @@ void DoHealth(std::shared_ptr<agones::SDK> sdk)
 }
 
 // watch GameServer Updates
-void WatchUpdates(std::shared_ptr<agones::SDK> sdk)
+void WatchUpdates()
 {
 	std::cout << "Starting to watch GameServer updates...\n"
 			  << std::flush;
@@ -36,7 +38,7 @@ void agonesThread()
 	std::cout << "C++ Game Server has started!\n"
 			  << "Getting the instance of the SDK.\n"
 			  << std::flush;
-	auto sdk = std::make_shared<agones::SDK>();
+	sdk = std::make_shared<agones::SDK>();
 
 	std::cout << "Attempting to connect...\n"
 			  << std::flush;
@@ -48,8 +50,8 @@ void agonesThread()
 	std::cout << "...handshake complete.\n"
 			  << std::flush;
 
-	std::thread health(DoHealth, sdk);
-	std::thread watch(WatchUpdates, sdk);
+	std::thread health(DoHealth);
+	std::thread watch(WatchUpdates);
 
 	std::cout << "Setting a label\n"
 			  << std::flush;
@@ -100,4 +102,8 @@ void agonesThread()
 
 	health.join();
 	watch.join();
+}
+
+void agonesShutdown() {
+	sdk->Shutdown();
 }

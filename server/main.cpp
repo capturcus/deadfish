@@ -127,7 +127,7 @@ void mainOnClose(dfws::Handle hdl)
 	if (gameState.phase == GamePhase::GAME && gameState.players.empty())
 	{
 		std::cout << "no players left, exiting\n";
-		exit(0);
+		agonesShutdown();
 	}
 }
 
