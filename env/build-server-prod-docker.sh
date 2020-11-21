@@ -13,5 +13,5 @@ rm -rf levels
 mkdir levels
 cp ../../levels/*.bin levels
 
-docker rmi deadfish-server
+docker rmi deadfish-server || true
 docker build --tag deadfish-server .

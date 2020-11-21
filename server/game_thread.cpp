@@ -10,6 +10,7 @@
 #include "game_thread.hpp"
 #include "level_loader.hpp"
 #include "skills.hpp"
+#include "agones.hpp"
 
 const float GOLDFISH_CHANCE = 0.05f;
 const uint32_t PRESIMULATE_TICKS = 1000;
@@ -631,7 +632,8 @@ void gameThread()
 			sendToAll(data);
 			// FIXME: Proper closing of all connections, so that this sleep is unnecessary
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
-			exit(0);
+			agonesShutdown();
+			return;
 		}
 
 		gameThreadTick(civilianTimer);
