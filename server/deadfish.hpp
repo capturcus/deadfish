@@ -185,6 +185,8 @@ struct HidingSpot : public Collideable {
 struct CollisionMask : public Collideable {
 	CollisionMask(const FlatBuffGenerated::CollisionMask*);
 	virtual bool obstructsSight(Player*) override { return true; }
+
+	flatbuffers::Offset<FlatBuffGenerated::CollisionMask> serialize(flatbuffers::FlatBufferBuilder &builder);
 };
 
 struct PlayerWall : public Collideable {

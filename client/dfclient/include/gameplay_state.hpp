@@ -13,6 +13,7 @@ namespace nc = ncine;
 
 #include "tweeny.h"
 
+#include "fov.hpp"
 #include "game_state.hpp"
 #include "lerp_component.hpp"
 #include "../../../common/deadfish_generated.h"
@@ -23,6 +24,7 @@ enum class Layers {
 	INDICATOR,
 	MOB_MANIPULATORS,
 	MOBS,
+	SHADOW,
 	OBJECTS,
 	INK_PARTICLES,
 	HIDING_SPOTS,
@@ -77,6 +79,7 @@ private:
 	void TryUseSkill(uint8_t skillPos);
 
 	void updateRemainingText(uint64_t remainingFrames);
+	void updateShadows();
 
 	typedef std::vector<std::unique_ptr<ncine::DrawableNode>> DrawableNodeVector;
 	DrawableNodeVector nodes;
@@ -94,7 +97,10 @@ private:
 	ncine::TextNode* timeLeftNode = nullptr;
 	std::string currentHidingSpot = "";
 
-	std::vector<std::unique_ptr<ncine::DrawableNode>> skillIcons;
+	fov::mesh shadowMesh;
+	std::unique_ptr<ncine::MeshSprite> shadowNode;
+
+	std::vector<std::unique_ptr<nc::DrawableNode>> skillIcons;
 
 	ncine::TimeStamp lastMessageReceivedTime;
 

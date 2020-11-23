@@ -180,6 +180,31 @@ void GameplayState::LoadLevel() {
 		}
 
 	}
+
+	// Initialize shadow mesh
+	if (level->collisionMasks() != nullptr) {
+		for (auto mask : *level->collisionMasks()) {
+			auto transform =
+				ncine::Matrix4x4f::translation({mask->pos()->x(), mask->pos()->y(), 0.f}) *
+				ncine::Matrix4x4f::rotationZ(mask->rotation());
+
+			if (mask->isCircle()) {
+				fov::circle c;
+				c.pos.x = mask->pos()->x();
+				c.pos.y = mask->pos()->y();
+				c.radius = mask->size()->x() * 0.5f;
+				shadowMesh.add_circle(c);
+			} else {
+				fov::chain c;
+				c.reserve(mask->polyverts()->size());
+				for (auto v : *mask->polyverts()) {
+					auto vv = ncine::Vector4f(v->x(), v->y(), 0.f, 1.f) * transform;
+					c.push_back(ncine::Vector2f(vv.x, vv.y));
+				}
+				shadowMesh.add_chain(c);
+			}
+		}
+	}
 }
 
 // this whole thing should probably be refactored
@@ -501,6 +526,8 @@ StateType GameplayState::Update(Messages m) {
 		OnMessage(msg);
 	}
 
+	updateShadows();
+
 	auto now = ncine::TimeStamp::now();
 	float subDelta = (now.seconds() - lastMessageReceivedTime.seconds()) * ANIMATION_FPS;
 	if (subDelta < 0.f) {
@@ -713,4 +740,58 @@ void GameplayState::updateRemainingText(uint64_t remainingFrames) {
 		timeLeftNode->setAlpha(255);
 		timeLeftNode->setScale(2.0f);
 	}
+}
+
+void GameplayState::updateShadows() {
+	if (!mySprite) {
+		shadowNode.reset();
+		return;
+	}
+
+	const auto camPos = this->cameraNode->absPosition();
+	auto origin = mySprite->position();
+
+	const auto outline = shadowMesh.calculate_outline(ncine::Vector2f(origin.x, -origin.y) * PIXELS2METERS);
+	std::vector<ncine::MeshSprite::Vertex> strip;
+	strip.resize(outline.size() * 6);
+
+	origin += camPos;
+
+	for (const auto& seg : outline) {
+		ncine::MeshSprite::Vertex a, b, c, d;
+		auto first = ncine::Vector2f(seg.first.x, -seg.first.y) * METERS2PIXELS + camPos;
+		auto second = ncine::Vector2f(seg.second.x, -seg.second.y) * METERS2PIXELS + camPos;
+		a.x = first.x;
+		a.y = first.y;
+		b.x = second.x;
+		b.y = second.y;
+		auto diffFirst = first - origin;
+		if (diffFirst.sqrLength() > 0.f) {
+			diffFirst *= 10000.f / diffFirst.length();
+		}
+		auto diffSecond = second - origin;
+		if (diffSecond.sqrLength() > 0.f) {
+			diffSecond *= 10000.f / diffSecond.length();
+		}
+		c.x = origin.x + diffFirst.x;
+		c.y = origin.y + diffFirst.y;
+		d.x = origin.x + diffSecond.x;
+		d.y = origin.y + diffSecond.y;
+
+		// Triangles
+		strip.push_back(a);
+		strip.push_back(a);
+		strip.push_back(b);
+		strip.push_back(c);
+		strip.push_back(d);
+		strip.push_back(d);
+	}
+
+	if (shadowNode == nullptr) {
+		auto& rootNode = ncine::theApplication().rootNode();
+		shadowNode = std::unique_ptr<ncine::MeshSprite>(new ncine::MeshSprite(&rootNode, _resources.textures["blackpixel.png"].get()));
+		shadowNode->setLayer((unsigned short)Layers::SHADOW);
+		shadowNode->setAlphaF(0.75f);
+	}
+	shadowNode->setVertices(strip.size(), strip.data());
 }
