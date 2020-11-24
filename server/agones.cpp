@@ -1,5 +1,7 @@
 #include "agones.hpp"
 
+namespace dfAgones = agones;
+
 #include <agones/sdk.h>
 #include <grpc++/grpc++.h>
 #include <iostream>
@@ -33,7 +35,7 @@ void WatchUpdates()
 	});
 }
 
-void agonesThread()
+void dfAgones::Start()
 {
 	std::cout << "C++ Game Server has started!\n"
 			  << "Getting the instance of the SDK.\n"
@@ -85,6 +87,10 @@ void agonesThread()
 	std::cout << "...marked Ready\n"
 			  << std::flush;
 
+	status = sdk->SetLabel("playing", "false");
+	if (!status.ok())
+		std::cout << "failed to set playing to true\n";
+
 	std::cout << "Getting GameServer details...\n"
 			  << std::flush;
 	agones::dev::sdk::GameServer gameserver;
@@ -104,6 +110,22 @@ void agonesThread()
 	watch.join();
 }
 
-void agonesShutdown() {
+void dfAgones::Shutdown() {
 	sdk->Shutdown();
+}
+
+void dfAgones::SetPlayers(int players) {
+	auto status = sdk->SetLabel("players", std::to_string(players));
+	if (!status.ok())
+		std::cout << "failed to set players: " << players << "\n";
+	else
+		std::cout << "set label players to " << players << "\n";
+}
+
+void dfAgones::SetPlaying() {
+	auto status = sdk->SetLabel("playing", "true");
+	if (!status.ok())
+		std::cout << "failed to set playing to true\n";
+	else
+		std::cout << "set playing to true\n";
 }

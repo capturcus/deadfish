@@ -632,7 +632,7 @@ void gameThread()
 			sendToAll(data);
 			// FIXME: Proper closing of all connections, so that this sleep is unnecessary
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
-			agonesShutdown();
+			agones::Shutdown();
 			return;
 		}
 
