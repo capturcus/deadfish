@@ -44,12 +44,14 @@ void addNewPlayer(dfws::Handle hdl, const std::string &name)
 
 	gameState.players.push_back(std::move(p));
 
+	agones::SetPlayers(gameState.players.size());
 	sendInitMetadata();
 }
 
 void startGame() {
 	gameState.phase = GamePhase::GAME;
 	dfws::SetOnMessage(&gameOnMessage);
+	agones::SetPlaying();
 	new std::thread(gameThread); // leak the shit out of it yooo
 }
 
@@ -122,12 +124,13 @@ void mainOnClose(dfws::Handle hdl)
 
 	if (gameState.phase == GamePhase::LOBBY)
 	{
+		agones::SetPlayers(gameState.players.size());
 		sendInitMetadata();
 	}
 	if (gameState.phase == GamePhase::GAME && gameState.players.empty())
 	{
 		std::cout << "no players left, exiting\n";
-		agonesShutdown();
+		agones::Shutdown();
 	}
 }
 
@@ -190,7 +193,7 @@ int main(int argc, const char* const argv[])
 	std::cout << "server started\n";
 
 	if (gameState.options["agones"].as<bool>())
-		new std::thread(agonesThread);
+		new std::thread(agones::Start);
 
 	int port = gameState.options["port"].as<int>();
 
