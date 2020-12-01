@@ -1,6 +1,9 @@
 #include <functional>
 #include <iostream>
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+
 #include <ncine/Application.h>
 #include <ncine/imgui.h>
 #include <ncine/MeshSprite.h>
@@ -14,6 +17,7 @@
 #include "menu_state.hpp"
 #include "resources.hpp"
 #include "util.hpp"
+#include "http_client.hpp"
 
 namespace nc = ncine;
 
@@ -50,6 +54,20 @@ bool MenuState::TryConnect() {
 	return true;
 }
 
+void MenuState::ProcessMatchmakerData(std::string data) {
+	boost::property_tree::ptree tree;
+	std::stringstream ss;
+	ss << data;
+	boost::property_tree::read_json(ss, tree);
+
+	auto status = tree.get("status", "");
+	auto address = tree.get("address", "");
+	auto port = tree.get("port", 0);
+	std::cout << "status: " << status << ", address: " << address << ", port: " << port << "\n";
+	gameData.serverAddress = address + ":" + std::to_string(port);
+	this->TryConnect();
+}
+
 StateType MenuState::Update(Messages m) {
 	if (m.opened) {
 		return StateType::Lobby;
@@ -57,17 +75,18 @@ StateType MenuState::Update(Messages m) {
 
 	ImGui::Begin("DeadFish", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
 		ImGuiWindowFlags_NoCollapse);
-	ImGui::SetWindowSize({350, 120});
+	ImGui::SetWindowSize({320, 100});
 	auto res = nc::theApplication().appConfiguration().resolution;
 	ImGui::SetWindowPos({static_cast<float>(res.x)/2-175, 4*static_cast<float>(res.y)/5});
-	static char buf1[64] = "localhost:63987";
-	static char buf2[64] = "asd";
-	ImGui::InputText("server", buf1, 64);
-	ImGui::InputText("nickname", buf2, 64);
-	if (ImGui::Button("connect", {300, 30})) {
-		gameData.serverAddress = std::string(buf1);
-		gameData.myNickname = std::string(buf2);
-		TryConnect();
+	static char buf[64] = "";
+	ImGui::InputText("nickname", buf, 64);
+	if (ImGui::Button("find game", {300, 30})) {
+		gameData.myNickname = std::string(buf);
+		std::string matchmakerData;
+		int ret = http::MatchmakerGet(matchmakerData);
+		std::cout << "ret " << ret << "\n";
+		if (ret > 0)
+			this->ProcessMatchmakerData(matchmakerData);
 	}
 	ImGui::End();
 
