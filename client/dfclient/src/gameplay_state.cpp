@@ -544,12 +544,10 @@ StateType GameplayState::Update(Messages m) {
 	updateHovers(mouseCoords, radiusSquared);
 
 	// clean up transparent text
-	for (auto it = this->textNodes.begin(); it != this->textNodes.end(); ++it) {
-		if ((*it)->alpha() == 0) {
-			textNodes.erase(it);
-			--it;
-		}
-	}
+	auto new_end = std::remove_if(textNodes.begin(), textNodes.end(), [] (auto& t){
+		return t->alpha() == 0;
+	});
+	this->textNodes.resize(std::distance(textNodes.begin(), new_end));
 
 	return StateType::Gameplay;
 }

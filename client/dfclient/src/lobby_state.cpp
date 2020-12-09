@@ -9,7 +9,6 @@
 #include "fb_util.hpp"
 #include "resources.hpp"
 #include "util.hpp"
-#include "text_creator.hpp"
 
 StateType LobbyState::OnMessage(const std::string& data) {
 	std::cout << "lobby received data\n";
@@ -48,7 +47,7 @@ StateType LobbyState::OnMessage(const std::string& data) {
 	return StateType::Lobby;
 }
 
-LobbyState::LobbyState(Resources& r) : _resources(r) {
+LobbyState::LobbyState(Resources& r) : _resources(r), textCreator(r) {
 	std::cout << "lobby create\n";
 
 	flatbuffers::FlatBufferBuilder builder;
@@ -62,7 +61,7 @@ LobbyState::LobbyState(Resources& r) : _resources(r) {
 	const float screenWidth = ncine::theApplication().width();
 	const float screenHeight = ncine::theApplication().height();
 
-	this->sceneNodes.push_back(textCreator->CreateText(
+	this->sceneNodes.push_back(textCreator.CreateText(
 		"players in lobby:",
 		ncine::Color::Black,
 		screenWidth * 0.3f, screenHeight * 0.8f,
@@ -70,7 +69,7 @@ LobbyState::LobbyState(Resources& r) : _resources(r) {
 		255, 0, -1 // permanent
 	));
 
-	this->readyButton = textCreator->CreateText(
+	this->readyButton = textCreator.CreateText(
 		"READY",
 		std::nullopt,
 		screenWidth * 0.5f, screenHeight * 0.2f,
@@ -110,7 +109,7 @@ void LobbyState::RedrawPlayers() {
 	const float screenHeight = ncine::theApplication().height();
 	for (auto& p : gameData.players) {
 		auto color = p.ready ? ncine::Color(0, 128, 0) : ncine::Color::Black;
-		this->textNodes.push_back(textCreator->CreateText(
+		this->textNodes.push_back(textCreator.CreateText(
 			p.name.c_str(),
 			color,
 			screenWidth * 0.3f, screenHeight * 0.75f - 40*playerNum,

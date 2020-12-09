@@ -17,12 +17,9 @@
 #include "game_data.hpp"
 #include "menu_state.hpp"
 #include "resources.hpp"
-<<<<<<< HEAD
 #include "util.hpp"
 #include "http_client.hpp"
-=======
 #include "text_creator.hpp"
->>>>>>> dbcbfee (The glorious birth of TextCreator in its...)
 
 namespace nc = ncine;
 
@@ -56,9 +53,12 @@ void MenuState::ShowMessage(std::string message)
 MenuState::MenuState(Resources& r) : _resources(r) {
 	nc::SceneNode &rootNode = nc::theApplication().rootNode();
 	auto res = nc::theApplication().appConfiguration().resolution;
+
 	logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, _resources.textures["deadfish.png"].get(), res.x*0.5f, res.y*0.6f);
 	nc::theApplication().gfxDevice().setClearColor(bgColor);
+
 	if (gameData.gameInProgress) {
+		TextCreator textCreator(r);
 		std::cout << "menu game in progress\n";
 		ShowMessage("game already in progress");
 		gameData.gameInProgress = false;

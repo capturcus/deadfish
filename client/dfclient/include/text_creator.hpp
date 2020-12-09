@@ -16,16 +16,17 @@
 class TextCreator {
 	std::reference_wrapper<Resources> _resources; // to be able to use fonts and emplace tweens
 public:
-	TextCreator(Resources& resources);
+	inline TextCreator(Resources& resources) : _resources(resources) {};
 
 	// public for convenience
-	ncine::Color _textColor;
-	float _pos_x;
-	float _pos_y;
-	float _textScale;
-	int _from, _hold, _decay;
-	Layers _layer;
+	ncine::Color _textColor= ncine::Color(0, 0, 0);
+	float _pos_x = 0;
+	float _pos_y = 0;
+	float _textScale = 1.0f;
+	int _from = 255, _hold = 60, _decay = 60;
+	Layers _layer = Layers::TEXT;
 
+private:
 	std::string _lastText;
 	ncine::Color _lastColor;
 	float _last_x;
@@ -33,6 +34,7 @@ public:
 	float _lastScale;
 	int _last_from, _last_hold, _last_decay;
 
+public:
 	// existent for code clarity
 	inline void setColor(ncine::Color color) { _textColor = color; }
 	inline void setColor(int r, int g, int b, int a = 255) { _textColor = ncine::Color(r,g,b,a); }
@@ -114,5 +116,3 @@ private:
 };
 
 #include "text_creator_templates.hpp"
-
-extern std::optional<TextCreator> textCreator;

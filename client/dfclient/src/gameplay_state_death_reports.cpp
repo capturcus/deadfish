@@ -30,7 +30,7 @@ static std::array<float, 4> textsYPos;
 void GameplayState::ProcessDeathReport(void const* ev) {
 	auto deathReport = (const FlatBuffGenerated::DeathReport*) ev;
 	
-	theTextCreator = textCreator.value();
+	theTextCreator = TextCreator(_resources);
 
 	screenWidth = ncine::theApplication().width();
 	screenHeight = ncine::theApplication().height();
@@ -145,7 +145,7 @@ void GameplayState::processKill(const FlatBuffGenerated::DeathReport* deathRepor
 			texts.push_back(theTextCreator->CreateOutline());
 
 			int totalScore = KILL_REWARD;
-			int scoreBonus;
+			int scoreBonus = 0;
 
 			theTextCreator->setTweenParams(200, 120, 60); // timing for score texts
 			theTextCreator->setScale(1.1f);
@@ -277,7 +277,7 @@ void GameplayState::processKill(const FlatBuffGenerated::DeathReport* deathRepor
 					));
 		}
 		for (auto& text : texts) {
-		this->textNodes.push_back(std::move(text));
+			this->textNodes.push_back(std::move(text));
 		}
 
 }
