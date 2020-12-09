@@ -17,7 +17,7 @@ static const char* TEXTURES_PATH = "textures";
 static const char* LEVELS_PATH = "../levels";
 static const char* SOUNDS_PATH = "sounds";
 
-enum SoundType {
+enum class SoundType {
 	KILL,
 	DEATH,
 	GOLDFISH

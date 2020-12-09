@@ -1,6 +1,7 @@
 #pragma once
 
 #include "game_state.hpp"
+#include "ncine/TextNode.h"
 
 #include "tweeny.h"
 
@@ -17,6 +18,8 @@ public:
 
 private:
 	bool TryConnect();
+
+	std::unique_ptr<ncine::TextNode> gameInProgressText;
 
 	Resources& _resources;
 };

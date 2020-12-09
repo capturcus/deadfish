@@ -23,16 +23,16 @@ nc::Colorf bgColor(0.96875f, 0.97265625, 0.953125, 1.0f);
 MenuState::MenuState(Resources& r) : _resources(r) {
 	nc::SceneNode &rootNode = nc::theApplication().rootNode();
 	auto res = nc::theApplication().appConfiguration().resolution;
+
 	logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, _resources.textures["deadfish.png"].get(), res.x*0.5f, res.y*0.6f);
 	nc::theApplication().gfxDevice().setClearColor(bgColor);
+
 	if (gameData.gameInProgress) {
+		TextCreator textCreator(r);
 		std::cout << "menu game in progress\n";
-		auto text = new ncine::TextNode(&rootNode, _resources.fonts["comic"].get());
-		text->setString("game already in progress");
-		text->setPosition(res.x * 0.5f, res.y * 0.75f);
-		text->setScale(2.0f);
-		text->setColor(0, 0, 0, 255);
-		_resources._intTweens.push_back(textCreator->CreateTextTween(text));
+		textCreator.setPosition(res.x * 0.5f, res.y * 0.75f);
+		textCreator.setScale(2.0f);
+		gameInProgressText = textCreator.CreateText("game already in progress");
 		gameData.gameInProgress = false;
 	}
 }

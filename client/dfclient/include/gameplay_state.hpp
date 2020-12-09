@@ -93,10 +93,24 @@ private:
 
 	void updateRemainingText(uint64_t remainingFrames);
 
+	/** A subfunction of ProcessDeathReport, responsible for handling killing somebody.
+	 */
 	void processKill(const FlatBuffGenerated::DeathReport* deathReport);
+
+	/** A subfunction of ProcessDeathReport, responsible for handling being killed.
+	 */
 	void processDeath(const FlatBuffGenerated::DeathReport* deathReport);
+
+	/** A subfunction of ProcessDeathReport, responsible for handling reports of a kill 
+	 * which doesn't involve the player.
+	 */
 	void processObituary(const FlatBuffGenerated::DeathReport* deathReport);
+
+	/** A subfunction of processKill, responsible for managing the client's reaction to the player's multikill.
+	 * @return A textnode with the adequate multikill text, to be included in the summary
+	 */
 	std::unique_ptr<ncine::TextNode> processMultikill(int multikillness);
+
 	void endKillingSpree();
 
 
