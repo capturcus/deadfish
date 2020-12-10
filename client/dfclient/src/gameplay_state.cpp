@@ -294,15 +294,18 @@ void GameplayState::ProcessWorldState(const void* ev) {
 			// this is the first time we see this mob, create it
 			Mob newMob;
 			newMob.sprite = CreateNewMobSprite(this->cameraNode.get(), mobData->species());
-			newMob.sprite->setAlpha(1);
+			newMob.lerp.bind(static_cast<ncine::Sprite*>(newMob.sprite.get()));
+
 			//fade in
+			newMob.sprite->setAlpha(1);
 			_resources._mobTweens[mobData->mobID()] = CreateAlphaTransitionTween(newMob.sprite.get(), 1, 255, MOB_FADEIN_TIME);
+
 			this->mobs[mobData->mobID()] = std::move(newMob);
 			mobItr = this->mobs.find(mobData->mobID());
 			firstUpdate = true;
 		}
 		Mob& mob = mobItr->second;
-		mob.setupLocRot(*mobData, firstUpdate);
+		mob.lerp.setupLerp(mobData->pos()->x(), mobData->pos()->y(), mobData->angle(), firstUpdate);
 		mob.seen = true;
 		if (mob.isAfterimage) {
 			//re-fade in
@@ -468,33 +471,6 @@ void GameplayState::OnMessage(const std::string& data) {
 	(this->*handler)(serverMessage->event());
 }
 
-void Mob::setupLocRot(const FlatBuffGenerated::Mob& msg, bool firstUpdate) {
-	prevPosition = currPosition;
-	prevRotation = currRotation;
-
-	currPosition.x = msg.pos()->x() * METERS2PIXELS;
-	currPosition.y = -msg.pos()->y() * METERS2PIXELS;
-	currRotation = -msg.angle() * 180.f / M_PI;
-
-	if (firstUpdate) {
-		prevPosition = currPosition;
-		prevRotation = currRotation;
-	}
-}
-
-void Mob::updateLocRot(float subDelta) {
-	if (this->isAfterimage) return;
-
-	float angleDelta = currRotation - prevRotation;
-	if (angleDelta > M_PI) {
-		angleDelta -= 2.f * M_PI;
-	} else if (angleDelta < -M_PI) {
-		angleDelta += 2.f * M_PI;
-	}
-
-	sprite->setPosition(prevPosition + (currPosition - prevPosition) * subDelta);
-	sprite->setRotation(prevRotation + angleDelta * subDelta);
-}
 
 GameplayState::GameplayState(Resources& r) : _resources(r) {
 	std::cout << "entered gameplay state\n";
@@ -585,7 +561,7 @@ StateType GameplayState::Update(Messages m) {
 
 	// Update mob positions
 	for (auto& mob : this->mobs) {
-		mob.second.updateLocRot(subDelta);
+		mob.second.lerp.updateLerp(subDelta);
 	}
 
 	if (this->mySprite == nullptr)
