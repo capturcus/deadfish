@@ -31,12 +31,12 @@ enum class Layers {
 
 struct Mob {
 	std::unique_ptr<ncine::AnimatedSprite> sprite;
+	LerpComponent lerp;
 	bool seen;
 	bool isAfterimage = false;
 	FlatBuffGenerated::MobState state = FlatBuffGenerated::MobState_Walk;
 	std::unique_ptr<ncine::Sprite> hoverMarker;
 	std::unique_ptr<ncine::Sprite> relationMarker;
-	LerpComponent lerp;
 };
 
 class Resources;

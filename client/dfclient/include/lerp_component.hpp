@@ -4,7 +4,7 @@
 #include "../../../common/deadfish_generated.h"
 
 class LerpComponent {
-    ncine::Sprite* sprite;
+    ncine::DrawableNode* sprite;
 	ncine::Vector2f prevPosition = {};
 	ncine::Vector2f currPosition = {};
 	float prevRotation = 0.f;
@@ -12,7 +12,7 @@ class LerpComponent {
 
 public:
     inline LerpComponent() {}
-    inline void bind(ncine::Sprite* aSprite) { sprite = aSprite; }
+    inline void bind(ncine::DrawableNode* aSprite) { sprite = aSprite; }
 	inline void setupLerp(const float x, const float y, const float angle, bool firstUpdate) {
         prevPosition = currPosition;
         prevRotation = currRotation;

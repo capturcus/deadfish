@@ -294,7 +294,7 @@ void GameplayState::ProcessWorldState(const void* ev) {
 			// this is the first time we see this mob, create it
 			Mob newMob;
 			newMob.sprite = CreateNewMobSprite(this->cameraNode.get(), mobData->species());
-			newMob.lerp.bind(static_cast<ncine::Sprite*>(newMob.sprite.get()));
+			newMob.lerp.bind(static_cast<ncine::DrawableNode*>(newMob.sprite.get()));
 
 			//fade in
 			newMob.sprite->setAlpha(1);
