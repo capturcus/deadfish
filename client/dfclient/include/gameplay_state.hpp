@@ -43,6 +43,7 @@ class Resources;
 
 struct InkParticle {
 	std::unique_ptr<ncine::DrawableNode> sprite;
+	LerpComponent lerp;
 	bool seen = false;
 };
 

@@ -400,6 +400,7 @@ void GameplayState::ProcessWorldState(const void* ev) {
 	for (int i = 0; i < worldState->inkParticles()->size(); i++) {
 		auto ink = worldState->inkParticles()->Get(i);
 		auto inkItr = inkParticles.find(ink->inkID());
+		bool firstUpdate = false;
 		if (inkItr == inkParticles.end()) {
 			// not found, make a new one
 			InkParticle newInk;
@@ -408,11 +409,13 @@ void GameplayState::ProcessWorldState(const void* ev) {
 			newInk.sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[inkTexName].get());
 			newInk.sprite->setLayer((unsigned short) Layers::INK_PARTICLES);
 			newInk.sprite->setScale(120./330.); // todo: fix my life
+			firstUpdate = true;
 
 			inkParticles.insert({ink->inkID(), std::move(newInk)});
 			inkItr = inkParticles.find(ink->inkID());
+			inkItr->second.lerp.bind(inkItr->second.sprite.get());
 		}
-		inkItr->second.sprite->setPosition(ink->pos()->x() * METERS2PIXELS, -ink->pos()->y() * METERS2PIXELS);
+		inkItr->second.lerp.setupLerp(ink->pos()->x(), ink->pos()->y(), inkItr->second.sprite->rotation(), firstUpdate);
 		inkItr->second.seen = true;
 	}
 
@@ -562,6 +565,11 @@ StateType GameplayState::Update(Messages m) {
 	// Update mob positions
 	for (auto& mob : this->mobs) {
 		mob.second.lerp.updateLerp(subDelta);
+	}
+
+	// Update ink cloud positions
+	for (auto& ip : this->inkParticles) {
+		ip.second.lerp.updateLerp(subDelta);
 	}
 
 	if (this->mySprite == nullptr)
