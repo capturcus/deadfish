@@ -163,16 +163,20 @@ int WebSocketBeast::Connect(std::string& fullAddress) {
 	auto host = address.substr(0, colon);
 	auto port = address.substr(colon + 1, address.size());
 	auto const results = resolver.resolve(host, port);
-	auto ep = net::connect(ws.next_layer(), results);
-	host += ':' + std::to_string(ep.port());
-	ws.set_option(websocket::stream_base::decorator(
-		[](websocket::request_type& req)
-		{
-			req.set(http::field::user_agent,
-				std::string(BOOST_BEAST_VERSION_STRING) +
-					" websocket-client-coro");
-		}));
-	ws.handshake(host, "/");
+	try {
+		auto ep = net::connect(ws.next_layer(), results);
+		host += ':' + std::to_string(ep.port());
+		ws.set_option(websocket::stream_base::decorator(
+			[](websocket::request_type& req)
+			{
+				req.set(http::field::user_agent,
+					std::string(BOOST_BEAST_VERSION_STRING) +
+						" websocket-client-coro");
+			}));
+		ws.handshake(host, "/");
+	} catch (std::exception e) {
+		return -1;
+	}
 
 	webSocketManager._ws->toBeOpened = true;
 
