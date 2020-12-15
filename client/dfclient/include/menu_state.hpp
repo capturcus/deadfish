@@ -18,6 +18,7 @@ public:
 private:
 	bool TryConnect();
 	void ProcessMatchmakerData(std::string data);
+	void ShowMessage(std::string message);
 
 	Resources& _resources;
 };
