@@ -1,8 +1,5 @@
 #include "http_client.hpp"
 
-const char* MATCHMAKER_ADDRESS = "localhost";
-const char* MATCHMAKER_PORT = "8000";
-
 #ifdef __EMSCRIPTEN__
 // TODO: write an emscripten version
 int http::MatchmakerGet(std::string& ret)
@@ -25,7 +22,7 @@ namespace bhttp = beast::http;      // from <boost/beast/http.hpp>
 namespace net = boost::asio;        // from <boost/asio.hpp>
 using tcp = net::ip::tcp;           // from <boost/asio/ip/tcp.hpp>
 
-static int throwingMatchmakerGet(std::string& ret)
+static int throwingMatchmakerGet(std::string address, std::string port, std::string& ret)
 {
 	// The io_context is required for all I/O
 	net::io_context ioc;
@@ -35,14 +32,14 @@ static int throwingMatchmakerGet(std::string& ret)
 	beast::tcp_stream stream(ioc);
 
 	// Look up the domain name
-	auto const results = resolver.resolve(MATCHMAKER_ADDRESS, MATCHMAKER_PORT);
+	auto const results = resolver.resolve(address, port);
 
 	// Make the connection on the IP address we get from a lookup
 	stream.connect(results);
 
 	// Set up an HTTP GET request message
 	bhttp::request<bhttp::string_body> req{bhttp::verb::get, "/matchmake", 10};
-	req.set(bhttp::field::host, MATCHMAKER_ADDRESS);
+	req.set(bhttp::field::host, address);
 	req.set(bhttp::field::user_agent, BOOST_BEAST_VERSION_STRING);
 
 	// Send the HTTP request to the remote host
@@ -74,11 +71,11 @@ static int throwingMatchmakerGet(std::string& ret)
 	return res.result_int();
 }
 
-int http::MatchmakerGet(std::string& ret)
+int http::MatchmakerGet(std::string address, std::string port, std::string& ret)
 {
 	int retCode = 0;
 	try {
-		retCode = throwingMatchmakerGet(ret);
+		retCode = throwingMatchmakerGet(address, port, ret);
 	} catch (...) {
 		return -1;
 	}

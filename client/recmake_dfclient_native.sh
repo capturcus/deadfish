@@ -14,6 +14,7 @@ cp ./nCine-external/lib/libpng16d.so.16 dfclient-native/
 cp ./nCine-external/lib/libwebp.so.7 dfclient-native/
 cp ./nCine-external/lib/liblua5.3.so dfclient-native/
 cp /usr/local/lib/libboost_system.so.1.74.0 dfclient-native/
+cp ./dfclient/deadfish.ini.example dfclient-native/deadfish.ini
 
 if [ "$1" != "--keep" ]
 then
