@@ -3,6 +3,7 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 
 #include <ncine/Application.h>
 #include <ncine/imgui.h>
@@ -46,6 +47,25 @@ MenuState::MenuState(Resources& r) : _resources(r) {
 		ShowMessage("game already in progress");
 		gameData.gameInProgress = false;
 	}
+	boost::property_tree::ptree pt;
+	boost::property_tree::ini_parser::read_ini("deadfish.ini", pt);
+	try {
+		this->matchmakerAddress = pt.get<std::string>("default.matchmaker_address");
+		this->matchmakerPort = pt.get<std::string>("default.matchmaker_port");
+		this->directAddress = pt.get<std::string>("default.direct_address");
+		this->directPort = pt.get<std::string>("default.direct_port");
+		std::string mode = pt.get<std::string>("default.client_mode");
+		if (mode == "matchmaker")
+			this->clientMode = ClientMode::Matchmaker;
+		else if (mode == "direct")
+			this->clientMode = ClientMode::DirectConnect;
+		else {
+			throw std::runtime_error(("unknown client mode: " + mode).c_str());
+		}
+	} catch (const std::exception& e) {
+		std::cout << "failed to read and parse deadfish.ini: " << e.what() << "\n";
+		exit(1);
+	}
 }
 
 bool MenuState::TryConnect() {
@@ -70,9 +90,45 @@ void MenuState::ProcessMatchmakerData(std::string data) {
 	auto status = tree.get("status", "");
 	auto address = tree.get("address", "");
 	auto port = tree.get("port", 0);
+	if (status == "error") {
+		this->ShowMessage("matchmaker error: " + tree.get("error", "unknown error"));
+		return;
+	}
 	std::cout << "status: " << status << ", address: " << address << ", port: " << port << "\n";
 	gameData.serverAddress = address + ":" + std::to_string(port);
 	this->TryConnect();
+}
+
+void MenuState::MatchmakerLayout(char* buf) {
+	ImGui::InputText("nickname", buf, 64);
+	if (ImGui::Button("find game", {300, 30})) {
+		ImGui::End();
+		gameData.myNickname = std::string(buf);
+		if (gameData.myNickname.empty()) {
+			this->ShowMessage("enter a nickname");
+			return;
+		}
+		std::string matchmakerData;
+		int ret = http::MatchmakerGet(this->matchmakerAddress,
+			this->matchmakerPort, matchmakerData);
+		if (ret < 0)
+			this->ShowMessage("couldn't connect to the matchmaker");
+		std::cout << "ret " << ret << "\n";
+		if (ret > 0)
+			this->ProcessMatchmakerData(matchmakerData);
+	} else
+		ImGui::End();
+}
+
+void MenuState::DirectConnectLayout(char* buf0, char* buf1) {
+	ImGui::InputText("server", buf0, 64);
+	ImGui::InputText("nickname", buf1, 64);
+	if (ImGui::Button("connect", {300, 30})) {
+		gameData.serverAddress = std::string(buf0);
+		gameData.myNickname = std::string(buf1);
+		TryConnect();
+	}
+	ImGui::End();
 }
 
 StateType MenuState::Update(Messages m) {
@@ -82,27 +138,20 @@ StateType MenuState::Update(Messages m) {
 
 	ImGui::Begin("DeadFish", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
 		ImGuiWindowFlags_NoCollapse);
-	ImGui::SetWindowSize({320, 100});
+	float sizeY = this->clientMode == ClientMode::Matchmaker ? 100.f : 120.f;
+	ImGui::SetWindowSize({350, sizeY});
 	auto res = nc::theApplication().appConfiguration().resolution;
 	ImGui::SetWindowPos({static_cast<float>(res.x)/2-175, 4*static_cast<float>(res.y)/5});
-	static char buf[64] = "";
-	ImGui::InputText("nickname", buf, 64);
-	if (ImGui::Button("find game", {300, 30})) {
-		ImGui::End();
-		gameData.myNickname = std::string(buf);
-		if (gameData.myNickname.empty()) {
-			this->ShowMessage("enter a nickname");
-			return StateType::Menu;
-		}
-		std::string matchmakerData;
-		int ret = http::MatchmakerGet(matchmakerData);
-		if (ret < 0)
-			this->ShowMessage("couldn't connect to the matchmaker");
-		std::cout << "ret " << ret << "\n";
-		if (ret > 0)
-			this->ProcessMatchmakerData(matchmakerData);
-	} else
-		ImGui::End();
+	static char buf0[64] = "";
+	static char buf1[64] = "";
+	switch (this->clientMode) {
+		case ClientMode::Matchmaker:
+			this->MatchmakerLayout(buf0);
+			break;
+		case ClientMode::DirectConnect:
+			this->DirectConnectLayout(buf0, buf1);
+	}
+	
 
 	return StateType::Menu;
 }
