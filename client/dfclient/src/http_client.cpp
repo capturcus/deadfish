@@ -58,9 +58,6 @@ static int throwingMatchmakerGet(std::string address, std::string port, std::str
 	beast::error_code ec;
 	stream.socket().shutdown(tcp::socket::shutdown_both, ec);
 
-	// not_connected happens sometimes
-	// so don't bother reporting it.
-	//
 	if(ec) {
 		std::cout << "socket failed, ec: " << ec << "\n";
 		return -1;

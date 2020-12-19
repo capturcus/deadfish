@@ -20,17 +20,20 @@ public:
 	StateType Update(Messages) override;
 
 private:
-	bool TryConnect();
+	void TryConnect();
 	void ProcessMatchmakerData(std::string data);
 	void ShowMessage(std::string message);
-	void MatchmakerLayout(char* buf);
-	void DirectConnectLayout(char* buf0, char* buf1);
+	void MatchmakerLayout();
+	void DirectConnectLayout();
 
 	ClientMode clientMode = ClientMode::Matchmaker;
 	std::string matchmakerAddress = "localhost";
 	std::string matchmakerPort = "8000";
 	std::string directAddress = "localhost";
 	std::string directPort = "63987";
+
+	char buf0[64];
+	char buf1[64];
 
 	Resources& _resources;
 };
