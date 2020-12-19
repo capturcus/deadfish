@@ -50,10 +50,10 @@ MenuState::MenuState(Resources& r) : _resources(r) {
 	boost::property_tree::ptree pt;
 	boost::property_tree::ini_parser::read_ini("deadfish.ini", pt);
 	try {
-		this->matchmakerAddress = pt.get<std::string>("default.matchmaker_address");
-		this->matchmakerPort = pt.get<std::string>("default.matchmaker_port");
-		this->directAddress = pt.get<std::string>("default.direct_address");
-		this->directPort = pt.get<std::string>("default.direct_port");
+		this->matchmakerAddress = pt.get<std::string>("default.matchmaker_address", "");
+		this->matchmakerPort = pt.get<std::string>("default.matchmaker_port", "");
+		this->directAddress = pt.get<std::string>("default.direct_address", "");
+		this->directPort = pt.get<std::string>("default.direct_port", "");
 		std::string mode = pt.get<std::string>("default.client_mode");
 		if (mode == "matchmaker")
 			this->clientMode = ClientMode::Matchmaker;
@@ -66,19 +66,21 @@ MenuState::MenuState(Resources& r) : _resources(r) {
 		std::cout << "failed to read and parse deadfish.ini: " << e.what() << "\n";
 		exit(1);
 	}
+	if (this->clientMode == ClientMode::DirectConnect) {
+		auto addr = this->directAddress + ":" + this->directPort;
+		strcpy(this->buf0, addr.c_str());
+	}
 }
 
-bool MenuState::TryConnect() {
+void MenuState::TryConnect() {
 	gameData.serverAddress = "ws://" + gameData.serverAddress;
 	std::cout << "server " << gameData.serverAddress << ", my nickname " << gameData.myNickname << "\n";
 	gameData.socket = CreateWebSocket();
 	int ret = gameData.socket->Connect(gameData.serverAddress);
 	if (ret < 0) {
 		std::cout << "socket->Connect failed " << ret << "\n";
-		// TODO: some ui error handling
-		return false;
+		this->ShowMessage("connecting to server failed");
 	}
-	return true;
 }
 
 void MenuState::ProcessMatchmakerData(std::string data) {
@@ -99,11 +101,11 @@ void MenuState::ProcessMatchmakerData(std::string data) {
 	this->TryConnect();
 }
 
-void MenuState::MatchmakerLayout(char* buf) {
-	ImGui::InputText("nickname", buf, 64);
+void MenuState::MatchmakerLayout() {
+	ImGui::InputText("nickname", this->buf0, 64);
 	if (ImGui::Button("find game", {300, 30})) {
 		ImGui::End();
-		gameData.myNickname = std::string(buf);
+		gameData.myNickname = std::string(this->buf1);
 		if (gameData.myNickname.empty()) {
 			this->ShowMessage("enter a nickname");
 			return;
@@ -120,12 +122,12 @@ void MenuState::MatchmakerLayout(char* buf) {
 		ImGui::End();
 }
 
-void MenuState::DirectConnectLayout(char* buf0, char* buf1) {
-	ImGui::InputText("server", buf0, 64);
-	ImGui::InputText("nickname", buf1, 64);
+void MenuState::DirectConnectLayout() {
+	ImGui::InputText("server", this->buf0, 64);
+	ImGui::InputText("nickname", this->buf1, 64);
 	if (ImGui::Button("connect", {300, 30})) {
-		gameData.serverAddress = std::string(buf0);
-		gameData.myNickname = std::string(buf1);
+		gameData.serverAddress = std::string(this->buf0);
+		gameData.myNickname = std::string(this->buf1);
 		TryConnect();
 	}
 	ImGui::End();
@@ -142,14 +144,12 @@ StateType MenuState::Update(Messages m) {
 	ImGui::SetWindowSize({350, sizeY});
 	auto res = nc::theApplication().appConfiguration().resolution;
 	ImGui::SetWindowPos({static_cast<float>(res.x)/2-175, 4*static_cast<float>(res.y)/5});
-	static char buf0[64] = "";
-	static char buf1[64] = "";
 	switch (this->clientMode) {
 		case ClientMode::Matchmaker:
-			this->MatchmakerLayout(buf0);
+			this->MatchmakerLayout();
 			break;
 		case ClientMode::DirectConnect:
-			this->DirectConnectLayout(buf0, buf1);
+			this->DirectConnectLayout();
 	}
 	
 
