@@ -289,7 +289,6 @@ void GameplayState::ProcessWorldState(const void* ev) {
 	for (int i = 0; i < worldState->mobs()->size(); i++) {
 		auto mobData = worldState->mobs()->Get(i);
 		auto mobItr = this->mobs.find(mobData->mobID());
-		bool firstUpdate = false;
 		if (mobItr == this->mobs.end()) {
 			// this is the first time we see this mob, create it
 			Mob newMob;
@@ -302,10 +301,9 @@ void GameplayState::ProcessWorldState(const void* ev) {
 
 			this->mobs[mobData->mobID()] = std::move(newMob);
 			mobItr = this->mobs.find(mobData->mobID());
-			firstUpdate = true;
 		}
 		Mob& mob = mobItr->second;
-		mob.lerp.setupLerp(mobData->pos()->x(), mobData->pos()->y(), mobData->angle(), firstUpdate);
+		mob.lerp.setupLerp(mobData->pos()->x(), mobData->pos()->y(), mobData->angle());
 		mob.seen = true;
 		if (mob.isAfterimage) {
 			//re-fade in
@@ -400,7 +398,6 @@ void GameplayState::ProcessWorldState(const void* ev) {
 	for (int i = 0; i < worldState->inkParticles()->size(); i++) {
 		auto ink = worldState->inkParticles()->Get(i);
 		auto inkItr = inkParticles.find(ink->inkID());
-		bool firstUpdate = false;
 		if (inkItr == inkParticles.end()) {
 			// not found, make a new one
 			InkParticle newInk;
@@ -409,13 +406,12 @@ void GameplayState::ProcessWorldState(const void* ev) {
 			newInk.sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[inkTexName].get());
 			newInk.sprite->setLayer((unsigned short) Layers::INK_PARTICLES);
 			newInk.sprite->setScale(120./330.); // todo: fix my life
-			firstUpdate = true;
 
 			inkParticles.insert({ink->inkID(), std::move(newInk)});
 			inkItr = inkParticles.find(ink->inkID());
 			inkItr->second.lerp.bind(inkItr->second.sprite.get());
 		}
-		inkItr->second.lerp.setupLerp(ink->pos()->x(), ink->pos()->y(), inkItr->second.sprite->rotation(), firstUpdate);
+		inkItr->second.lerp.setupLerp(ink->pos()->x(), ink->pos()->y(), inkItr->second.sprite->rotation());
 		inkItr->second.seen = true;
 	}
 

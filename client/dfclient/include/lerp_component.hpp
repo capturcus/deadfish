@@ -4,38 +4,40 @@
 #include "../../../common/deadfish_generated.h"
 
 class LerpComponent {
-    ncine::DrawableNode* sprite;
-	ncine::Vector2f prevPosition = {};
-	ncine::Vector2f currPosition = {};
-	float prevRotation = 0.f;
-	float currRotation = 0.f;
+	ncine::DrawableNode* _sprite;
+	ncine::Vector2f _prevPosition = {};
+	ncine::Vector2f _currPosition = {};
+	float _prevRotation = 0.f;
+	float _currRotation = 0.f;
+	bool _firstUpdate = true;
 
 public:
-    inline LerpComponent() {}
-    inline void bind(ncine::DrawableNode* aSprite) { sprite = aSprite; }
-	inline void setupLerp(const float x, const float y, const float angle, bool firstUpdate) {
-        prevPosition = currPosition;
-        prevRotation = currRotation;
+	inline LerpComponent() {}
+	inline void bind(ncine::DrawableNode* aSprite) { _sprite = aSprite; }
+	inline void setupLerp(const float x, const float y, const float angle) {
+		_prevPosition = _currPosition;
+		_prevRotation = _currRotation;
 
-        currPosition.x = x * METERS2PIXELS;
-        currPosition.y = -y * METERS2PIXELS;
-        currRotation = -angle * 180.f / M_PI;
+		_currPosition.x = x * METERS2PIXELS;
+		_currPosition.y = -y * METERS2PIXELS;
+		_currRotation = -angle * 180.f / M_PI;
 
-        if (firstUpdate) {
-            prevPosition = currPosition;
-            prevRotation = currRotation;
-        }
-    }
+		if (_firstUpdate) {
+			_prevPosition = _currPosition;
+			_prevRotation = _currRotation;
+			_firstUpdate = false;
+		}
+	}
 
 	inline void updateLerp(float subDelta) {
-        float angleDelta = currRotation - prevRotation;
-        if (angleDelta > M_PI) {
-            angleDelta -= 2.f * M_PI;
-        } else if (angleDelta < -M_PI) {
-            angleDelta += 2.f * M_PI;
-        }
+		float angleDelta = _currRotation - _prevRotation;
+		if (angleDelta > M_PI) {
+			angleDelta -= 2.f * M_PI;
+		} else if (angleDelta < -M_PI) {
+			angleDelta += 2.f * M_PI;
+		}
 
-        sprite->setPosition(prevPosition + (currPosition - prevPosition) * subDelta);
-        sprite->setRotation(prevRotation + angleDelta * subDelta);
-    }
+		_sprite->setPosition(_prevPosition + (_currPosition - _prevPosition) * subDelta);
+		_sprite->setRotation(_prevRotation + angleDelta * subDelta);
+	}
 };
