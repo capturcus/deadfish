@@ -26,6 +26,9 @@ const float CHASE_SPEED_BONUS = 1.25f;
 const float TO_DEGREES = (180.f / M_PI);
 const float TO_RADIANS = (M_PI / 180.f);
 
+const float PIXELS2METERS = 0.01f;
+const float METERS2PIXELS = 100.f;
+
 const uint16_t GOLDFISH_SPECIES = (uint16_t) -1;
 
 enum class Skills {
