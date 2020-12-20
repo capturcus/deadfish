@@ -105,7 +105,7 @@ void MenuState::MatchmakerLayout() {
 	ImGui::InputText("nickname", this->buf0, 64);
 	if (ImGui::Button("find game", {300, 30})) {
 		ImGui::End();
-		gameData.myNickname = std::string(this->buf1);
+		gameData.myNickname = std::string(this->buf0);
 		if (gameData.myNickname.empty()) {
 			this->ShowMessage("enter a nickname");
 			return;
