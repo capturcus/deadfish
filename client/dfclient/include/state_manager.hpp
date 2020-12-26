@@ -9,6 +9,7 @@
 
 #include "game_state.hpp"
 #include "resources.hpp"
+#include "text_creator.hpp"
 
 struct StateManager {
 	StateManager();
@@ -18,6 +19,8 @@ struct StateManager {
 	void OnKeyReleased(const ncine::KeyboardEvent &event);
 	void OnMouseButtonPressed(const ncine::MouseEvent &event);
 	void OnMouseMoved(const ncine::MouseState &state);
+
+	TextCreator CreateTextCreator();
 
 private:
 	std::unique_ptr<GameState> _currentState;

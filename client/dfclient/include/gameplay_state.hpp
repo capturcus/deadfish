@@ -28,7 +28,10 @@ enum class Layers {
 	OBJECTS,
 	INK_PARTICLES,
 	HIDING_SPOTS,
-	SKILLS
+	SKILLS,
+	TEXT_OUTLINES,
+	ADDITIONAL_TEXT,
+	TEXT
 };
 
 struct Mob {
@@ -42,6 +45,7 @@ struct Mob {
 };
 
 class Resources;
+class TextCreator;
 
 struct InkParticle {
 	std::unique_ptr<ncine::DrawableNode> sprite;
@@ -81,8 +85,33 @@ private:
 	void updateRemainingText(uint64_t remainingFrames);
 	void updateShadows();
 
+	/** A subfunction of ProcessDeathReport, responsible for handling killing somebody.
+	 */
+	void processKill(const FlatBuffGenerated::DeathReport* deathReport);
+
+	/** A subfunction of ProcessDeathReport, responsible for handling being killed.
+	 */
+	void processDeath(const FlatBuffGenerated::DeathReport* deathReport);
+
+	/** A subfunction of ProcessDeathReport, responsible for handling reports of a kill 
+	 * which doesn't involve the player.
+	 */
+	void processObituary(const FlatBuffGenerated::DeathReport* deathReport);
+
+	/** A subfunction of processKill, responsible for managing the client's reaction to the player's multikill.
+	 * @return A textnode with the adequate multikill text, to be included in the summary
+	 */
+	std::unique_ptr<ncine::TextNode> processMultikill(int multikillness);
+
+	void endKillingSpree();
+
+
+	friend class TextCreator;
+
 	typedef std::vector<std::unique_ptr<ncine::DrawableNode>> DrawableNodeVector;
 	DrawableNodeVector nodes;
+	DrawableNodeVector textNodes;
+	std::unique_ptr<ncine::TextNode> killingSpreeText;
 	std::map<std::string, DrawableNodeVector> hiding_spots;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
 	std::map<uint16_t, Mob> mobs;

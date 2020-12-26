@@ -41,13 +41,22 @@ StateManager::StateManager() {
 		}
 		file = soundDir.readNext();
 	}
+
 	_resources._killSoundBuffer = std::move(_resources._sounds["amongus-kill.wav"]);
 	_resources._sounds.erase("amongus-kill.wav");
 	_resources._killSound = std::make_unique<ncine::AudioBufferPlayer>(_resources._killSoundBuffer.get());
+
+	_resources._goldfishSoundBuffer = std::move(_resources._sounds["mario-powerup.wav"]);
+	_resources._sounds.erase("mario-powerup.wav");
+	_resources._goldfishSound = std::make_unique<ncine::AudioBufferPlayer>(_resources._goldfishSoundBuffer.get());
 	
 
 	_currentStateType = StateType::Menu;
 	_currentState = std::make_unique<MenuState>(_resources);
+}
+
+TextCreator StateManager::CreateTextCreator() {
+	return TextCreator(_resources);
 }
 
 void StateManager::OnFrameStart() {

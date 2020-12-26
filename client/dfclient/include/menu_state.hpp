@@ -1,6 +1,7 @@
 #pragma once
 
 #include "game_state.hpp"
+#include "ncine/TextNode.h"
 
 #include "tweeny.h"
 
@@ -34,6 +35,8 @@ private:
 
 	char buf0[64];
 	char buf1[64];
+
+	std::unique_ptr<ncine::TextNode> gameInProgressText;
 
 	Resources& _resources;
 };

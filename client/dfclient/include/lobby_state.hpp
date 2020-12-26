@@ -7,6 +7,7 @@
 
 #include "game_state.hpp"
 #include "websocket.hpp"
+#include "text_creator.hpp"
 
 class Resources;
 
@@ -30,6 +31,8 @@ private:
 	std::vector<std::unique_ptr<ncine::TextNode>> textNodes;
 	std::unique_ptr<ncine::TextNode> readyButton;
 	bool ready = false;
+
+	TextCreator textCreator;
 
 	Resources& _resources;
 };
