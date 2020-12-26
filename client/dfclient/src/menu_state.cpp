@@ -47,6 +47,7 @@ MenuState::MenuState(Resources& r) : _resources(r) {
 		ShowMessage("game already in progress");
 		gameData.gameInProgress = false;
 	}
+#ifndef EMSCRIPTEN
 	boost::property_tree::ptree pt;
 	boost::property_tree::ini_parser::read_ini("deadfish.ini", pt);
 	try {
@@ -70,6 +71,7 @@ MenuState::MenuState(Resources& r) : _resources(r) {
 		auto addr = this->directAddress + ":" + this->directPort;
 		strcpy(this->buf0, addr.c_str());
 	}
+#endif // EMSCRIPTEN
 }
 
 void MenuState::TryConnect() {

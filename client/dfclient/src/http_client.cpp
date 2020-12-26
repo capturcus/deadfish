@@ -2,7 +2,7 @@
 
 #ifdef __EMSCRIPTEN__
 // TODO: write an emscripten version
-int http::MatchmakerGet(std::string& ret)
+int http::MatchmakerGet(std::string address, std::string port, std::string& ret)
 {
 	return -1;
 }
