@@ -33,8 +33,8 @@ private:
 	std::string directAddress = "localhost";
 	std::string directPort = "63987";
 
-	char buf0[64];
-	char buf1[64];
+	char buf0[64] = {0};
+	char buf1[64] = {0};
 
 	std::unique_ptr<ncine::TextNode> gameInProgressText;
 

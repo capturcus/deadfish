@@ -111,10 +111,14 @@ void dfAgones::Start()
 }
 
 void dfAgones::Shutdown() {
+	if (!sdk)
+		return;
 	sdk->Shutdown();
 }
 
 void dfAgones::SetPlayers(int players) {
+	if (!sdk)
+		return;
 	auto status = sdk->SetLabel("players", std::to_string(players));
 	if (!status.ok())
 		std::cout << "failed to set players: " << players << "\n";
@@ -123,6 +127,8 @@ void dfAgones::SetPlayers(int players) {
 }
 
 void dfAgones::SetPlaying() {
+	if (!sdk)
+		return;
 	auto status = sdk->SetLabel("playing", "true");
 	if (!status.ok())
 		std::cout << "failed to set playing to true\n";
