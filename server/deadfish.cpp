@@ -91,3 +91,43 @@ CollisionMask::CollisionMask(const FlatBuffGenerated::CollisionMask* fb_Col) {
 	body->CreateFixture(&fixtureDef);
 	body->SetUserData(this);
 }
+
+flatbuffers::Offset<FlatBuffGenerated::CollisionMask> CollisionMask::serialize(
+	flatbuffers::FlatBufferBuilder &builder
+) {
+	FlatBuffGenerated::Vec2 pos{body->GetPosition().x, body->GetPosition().y};
+	float rotation = body->GetAngle() * TO_DEGREES;
+
+	b2Fixture* fixture = body->GetFixtureList();
+	assert(fixture != nullptr);
+	b2Shape* shape = fixture->GetShape();
+	auto type = shape->GetType();
+
+	if (type == b2Shape::e_polygon) {
+		b2PolygonShape* polyShape = dynamic_cast<b2PolygonShape*>(shape);
+		int32_t vertCount = polyShape->GetVertexCount();
+
+		std::vector<FlatBuffGenerated::Vec2> polyverts_v;
+		polyverts_v.reserve((size_t)vertCount);
+
+		for (int32_t i = 0; i < vertCount; i++) {
+			auto v = polyShape->GetVertex(i);
+			polyverts_v.emplace_back(v.x, v.y);
+		}
+		auto polyverts = builder.CreateVectorOfStructs(polyverts_v);
+
+		return FlatBuffGenerated::CreateCollisionMask(
+			builder, &pos, nullptr, rotation, false, polyverts);
+
+	} else if (type == b2Shape::e_circle) {
+		b2CircleShape* circleShape = dynamic_cast<b2CircleShape*>(shape);
+		FlatBuffGenerated::Vec2 size{circleShape->m_radius * 2.f, 0.f};
+
+		return FlatBuffGenerated::CreateCollisionMask(
+			builder, &pos, &size, rotation, true, 0);
+
+	} else {
+		assert(false); // unsupported shape type
+		return 0;
+	}
+}

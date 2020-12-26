@@ -63,9 +63,17 @@ flatbuffers::Offset<FlatBuffGenerated::Level> serializeLevel(flatbuffers::FlatBu
 	FlatBuffGenerated::Vec2 tilesize(tilelayer.tilesize.x, tilelayer.tilesize.y);
 	auto tilelayerOffset = FlatBuffGenerated::CreateTilelayer(builder, tilelayer.width, tilelayer.height, &tilesize, dataOffset);
 
+	// collision masks
+	std::vector<flatbuffers::Offset<FlatBuffGenerated::CollisionMask>> collisionMaskOffsets;
+	for (const auto& cm : gameState.level->collisionMasks) {
+		auto offset = cm->serialize(builder);
+		collisionMaskOffsets.push_back(offset);
+	}
+	auto collisionMasks = builder.CreateVector(collisionMaskOffsets);
+
 	// final
 	FlatBuffGenerated::Vec2 size(gameState.level->size.x, gameState.level->size.y);
-	auto level = FlatBuffGenerated::CreateLevel(builder, objects, decoration, 0, 0, 0, 0, tilesets, tilelayerOffset, &size);
+	auto level = FlatBuffGenerated::CreateLevel(builder, objects, decoration, 0, collisionMasks, 0, 0, tilesets, tilelayerOffset, &size);
 	return level;
 }
 

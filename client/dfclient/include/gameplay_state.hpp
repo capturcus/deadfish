@@ -5,29 +5,26 @@
 #include <map>
 
 #include <ncine/MeshSprite.h>
-#include <ncine/Sprite.h>
+#include <ncine/AnimatedSprite.h>
 #include <ncine/TextNode.h>
 #include <ncine/TimeStamp.h>
-
-namespace ncine {
-	class AnimatedSprite;
-}
 
 namespace nc = ncine;
 
 #include "tweeny.h"
 
+#include "fov.hpp"
 #include "game_state.hpp"
+#include "lerp_component.hpp"
 #include "../../../common/deadfish_generated.h"
 
-const float PIXELS2METERS = 0.01f;
-const float METERS2PIXELS = 100.f;
 enum class Layers {
 	TILE = 0,
 	DECORATION,
 	INDICATOR,
 	MOB_MANIPULATORS,
 	MOBS,
+	SHADOW,
 	OBJECTS,
 	INK_PARTICLES,
 	HIDING_SPOTS,
@@ -36,25 +33,19 @@ enum class Layers {
 
 struct Mob {
 	std::unique_ptr<ncine::AnimatedSprite> sprite;
+	LerpComponent lerp;
 	bool seen;
 	bool isAfterimage = false;
 	FlatBuffGenerated::MobState state = FlatBuffGenerated::MobState_Walk;
 	std::unique_ptr<ncine::Sprite> hoverMarker;
 	std::unique_ptr<ncine::Sprite> relationMarker;
-
-	ncine::Vector2f prevPosition = {};
-	ncine::Vector2f currPosition = {};
-	float prevRotation = 0.f;
-	float currRotation = 0.f;
-
-	void setupLocRot(const FlatBuffGenerated::Mob& msg, bool firstUpdate);
-	void updateLocRot(float subDelta);
 };
 
 class Resources;
 
 struct InkParticle {
 	std::unique_ptr<ncine::DrawableNode> sprite;
+	LerpComponent lerp;
 	bool seen = false;
 };
 
@@ -88,6 +79,7 @@ private:
 	void TryUseSkill(uint8_t skillPos);
 
 	void updateRemainingText(uint64_t remainingFrames);
+	void updateShadows();
 
 	typedef std::vector<std::unique_ptr<ncine::DrawableNode>> DrawableNodeVector;
 	DrawableNodeVector nodes;
@@ -105,7 +97,10 @@ private:
 	ncine::TextNode* timeLeftNode = nullptr;
 	std::string currentHidingSpot = "";
 
-	std::vector<std::unique_ptr<ncine::DrawableNode>> skillIcons;
+	fov::mesh shadowMesh;
+	std::unique_ptr<ncine::MeshSprite> shadowNode;
+
+	std::vector<std::unique_ptr<nc::DrawableNode>> skillIcons;
 
 	ncine::TimeStamp lastMessageReceivedTime;
 
