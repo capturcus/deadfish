@@ -23,8 +23,8 @@ nc::IAppEventHandler *createAppEventHandler()
 void MyEventHandler::onPreInit(nc::AppConfiguration &config)
 {
 	// config.withDebugOverlay = true;
-	config.resolution.x = 1800;
-	config.resolution.y = 1000;
+	// config.resolution.x = 1800;
+	// config.resolution.y = 1000;
 #if defined(__EMSCRIPTEN__)
 	config.dataPath() = "/";
 #else
@@ -38,6 +38,22 @@ std::optional<TextCreator> textCreator;
 
 void MyEventHandler::onInit()
 {
+	auto& device = ncine::theApplication().gfxDevice();
+	int bestModeNum = -1;
+	uint64_t bestPixels = 0;
+	for (int i = 0; i < device.numVideoModes(); i++) {
+		auto& mode = device.videoMode(i);
+		if (mode.width * mode.height > bestPixels) {
+			bestPixels = mode.width * mode.height;
+			bestModeNum = i;
+		}
+	}
+	auto& bestMode = device.videoMode(bestModeNum);
+	std::cout << "best mode " << bestModeNum << " " <<
+		bestMode.width << "x" << bestMode.height << "\n";
+	device.setResolution({ bestMode.width, bestMode.height });
+	device.setFullScreen(true);
+
 	stateManager.emplace();
 	textCreator.emplace(stateManager->CreateTextCreator());
 }
