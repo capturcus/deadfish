@@ -10,7 +10,7 @@ namespace dfAgones = agones;
 static std::shared_ptr<agones::SDK> sdk;
 
 // send health check pings
-void DoHealth()
+static void DoHealth()
 {
 	while (true)
 	{
@@ -23,7 +23,7 @@ void DoHealth()
 }
 
 // watch GameServer Updates
-void WatchUpdates()
+static void WatchUpdates()
 {
 	std::cout << "Starting to watch GameServer updates...\n"
 			  << std::flush;
@@ -35,7 +35,7 @@ void WatchUpdates()
 	});
 }
 
-void dfAgones::Start()
+bool dfAgones::Start()
 {
 	std::cout << "C++ Game Server has started!\n"
 			  << "Getting the instance of the SDK.\n"
@@ -45,51 +45,28 @@ void dfAgones::Start()
 	std::cout << "Attempting to connect...\n"
 			  << std::flush;
 	if (!sdk->Connect())
-	{
-		std::cerr << "Exiting!\n";
-		exit(1);
-	}
+		return false;
+
 	std::cout << "...handshake complete.\n"
 			  << std::flush;
 
-	std::thread health(DoHealth);
-	std::thread watch(WatchUpdates);
-
-	std::cout << "Setting a label\n"
-			  << std::flush;
-	grpc::Status status = sdk->SetLabel("test-label", "test-value");
-	if (!status.ok())
-	{
-		std::cerr << "Could not run SetLabel(): " << status.error_message()
-				  << ". Exiting!\n";
-		exit(1);
-	}
-
-	std::cout << "Setting an annotation\n"
-			  << std::flush;
-	status = sdk->SetAnnotation("test-annotation", "test value");
-	if (!status.ok())
-	{
-		std::cerr << "Could not run SetAnnotation(): " << status.error_message()
-				  << ". Exiting!\n";
-		exit(1);
-	}
-
 	std::cout << "Marking server as ready...\n"
 			  << std::flush;
-	status = sdk->Ready();
+	auto status = sdk->Ready();
 	if (!status.ok())
 	{
 		std::cerr << "Could not run Ready(): " << status.error_message()
 				  << ". Exiting!\n";
-		exit(1);
+		return false;
 	}
 	std::cout << "...marked Ready\n"
 			  << std::flush;
 
 	status = sdk->SetLabel("playing", "false");
-	if (!status.ok())
+	if (!status.ok()) {
 		std::cout << "failed to set playing to true\n";
+		return false;
+	}
 
 	std::cout << "Getting GameServer details...\n"
 			  << std::flush;
@@ -100,14 +77,17 @@ void dfAgones::Start()
 	{
 		std::cerr << "Could not run GameServer(): " << status.error_message()
 				  << ". Exiting!\n";
-		exit(1);
+		return false;
 	}
 
 	std::cout << "GameServer name: " << gameserver.object_meta().name() << "\n"
 			  << std::flush;
 
-	health.join();
-	watch.join();
+	// leak those
+	new std::thread(DoHealth);
+	new std::thread(WatchUpdates);
+
+	return true;
 }
 
 void dfAgones::Shutdown() {

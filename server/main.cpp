@@ -193,7 +193,10 @@ int main(int argc, const char* const argv[])
 	std::cout << "server started\n";
 
 	if (gameState.options["agones"].as<bool>())
-		new std::thread(agones::Start);
+		if (!agones::Start()) {
+			std::cout << "failed to initalize agones\n";
+			return -1;
+		}
 
 	int port = gameState.options["port"].as<int>();
 
