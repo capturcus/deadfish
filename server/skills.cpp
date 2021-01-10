@@ -28,7 +28,7 @@ void launchInkParticle(Player& p, b2Vec2 direction) {
 	inkBody->SetLinearDamping(1);
 	inkBody->ApplyLinearImpulse(direction, inkBody->GetWorldCenter(), true);
 
-	inkPart->inkID = lastInkID++;
+	inkPart->movableID = newMobID();
 	gameState.inkParticles.push_back(std::move(inkPart));
 }
 
@@ -105,7 +105,7 @@ const uint16_t MANIPULATOR_FRAMES = 60;
 bool executeSkillMobManipulator(UNUSED Player& p, UNUSED Skills skill, UNUSED b2Vec2 mousePos) {
 	std::cout << "mob manipulator " << (uint16_t) skill << "\n";
 	MobManipulator manipulator;
-	manipulator.pos = p.body->GetPosition();
+	manipulator.pos = b2f(p.body->GetPosition());
 	manipulator.type = skill == Skills::DISPERSOR ? FlatBuffGenerated::MobManipulatorType_Dispersor
 		: FlatBuffGenerated::MobManipulatorType_Attractor;
 	manipulator.framesLeft = MANIPULATOR_FRAMES;

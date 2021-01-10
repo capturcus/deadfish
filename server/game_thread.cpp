@@ -15,6 +15,7 @@
 const float GOLDFISH_CHANCE = 0.05f;
 const uint32_t PRESIMULATE_TICKS = 1000;
 
+// TODO(movable) take into consideration ink particles
 uint16_t newMobID()
 {
 	while (true)
@@ -23,7 +24,7 @@ uint16_t newMobID()
 
 		for (auto &p : gameState.players)
 		{
-			if (p->mobID == ret)
+			if (p->movableID == ret)
 				continue;
 		}
 
@@ -51,7 +52,6 @@ std::string makeServerMessage(flatbuffers::FlatBufferBuilder &builder,
 	auto str = std::string(data, data + size);
 	return str;
 }
-
 
 void sendGameAlreadyInProgress(dfws::Handle hdl)
 {
@@ -94,6 +94,12 @@ Player* getPlayerByConnHdl(dfws::Handle hdl)
 	}
 	std::cout << "getPlayerByConnHdl PLAYER NOT FOUND\n";
 	return nullptr;
+}
+
+void updateCollideableMovable(CollideableMovable* cm)
+{
+	cm->pos = b2f(cm->body->GetPosition());
+	cm->angle = cm->body->GetAngle();
 }
 
 struct FOVCallback
@@ -170,16 +176,17 @@ flatbuffers::Offset<FlatBuffGenerated::Mob> createFBMob(flatbuffers::FlatBufferB
 	Player& player, const Mob* m)
 {
 	FlatBuffGenerated::PlayerRelation relation = FlatBuffGenerated::PlayerRelation_None;
-	if (player.killTargetID == m->mobID)
+	if (player.killTargetID == m->movableID)
 		relation = FlatBuffGenerated::PlayerRelation_Targeted;
 	auto posVec = FlatBuffGenerated::Vec2(m->body->GetPosition().x, m->body->GetPosition().y);
-	return FlatBuffGenerated::CreateMob(builder,
-									m->mobID,
-									&posVec,
-									m->body->GetAngle(),
-									(FlatBuffGenerated::MobState)m->state,
-									m->species,
-									relation);
+	// TODO(movable)
+	// return FlatBuffGenerated::CreateMob(builder,
+	// 								m->movableID,
+	// 								&posVec,
+	// 								m->body->GetAngle(),
+	// 								(FlatBuffGenerated::MobState)m->state,
+	// 								m->species,
+	// 								relation);
 }
 
 flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBufferBuilder &builder, uint64_t framesRemaining)
@@ -232,19 +239,20 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 		if (!playerSeeCollideable(player, *ink))
 			continue;
 		FlatBuffGenerated::Vec2 pos = b2f(ink->body->GetPosition());
-		auto inkOffset = FlatBuffGenerated::CreateInkParticle(builder, ink->inkID, &pos);
-		inkParticles.push_back(inkOffset);
+		// TODO(movable)
+		// auto inkOffset = FlatBuffGenerated::CreateInkParticle(builder, ink->movableID, &pos);
+		// inkParticles.push_back(inkOffset);
 	}
 
 	auto inkParticlesOffset = builder.CreateVector(inkParticles);
 
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::MobManipulator>> manipulators;
 	for (auto& manipulator : gameState.mobManipulators) {
-		if (!mobSeePoint(player, manipulator.pos, true))
+		if (!mobSeePoint(player, f2b(manipulator.pos), true))
 			continue;
-		FlatBuffGenerated::Vec2 pos = {manipulator.pos.x, manipulator.pos.y};
-		auto manOffset = FlatBuffGenerated::CreateMobManipulator(builder, &pos, manipulator.type);
-		manipulators.push_back(manOffset);
+		// TODO(movable)
+		// auto manOffset = FlatBuffGenerated::CreateMobManipulator(builder, &manipulator.pos, manipulator.type);
+		// manipulators.push_back(manOffset);
 	}
 
 	auto manipulatorsOffset = builder.CreateVector(manipulators);
@@ -340,13 +348,13 @@ void spawnCivilian(std::string spawnName, NavPoint* spawn) {
 		species = lowestSpecies;
 	}
 
-	c->mobID = newMobID();
+	c->movableID = newMobID();
 	c->species = species;
 	c->previousNavpoint = spawnName;
 	c->currentNavpoint = spawnName;
 	physicsInitMob(c.get(), spawn->position, 0, 0.3f);
 	c->setNextNavpoint();
-	gameState.civilians[c->mobID] = std::move(c);
+	gameState.civilians[c->movableID] = std::move(c);
 	std::cout << "spawning civilian of species " << species <<
 		" at " << spawnName << " to a total of " << gameState.civilians.size() << "\n";
 }
@@ -409,7 +417,7 @@ Mob *findMobById(uint16_t id)
 		return it->second.get();
 
 	auto it2 = std::find_if(gameState.players.begin(), gameState.players.end(),
-							[id](const auto &p) { return p->mobID == id; });
+							[id](const auto &p) { return p->movableID == id; });
 	if (it2 != gameState.players.end())
 		return it2->get();
 	return nullptr;
@@ -424,7 +432,7 @@ void executeCommandKill(Player &player, uint16_t id)
 	if (!m)
 		return;
 	auto otherPlayer = dynamic_cast<Player *>(m);
-	if (otherPlayer && otherPlayer->killTargetID == player.mobID) {
+	if (otherPlayer && otherPlayer->killTargetID == player.movableID) {
 		// they're already targeting us, abort
 		return;
 	}
@@ -435,7 +443,7 @@ void executeCommandKill(Player &player, uint16_t id)
 		m->handleKill(player);
 		return;
 	}
-	player.killTargetID = m->mobID;
+	player.killTargetID = m->movableID;
 }
 
 void sendHighscores()

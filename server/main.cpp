@@ -23,7 +23,7 @@ void sendInitMetadata()
 			playerOffsets.push_back(playerOffset);
 		}
 		auto players = builder.CreateVector(playerOffsets);
-		auto metadata = FlatBuffGenerated::CreateInitMetadata(builder, players, targetPlayer->mobID, targetPlayer->playerID);
+		auto metadata = FlatBuffGenerated::CreateInitMetadata(builder, players, targetPlayer->movableID, targetPlayer->playerID);
 		sendServerMessage(*targetPlayer, builder, FlatBuffGenerated::ServerMessageUnion_InitMetadata, metadata.Union());
 	}
 }
@@ -37,7 +37,7 @@ void addNewPlayer(dfws::Handle hdl, const std::string &name)
 
 	// TODO: check that a player with the same name is not present
 	auto p = std::make_unique<Player>();
-	p->mobID = newMobID();
+	p->movableID = newMobID();
 	p->name = name;
 	p->wsHandle = hdl;
 	p->playerID = gameState.players.size();

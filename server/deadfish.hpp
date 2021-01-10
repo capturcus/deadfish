@@ -37,6 +37,14 @@ static inline FlatBuffGenerated::Vec2 b2f(b2Vec2 v) {
 	return FlatBuffGenerated::Vec2(v.x, v.y);
 }
 
+static inline b2Vec2 f2b(FlatBuffGenerated::Vec2 v) {
+	return b2Vec2(v.x(), v.y());
+}
+
+static inline glm::vec2 f2g(FlatBuffGenerated::Vec2 v) {
+	return glm::vec2(v.x(), v.y());
+}
+
 enum class GamePhase {
 	LOBBY = 0,
 	GAME
@@ -65,8 +73,16 @@ struct Collideable {
 	Collideable(const Collideable&) = delete;
 };
 
-struct Mob : public Collideable {
-	uint16_t mobID = 0;
+struct Movable {
+	FlatBuffGenerated::Vec2 pos;
+	uint16_t movableID;
+	float angle;
+};
+
+struct CollideableMovable
+	: public Collideable, public Movable{};
+
+struct Mob : public CollideableMovable {
 	uint16_t species = 0;
 	MobState state = MobState::WALKING;
 	virtual void handleCollision(UNUSED Collideable& other) override {}
@@ -83,9 +99,7 @@ struct Mob : public Collideable {
 };
 
 struct InkParticle :
-	public Collideable {
-	
-	uint16_t inkID;
+	public CollideableMovable {
 	uint16_t lifetimeFrames;
 
 	InkParticle(b2Body* b);
@@ -213,8 +227,8 @@ struct Level {
 	glm::vec2 size;
 };
 
-struct MobManipulator {
-	b2Vec2 pos;
+struct MobManipulator
+	: public Movable {
 	FlatBuffGenerated::MobManipulatorType type;
 	uint16_t framesLeft;
 };
