@@ -45,6 +45,16 @@ static inline glm::vec2 f2g(FlatBuffGenerated::Vec2 v) {
 	return glm::vec2(v.x(), v.y());
 }
 
+template<typename T>
+using MovableMap = std::map<uint16_t, std::unique_ptr<T>>;
+
+template <typename T>
+static void iterateOverMovableMap(MovableMap<T>& map, std::function<void(T&)> f)
+{
+	for (auto &m : map)
+		f(*m.second);
+}
+
 enum class GamePhase {
 	LOBBY = 0,
 	GAME
@@ -242,10 +252,11 @@ public:
 	std::unique_ptr<Level> level = nullptr;
 
 	std::unique_ptr<b2World> b2world = nullptr;
-	std::vector<std::unique_ptr<Player>> players;
-	std::map<uint16_t, std::unique_ptr<Civilian>> civilians;
-	std::vector<std::unique_ptr<InkParticle>> inkParticles;
-	std::vector<MobManipulator> mobManipulators;
+
+	MovableMap<Player> players;
+	MovableMap<Civilian> civilians;
+	MovableMap<InkParticle> inkParticles;
+	MovableMap<MobManipulator> mobManipulators;
 
 	inline std::unique_ptr<std::lock_guard<std::mutex>> lock() {
 		return std::make_unique<std::lock_guard<std::mutex>>(mut);

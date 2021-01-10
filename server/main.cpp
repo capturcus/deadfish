@@ -11,8 +11,9 @@ GameState gameState;
 
 void sendInitMetadata()
 {
-	for (auto &targetPlayer : gameState.players)
+	for (auto &targetPlayerIt : gameState.players)
 	{
+		auto &targetPlayer = targetPlayerIt.second;
 		flatbuffers::FlatBufferBuilder builder(1);
 		std::vector<flatbuffers::Offset<FlatBuffGenerated::InitPlayer>> playerOffsets;
 		for (size_t i = 0; i < gameState.players.size(); i++)
@@ -37,12 +38,12 @@ void addNewPlayer(dfws::Handle hdl, const std::string &name)
 
 	// TODO: check that a player with the same name is not present
 	auto p = std::make_unique<Player>();
-	p->movableID = newMobID();
+	p->movableID = newMovableID();
 	p->name = name;
 	p->wsHandle = hdl;
 	p->playerID = gameState.players.size();
 
-	gameState.players.push_back(std::move(p));
+	gameState.players[p->movableID] = std::move(p);
 
 	agones::SetPlayers(gameState.players.size());
 	sendInitMetadata();
@@ -94,7 +95,7 @@ void mainOnMessage(dfws::Handle hdl, const std::string& payload)
 		if (gameState.options.count("numplayers"))
 			return; // the game will start after a number of player will join, not after all being ready
 		for (auto& p : gameState.players) {
-			if (!p->ready)
+			if (!p.second->ready)
 				return;
 		}
 		startGame();
@@ -109,18 +110,19 @@ void mainOnMessage(dfws::Handle hdl, const std::string& payload)
 
 void mainOnClose(dfws::Handle hdl)
 {
-	auto player = gameState.players.begin();
-	while (player != gameState.players.end())
+	auto playerIt = gameState.players.begin();
+	while (playerIt != gameState.players.end())
 	{
-		if ((*player)->wsHandle == hdl)
+		auto &player = playerIt->second;
+		if (player->wsHandle == hdl)
 		{
-			std::cout << "deleting player " << (*player)->name << "\n";
+			std::cout << "deleting player " << player->name << "\n";
 			break;
 		}
-		player++;
+		playerIt++;
 	}
-	if (player != gameState.players.end())
-		gameState.players.erase(player);
+	if (playerIt != gameState.players.end())
+		gameState.players.erase(playerIt);
 
 	if (gameState.phase == GamePhase::LOBBY)
 	{

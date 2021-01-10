@@ -184,9 +184,10 @@ void Civilian::collisionResolution() {
 void Civilian::update()
 {
 	std::vector<MobManipulator> seenManips;
-	for (auto &m : gameState.mobManipulators) {
-		if (mobSeePoint(*this, f2b(m.pos), true))
-			seenManips.push_back(m);
+	for (auto &mIt : gameState.mobManipulators) {
+		auto &m = mIt.second;
+		if (mobSeePoint(*this, f2b(m->pos), true))
+			seenManips.push_back(*m);
 	}
 	if (seenManips.size() > 0) {
 		this->seenAManip = true;

@@ -1,7 +1,7 @@
 #pragma once
 
 void gameThread();
-uint16_t newMobID();
+uint16_t newMovableID();
 void gameOnMessage(dfws::Handle hdl, const std::string& msg);
 void spawnPlayer(Player& p);
 void spawnCivilian();
