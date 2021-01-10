@@ -89,9 +89,9 @@ void sendServerMessage(Player &player,
 void sendToAll(std::string &data)
 {
 	iterateOverMovableMap(gameState.players,
-		std::function<void(Player&)>([=](Player& p){
+		[=](Player& p){
 			dfws::SendData(p.wsHandle, data);
-		})
+		}
 	);
 }
 
@@ -99,10 +99,10 @@ Player* getPlayerByConnHdl(dfws::Handle hdl)
 {
 	Player* ret = nullptr;
 	iterateOverMovableMap(gameState.players,
-		std::function<void(Player&)>([&](Player& p){
+		[&](Player& p){
 			if (p.wsHandle == hdl)
 				ret = &p;
-		})
+		}
 	);
 	if (!ret)
 		std::cout << "getPlayerByConnHdl PLAYER NOT FOUND\n";
@@ -401,26 +401,23 @@ void spawnPlayer(Player &player)
 	std::string maxSpawn = "";
 	for (auto &p : gameState.level->navpoints)
 	{
-		if (p.second->isplayerspawn)
-		{
-			// TODO(movable) iterate over players reasonably
-			float minDist = std::numeric_limits<float>::max();
-			for (auto &plIt : gameState.players)
-			{
-				auto &pl = plIt.second;
-				if (!pl->body)
-					continue;
-				auto dist = b2Distance(g2b(p.second->position), pl->body->GetPosition());
+		if (!p.second->isplayerspawn)
+			continue;
+
+		float minDist = std::numeric_limits<float>::max();
+		iterateOverMovableMap(gameState.players,
+			[&](Player& pl){
+				if (!pl.body)
+					return;
+				auto dist = b2Distance(g2b(p.second->position), pl.body->GetPosition());
 				if (dist < minDist)
-				{
 					minDist = dist;
-				}
 			}
-			if (minDist > maxMinDist)
-			{
-				maxMinDist = minDist;
-				maxSpawn = p.first;
-			}
+		);
+		if (minDist > maxMinDist)
+		{
+			maxMinDist = minDist;
+			maxSpawn = p.first;
 		}
 	}
 	auto spawn = gameState.level->navpoints[maxSpawn].get();
@@ -479,10 +476,10 @@ void sendHighscores()
 	flatbuffers::FlatBufferBuilder builder;
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::HighscoreEntry>> entries;
 	iterateOverMovableMap(gameState.players,
-		std::function<void(Player&)>([&](Player& p){
+		[&](Player& p){
 			auto entry = FlatBuffGenerated::CreateHighscoreEntry(builder, p.playerID, p.points);
 			entries.push_back(entry);
-		})
+		}
 	);
 	auto v = builder.CreateVector(entries);
 	auto update = FlatBuffGenerated::CreateHighscoreUpdate(builder, v);
@@ -575,19 +572,26 @@ void initGameThread(TestContactListener& tcl)
 	auto data = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_Level, levelOffset.Union());
 	sendToAll(data);
 
-	// shuffle the players to give them random species unless it's a test
-	// TODO(moveable) somehow shuffle a map lmao
-	// if (gameState.options.count("test") == 0)
-	// 	std::shuffle(gameState.players.begin(), gameState.players.end(), std::mt19937(std::random_device()()));
-
 	uint8_t lastSpecies = 0;
 	iterateOverMovableMap(gameState.players,
-		std::function<void(Player&)>([&](Player& p){
+		[&](Player& p){
 			p.species = lastSpecies;
 			lastSpecies++;
 			spawnPlayer(p);
-		})
+		}
 	);
+}
+
+template<typename T>
+void updateCollideableMoveableMap(MovableMap<T>& m)
+{
+	for (auto it = m.cbegin(); it != m.cend();) {
+		it->second->update();
+		if (it->second->toBeDeleted)
+			it = m.erase(it);
+		else
+			++it;
+	}
 }
 
 void gameThreadTick(int& civilianTimer)
@@ -595,22 +599,17 @@ void gameThreadTick(int& civilianTimer)
 	// update physics
 	gameState.b2world->Step(1 / 20.0, 8, 3);
 
-	// TODO(moveable) rewrite updating with new design
-	// updateCollideables(gameState.inkParticles);
+	updateCollideableMoveableMap(gameState.inkParticles);
+	updateCollideableMoveableMap(gameState.civilians);
+	updateCollideableMoveableMap(gameState.mobManipulators);
 
-	// update civilians
-	for (auto it = gameState.civilians.cbegin(); it != gameState.civilians.cend();) {
-		it->second->update();
-		if (it->second->toBeDeleted)
-			it = gameState.civilians.erase(it);
-		else
-			++it;
-	}
-
-	// update players
-	// TODO(moveable) rewrite updating with new design
-	// for (auto &p : gameState.players)
-	// 	p->update();
+	// in players the toBeDeleted variable doesn't actually mean that the player is to be deleted
+	// so we have to treat this differently
+	iterateOverMovableMap(gameState.players,
+		[&](Player& p){
+			p.update();
+		}
+	);
 
 	// spawn civilians if need be
 	if (!gameState.options["ghosttown"].as<bool>() && civilianTimer == 0 && gameState.civilians.size() < MAX_CIVILIANS)
@@ -620,15 +619,6 @@ void gameThreadTick(int& civilianTimer)
 	}
 	else
 		civilianTimer = std::max(0, civilianTimer - 1);
-
-	// TODO(moveable) rewrite updating with new design
-	// for (auto it = gameState.mobManipulators.begin(); it != gameState.mobManipulators.end();) {
-	// 	it->framesLeft--;
-	// 	if (it->framesLeft == 0)
-	// 		it = gameState.mobManipulators.erase(it);
-	// 	else
-	// 		it++;
-	// }
 }
 
 void gameThread()
@@ -667,12 +657,13 @@ void gameThread()
 
 		gameThreadTick(civilianTimer);
 
+		// send data to everyone
 		iterateOverMovableMap(gameState.players,
-			std::function<void(Player&)>([&](Player& p){
+			[&](Player& p){
 				builder.Clear();
 				auto offset = makeWorldState(p, builder, roundTimer);
 				sendServerMessage(p, builder, FlatBuffGenerated::ServerMessageUnion_WorldState, offset);
-			})
+			}
 		);
 
 		// Drop the lock

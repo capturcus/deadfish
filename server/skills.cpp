@@ -121,3 +121,10 @@ bool executeSkillBlink(Player& p, UNUSED Skills skill, b2Vec2 mousePos) {
 	physicsInitMob(&p, b2g(mousePos), 0, 0.3f, 3);
 	return true;
 }
+
+void MobManipulator::update()
+{
+	this->framesLeft--;
+	if (this->framesLeft == 0)
+		this->toBeDeleted = true;
+}

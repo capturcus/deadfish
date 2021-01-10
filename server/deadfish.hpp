@@ -48,8 +48,8 @@ static inline glm::vec2 f2g(FlatBuffGenerated::Vec2 v) {
 template<typename T>
 using MovableMap = std::map<uint16_t, std::unique_ptr<T>>;
 
-template <typename T>
-static void iterateOverMovableMap(MovableMap<T>& map, std::function<void(T&)> f)
+template <typename T, typename F>
+static void iterateOverMovableMap(MovableMap<T>& map, F&& f)
 {
 	for (auto &m : map)
 		f(*m.second);
@@ -241,6 +241,8 @@ struct MobManipulator
 	: public Movable {
 	FlatBuffGenerated::MobManipulatorType type;
 	uint16_t framesLeft;
+	bool toBeDeleted;
+	void update();
 };
 
 struct GameState {
