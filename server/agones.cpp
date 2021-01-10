@@ -28,8 +28,8 @@ static void WatchUpdates()
 	std::cout << "Starting to watch GameServer updates...\n"
 			  << std::flush;
 	sdk->WatchGameServer([](const agones::dev::sdk::GameServer &gameserver) {
-		std::cout << "GameServer Update:\n"								   //
-				  << "\tname: " << gameserver.object_meta().name() << "\n" //
+		std::cout << "GameServer Update:\n"
+				  << "\tname: " << gameserver.object_meta().name() << "\n"
 				  << "\tstate: " << gameserver.status().state() << "\n"
 				  << std::flush;
 	});
