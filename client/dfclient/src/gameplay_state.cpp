@@ -325,6 +325,7 @@ void GameplayState::processMovable(std::map<uint16_t, T>& map, const FlatBuffGen
 		//fade in
 		newMov.sprite->setAlpha(1);
 		newMov.tween = CreateAlphaTransitionTween(newMov.sprite.get(), 1, 255, MOB_FADEIN_TIME);
+		newMov.movableID = comp->ID();
 		map[comp->ID()] = std::move(newMov);
 		it = map.find(comp->ID());
 	}
@@ -362,8 +363,9 @@ template<typename T>
 void updateMovableMap(std::map<uint16_t, T>& map, float subDelta)
 {
 	for (auto& it : map) {
-		Movable& movable = *it.second.get();
-		movable.lerp.updateLerp(subDelta);
+		auto &mov = it.second;
+		mov.tween.step(1);
+		mov.lerp.updateLerp(subDelta);
 	}
 }
 
@@ -389,9 +391,9 @@ void GameplayState::ProcessWorldState(const void* ev) {
 			animSprite->setPaused(false);
 		}
 		// if it's us then save sprite
-		if (mobData->movable()->ID() == gameData.myMobID) {
+		if (mob.movableID == gameData.myMobID)
 			this->mySprite = mob.sprite.get();
-		}
+
 		if (mobData->relation() == FlatBuffGenerated::PlayerRelation_None) {
 			mob.relationMarker.reset(nullptr);
 		} else if (mobData->relation() == FlatBuffGenerated::PlayerRelation_Targeted) {
@@ -603,15 +605,8 @@ StateType GameplayState::Update(Messages m) {
 		ImGui::End();
 	}
 
-	// Update mob positions
-	// for (auto& mob : this->mobs) {
-	// 	mob.second.lerp.updateLerp(subDelta);
-	// }
-
-	// // Update ink cloud positions
-	// for (auto& ip : this->inkParticles) {
-	// 	ip.second.lerp.updateLerp(subDelta);
-	// }
+	updateMovableMap(this->mobs, subDelta);
+	updateMovableMap(this->inkParticles, subDelta);
 
 	if (this->mySprite == nullptr)
 		return StateType::Gameplay;

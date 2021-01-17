@@ -16,11 +16,11 @@ void sendInitMetadata()
 		auto &targetPlayer = targetPlayerIt.second;
 		flatbuffers::FlatBufferBuilder builder(1);
 		std::vector<flatbuffers::Offset<FlatBuffGenerated::InitPlayer>> playerOffsets;
-		for (size_t i = 0; i < gameState.players.size(); i++)
+		for (auto& playerIt : gameState.players)
 		{
-			auto& player = gameState.players[i];
+			auto& player = playerIt.second;
 			auto name = builder.CreateString(player->name.c_str());
-			auto playerOffset = FlatBuffGenerated::CreateInitPlayer(builder, i, name, player->species, player->ready);
+			auto playerOffset = FlatBuffGenerated::CreateInitPlayer(builder, player->playerID, name, player->species, player->ready);
 			playerOffsets.push_back(playerOffset);
 		}
 		auto players = builder.CreateVector(playerOffsets);
