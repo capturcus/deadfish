@@ -11,6 +11,7 @@
 #include <boost/program_options.hpp>
 #include "../common/deadfish_generated.h"
 #include "../common/constants.hpp"
+#include "../common/types.hpp"
 #include "websocket.hpp"
 
 namespace boost_po = boost::program_options;
@@ -44,9 +45,6 @@ static inline b2Vec2 f2b(FlatBuffGenerated::Vec2 v) {
 static inline glm::vec2 f2g(FlatBuffGenerated::Vec2 v) {
 	return glm::vec2(v.x(), v.y());
 }
-
-template<typename T>
-using MovableMap = std::map<uint16_t, std::unique_ptr<T>>;
 
 template <typename T, typename F>
 static void iterateOverMovableMap(MovableMap<T>& map, F&& f)

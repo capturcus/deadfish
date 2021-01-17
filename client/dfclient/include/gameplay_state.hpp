@@ -17,6 +17,7 @@ namespace nc = ncine;
 #include "game_state.hpp"
 #include "lerp_component.hpp"
 #include "../../../common/deadfish_generated.h"
+#include "../../../common/types.hpp"
 
 enum class Layers {
 	TILE = 0,
@@ -31,11 +32,16 @@ enum class Layers {
 	SKILLS
 };
 
-struct Mob {
-	std::unique_ptr<ncine::AnimatedSprite> sprite;
+struct Movable {
 	LerpComponent lerp;
+	uint16_t movableID;
 	bool seen;
 	bool isAfterimage = false;
+	std::unique_ptr<ncine::Sprite> sprite;
+	tweeny::tween<int> tween;
+};
+
+struct Mob : public Movable {
 	FlatBuffGenerated::MobState state = FlatBuffGenerated::MobState_Walk;
 	std::unique_ptr<ncine::Sprite> hoverMarker;
 	std::unique_ptr<ncine::Sprite> relationMarker;
@@ -43,10 +49,10 @@ struct Mob {
 
 class Resources;
 
-struct InkParticle {
-	std::unique_ptr<ncine::DrawableNode> sprite;
-	LerpComponent lerp;
-	bool seen = false;
+struct InkParticle : public Movable {
+};
+
+struct Manipulator : public Movable {
 };
 
 struct GameplayState
@@ -81,19 +87,26 @@ private:
 	void updateRemainingText(uint64_t remainingFrames);
 	void updateShadows();
 
+	template<typename T, typename F>
+	void processMovable(std::map<uint16_t, T>& map, const FlatBuffGenerated::MovableComponent* comp,
+		F createMovableFunc);
+	template<typename T>
+	void deleteUnusedMovables(std::map<uint16_t, T>& map);
+
+	std::map<uint16_t, Manipulator> manipulators;
+	std::map<uint16_t, Mob> mobs;
+	std::map<uint16_t, InkParticle> inkParticles;
+
 	typedef std::vector<std::unique_ptr<ncine::DrawableNode>> DrawableNodeVector;
 	DrawableNodeVector nodes;
 	std::map<std::string, DrawableNodeVector> hiding_spots;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
-	std::map<uint16_t, Mob> mobs;
-	std::map<uint16_t, InkParticle> inkParticles;
 	ncine::Sprite* mySprite = nullptr;
 	uint32_t lastNodeID = 0;
 	bool showHighscores = false;
 	bool showQuitDialog = false;
 	bool gameEnded = false;
 	std::vector<nc::DrawableNode*> indicators;
-	std::vector<std::unique_ptr<ncine::Sprite>> manipulators;
 	ncine::TextNode* timeLeftNode = nullptr;
 	std::string currentHidingSpot = "";
 
