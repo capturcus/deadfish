@@ -2,7 +2,8 @@
 
 #include <ncine/Sprite.h>
 #include "resources.hpp"
-#include "gameplay_state.hpp"
+#include "../../../common/constants.hpp"
+#include "../../../common/deadfish_generated.h"
 
 /** Simplifies creating various in-game texts, such as UI messages on player kills.
  * Designed to allow long-term and one-off text parameter customization. As such,

@@ -13,9 +13,13 @@ namespace nc = ncine;
 
 #include "tweeny.h"
 
+#include "../../../common/constants.hpp"
+#include "../../../common/deadfish_generated.h"
+#include "../../../common/types.hpp"
 #include "fov.hpp"
 #include "game_state.hpp"
 #include "lerp_component.hpp"
+<<<<<<< HEAD
 #include "../../../common/deadfish_generated.h"
 #include "../../../common/types.hpp"
 
@@ -37,6 +41,9 @@ enum class Layers {
 	ADDITIONAL_TEXT,
 	TEXT
 };
+=======
+#include "death_report_processor.hpp"
+>>>>>>> 11a59ab (death report refactor (DeathReportProcessor))
 
 tweeny::tween<int>
 CreateAlphaTransitionTween(ncine::DrawableNode* sprite, int from, int to, int during);
@@ -64,6 +71,9 @@ struct InkParticle : public Movable {
 
 struct Manipulator : public Movable {
 };
+
+typedef std::vector<std::unique_ptr<ncine::DrawableNode>> DrawableNodeVector;
+
 struct GameplayState
 	: public GameState
 {
@@ -107,33 +117,11 @@ private:
 	std::map<uint16_t, Mob> mobs;
 	std::map<uint16_t, InkParticle> inkParticles;
 
-	/** A subfunction of ProcessDeathReport, responsible for handling killing somebody.
-	 */
-	void processKill(const FlatBuffGenerated::DeathReport* deathReport);
-
-	/** A subfunction of ProcessDeathReport, responsible for handling being killed.
-	 */
-	void processDeath(const FlatBuffGenerated::DeathReport* deathReport);
-
-	/** A subfunction of ProcessDeathReport, responsible for handling reports of a kill 
-	 * which doesn't involve the player.
-	 */
-	void processObituary(const FlatBuffGenerated::DeathReport* deathReport);
-
-	/** A subfunction of processKill, responsible for managing the client's reaction to the player's multikill.
-	 * @return A textnode with the adequate multikill text, to be included in the summary
-	 */
-	std::unique_ptr<ncine::TextNode> processMultikill(int multikillness);
-
-	void endKillingSpree();
-
 
 	friend class TextCreator;
 
-	typedef std::vector<std::unique_ptr<ncine::DrawableNode>> DrawableNodeVector;
 	DrawableNodeVector nodes;
 	DrawableNodeVector textNodes;
-	std::unique_ptr<ncine::TextNode> killingSpreeText;
 	std::map<std::string, DrawableNodeVector> hiding_spots;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
 	ncine::Sprite* mySprite = nullptr;
@@ -153,6 +141,8 @@ private:
 	ncine::TimeStamp lastMessageReceivedTime;
 
 	Resources& _resources;
+
+	DeathReportProcessor _deathReportProcessor;
 };
 
 template<typename T, typename F>

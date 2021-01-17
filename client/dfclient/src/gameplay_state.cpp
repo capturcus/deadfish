@@ -409,7 +409,7 @@ void GameplayState::OnMessage(const std::string& data) {
 }
 
 
-GameplayState::GameplayState(Resources& r) : _resources(r) {
+GameplayState::GameplayState(Resources& r) : _resources(r), _deathReportProcessor(r) {
 	std::cout << "entered gameplay state\n";
 	ncine::theApplication().gfxDevice().setClearColor(ncine::Colorf(1, 1, 1, 1));
 	auto& rootNode = ncine::theApplication().rootNode();
@@ -550,6 +550,12 @@ StateType GameplayState::Update(Messages m) {
 	this->textNodes.resize(std::distance(textNodes.begin(), new_end));
 
 	return StateType::Gameplay;
+}
+
+void GameplayState::ProcessDeathReport(const void* ev) {
+	auto deathReport = (const FlatBuffGenerated::DeathReport*) ev;
+	auto newTextNodes = _deathReportProcessor.ProcessDeathReport(deathReport);
+	std::move(newTextNodes.begin(), newTextNodes.end(), std::back_inserter(this->textNodes));
 }
 
 void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {
