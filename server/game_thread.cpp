@@ -109,16 +109,19 @@ Player* getPlayerByConnHdl(dfws::Handle hdl)
 	return ret;
 }
 
-// void updateCollideableMovable(CollideableMovable* cm)
-// {
-// 	cm->pos = b2f(cm->body->GetPosition());
-// 	cm->angle = cm->body->GetAngle();
-// }
+std::unique_ptr<FlatBuffGenerated::MovableComponent> Movable::fbMovable()
+{
+	return std::make_unique<FlatBuffGenerated::MovableComponent>(
+		this->pos, this->movableID, this->angle
+	);
+}
 
-// void iterateOverCollideableMovable(std::function<void(CollideableMovable&)> f)
-// {
-
-// }
+std::unique_ptr<FlatBuffGenerated::MovableComponent> CollideableMovable::fbMovable()
+{
+	this->pos = b2f(this->body->GetPosition());
+	this->angle = this->body->GetAngle();
+	return Movable::fbMovable();
+}
 
 struct FOVCallback
 	: public b2RayCastCallback
@@ -191,27 +194,24 @@ makePlayerIndicator(flatbuffers::FlatBufferBuilder &builder,
 }
 
 flatbuffers::Offset<FlatBuffGenerated::Mob> createFBMob(flatbuffers::FlatBufferBuilder &builder,
-	Player& player, const Mob* m)
+	Player& player, Mob* m)
 {
 	FlatBuffGenerated::PlayerRelation relation = FlatBuffGenerated::PlayerRelation_None;
 	if (player.killTargetID == m->movableID)
 		relation = FlatBuffGenerated::PlayerRelation_Targeted;
 	auto posVec = FlatBuffGenerated::Vec2(m->body->GetPosition().x, m->body->GetPosition().y);
-	// TODO(movable)
-	// return FlatBuffGenerated::CreateMob(builder,
-	// 								m->movableID,
-	// 								&posVec,
-	// 								m->body->GetAngle(),
-	// 								(FlatBuffGenerated::MobState)m->state,
-	// 								m->species,
-	// 								relation);
+	auto movableComponent = m->fbMovable();
+	return FlatBuffGenerated::CreateMob(builder,
+									movableComponent.get(),
+									(FlatBuffGenerated::MobState)m->state,
+									m->species,
+									relation);
 }
 
 flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBufferBuilder &builder, uint64_t framesRemaining)
 {
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::Mob>> mobs;
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::Indicator>> indicators;
-	// TODO(movable) refactor this so that all the movables are processed together
 	for (auto &p : gameState.civilians)
 	{
 		auto &c = p.second;
@@ -259,10 +259,9 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 		auto &ink = inkIt.second;
 		if (!playerSeeCollideable(player, *ink))
 			continue;
-		FlatBuffGenerated::Vec2 pos = b2f(ink->body->GetPosition());
-		// TODO(movable)
-		// auto inkOffset = FlatBuffGenerated::CreateInkParticle(builder, ink->movableID, &pos);
-		// inkParticles.push_back(inkOffset);
+		auto movableComponent = ink->fbMovable();
+		auto inkOffset = FlatBuffGenerated::CreateInkParticle(builder, movableComponent.get());
+		inkParticles.push_back(inkOffset);
 	}
 
 	auto inkParticlesOffset = builder.CreateVector(inkParticles);
@@ -272,9 +271,10 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 		auto &manipulator = manipulatorIt.second;
 		if (!mobSeePoint(player, f2b(manipulator->pos), true))
 			continue;
-		// TODO(movable)
-		// auto manOffset = FlatBuffGenerated::CreateMobManipulator(builder, &manipulator.pos, manipulator.type);
-		// manipulators.push_back(manOffset);
+		auto movableComponent = manipulator->fbMovable();
+		auto manOffset = FlatBuffGenerated::CreateMobManipulator(builder,
+			movableComponent.get(), manipulator->type);
+		manipulators.push_back(manOffset);
 	}
 
 	auto manipulatorsOffset = builder.CreateVector(manipulators);

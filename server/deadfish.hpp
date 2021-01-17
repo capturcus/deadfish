@@ -87,10 +87,14 @@ struct Movable {
 	FlatBuffGenerated::Vec2 pos;
 	uint16_t movableID;
 	float angle;
+
+	virtual std::unique_ptr<FlatBuffGenerated::MovableComponent> fbMovable();
 };
 
 struct CollideableMovable
-	: public Collideable, public Movable{};
+	: public Collideable, public Movable {
+	virtual std::unique_ptr<FlatBuffGenerated::MovableComponent> fbMovable() override;
+};
 
 struct Mob : public CollideableMovable {
 	uint16_t species = 0;
@@ -243,6 +247,8 @@ struct MobManipulator
 	uint16_t framesLeft;
 	bool toBeDeleted;
 	void update();
+
+	virtual ~MobManipulator() {};
 };
 
 struct GameState {
