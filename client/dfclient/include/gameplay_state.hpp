@@ -86,6 +86,7 @@ private:
 
 	void updateRemainingText(uint64_t remainingFrames);
 	void updateShadows();
+	void updateHovers(ncine::Vector2f mouseCoords, float radiusSquared);
 
 	template<typename T, typename F>
 	void processMovable(std::map<uint16_t, T>& map, const FlatBuffGenerated::MovableComponent* comp,

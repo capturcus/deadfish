@@ -541,6 +541,28 @@ GameplayState::GameplayState(Resources& r) : _resources(r) {
 GameplayState::~GameplayState() {
 }
 
+void GameplayState::updateHovers(ncine::Vector2f mouseCoords, float radiusSquared) {
+	int smallestNorm = INT32_MAX;
+	Mob* closestMob = nullptr;
+	for (auto& mob : this->mobs) {
+		if (mob.second.sprite.get() == this->mySprite)
+			continue;
+
+		mob.second.hoverMarker.reset(nullptr);
+
+		int norm = deadfish::norm(mob.second.sprite->position(), mouseCoords);
+		if (norm < smallestNorm) {
+			smallestNorm = norm;
+			closestMob = &mob.second;
+		}
+	}
+	if (closestMob && smallestNorm < radiusSquared) {
+		closestMob->hoverMarker = std::make_unique<ncine::Sprite>(closestMob->sprite.get(), _resources.textures["graycircle.png"].get());
+		closestMob->hoverMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
+		closestMob->hoverMarker->setLayer((unsigned short)Layers::INDICATOR);
+	}
+}
+
 StateType GameplayState::Update(Messages m) {
 	for (auto& msg: m.data_msgs) {
 		OnMessage(msg);
@@ -607,6 +629,7 @@ StateType GameplayState::Update(Messages m) {
 
 	updateMovableMap(this->mobs, subDelta);
 	updateMovableMap(this->inkParticles, subDelta);
+	updateMovableMap(this->manipulators, subDelta);
 
 	if (this->mySprite == nullptr)
 		return StateType::Gameplay;
@@ -625,25 +648,7 @@ StateType GameplayState::Update(Messages m) {
 	float radiusSquared = this->mySprite->size().x/2;
 	radiusSquared = radiusSquared*radiusSquared;
 
-	// int smallestNorm = INT32_MAX;
-	// Mob* closestMob = nullptr;
-	// for (auto& mob : this->mobs) {
-	// 	if (mob.second.sprite.get() == this->mySprite)
-	// 		continue;
-
-	// 	mob.second.hoverMarker.reset(nullptr);
-
-	// 	int norm = deadfish::norm(mob.second.sprite->position(), mouseCoords);
-	// 	if (norm < smallestNorm) {
-	// 		smallestNorm = norm;
-	// 		closestMob = &mob.second;
-	// 	}
-	// }
-	// if (closestMob && smallestNorm < radiusSquared) {
-	// 	closestMob->hoverMarker = std::make_unique<ncine::Sprite>(closestMob->sprite.get(), _resources.textures["graycircle.png"].get());
-	// 	closestMob->hoverMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
-	// 	closestMob->hoverMarker->setLayer((unsigned short)Layers::INDICATOR);
-	// }
+	updateHovers(mouseCoords, radiusSquared);
 
 	return StateType::Gameplay;
 }
@@ -664,21 +669,21 @@ void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {
 		builder.Finish(message);
 		SendData(builder);
 	}
-	// if (event.isRightButton()) {
-	// 	// kill
-	// 	for (auto& mob : this->mobs) {
-	// 		if (mob.second.isAfterimage) continue;
-	// 		if (mob.second.hoverMarker.get()) {
-	// 			// if it is hovered kill it
-	// 			flatbuffers::FlatBufferBuilder builder;
-	// 			auto cmdKill = FlatBuffGenerated::CreateCommandKill(builder, mob.first);
-	// 			auto message = FlatBuffGenerated::CreateClientMessage(builder, FlatBuffGenerated::ClientMessageUnion_CommandKill, cmdKill.Union());
-	// 			builder.Finish(message);
-	// 			SendData(builder);
-	// 			break;
-	// 		}
-	// 	}
-	// }
+	if (event.isRightButton()) {
+		// kill
+		for (auto& mob : this->mobs) {
+			if (mob.second.isAfterimage) continue;
+			if (mob.second.hoverMarker.get()) {
+				// if it is hovered kill it
+				flatbuffers::FlatBufferBuilder builder;
+				auto cmdKill = FlatBuffGenerated::CreateCommandKill(builder, mob.first);
+				auto message = FlatBuffGenerated::CreateClientMessage(builder, FlatBuffGenerated::ClientMessageUnion_CommandKill, cmdKill.Union());
+				builder.Finish(message);
+				SendData(builder);
+				break;
+			}
+		}
+	}
 }
 
 void SendCommandRun(bool run) {
