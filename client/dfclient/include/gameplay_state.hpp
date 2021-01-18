@@ -72,8 +72,6 @@ struct InkParticle : public Movable {
 struct Manipulator : public Movable {
 };
 
-typedef std::vector<std::unique_ptr<ncine::DrawableNode>> DrawableNodeVector;
-
 struct GameplayState
 	: public GameState
 {

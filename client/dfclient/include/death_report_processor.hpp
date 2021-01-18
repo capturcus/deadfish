@@ -14,8 +14,7 @@
 
 #include "resources.hpp"
 #include "text_creator.hpp"
-
-typedef std::vector<std::unique_ptr<ncine::DrawableNode>> DrawableNodeVector;
+#include "../../../common/types.hpp"
 
 class DeathReportProcessor {
 private:
