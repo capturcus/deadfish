@@ -5,9 +5,6 @@
 const int FRAME_TIME = 50; // 20 fps
 const int SECOND = 1000/FRAME_TIME; // 1s
 
-const float PIXELS2METERS = 0.01f;
-const float METERS2PIXELS = 100.f;
-
 const uint64_t ROUND_LENGTH = 10 * 60 * 20; // 10 minutes
 const int CIVILIAN_TIME = 40;
 const int MAX_CIVILIANS = 100;
@@ -63,6 +60,7 @@ enum class Layers {
 	INDICATOR,
 	MOB_MANIPULATORS,
 	MOBS,
+	SHADOW,
 	OBJECTS,
 	INK_PARTICLES,
 	HIDING_SPOTS,

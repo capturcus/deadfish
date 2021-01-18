@@ -364,6 +364,14 @@ KillcountMechanicsInfo handleKillcountMechanics(Player& killer, Player& victim) 
 	return ret;
 }
 
+void handleGoldfishKill(Player& killer) {
+	if (killer.skills.size() == MAX_SKILLS)
+		return;
+	uint16_t skill = rand() % (uint16_t) Skills::SKILLS_MAX;
+	killer.skills.push_back(skill);
+	killer.sendSkillBarUpdate();
+}
+
 void Civilian::handleKill(Player& killer) {
 	if (killer.isDead())
 		return;
