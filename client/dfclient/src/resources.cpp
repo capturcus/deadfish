@@ -41,7 +41,7 @@ void Resources::playSound(SoundType soundType, float gain) {
 	case SoundType::DEATH:
 		auto randIndex = rand()%_sounds.size();
 		auto it = _sounds.begin();
-		for(auto i=0; i<randIndex; ++i) ++it;
+		for (auto i=0; i<randIndex; ++i) ++it;
 		_deathSound = std::make_unique<ncine::AudioBufferPlayer>(it->second.get());
 		break;
 	}

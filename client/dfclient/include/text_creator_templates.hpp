@@ -45,7 +45,7 @@ std::unique_ptr<ncine::TextNode> TextCreator::CreateText(
 
 template <typename T>
 std::unique_ptr<ncine::TextNode> TextCreator::CreateOutline(const T& easing) {
-	if(_lastColor == ncine::Color::Black) return nullptr;
+	if (_lastColor == ncine::Color::Black) return nullptr;
 	return doCreateText(
 		_lastText,
 		ncine::Color::Black,
