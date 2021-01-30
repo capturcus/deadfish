@@ -1,0 +1,19 @@
+apiVersion: "agones.dev/v1"
+kind: Fleet
+metadata:
+  name: deadfish-fleet
+spec:
+  replicas: 2
+  template:
+    spec:
+      ports:
+      - name: default
+        portPolicy: Dynamic
+        containerPort: 63987
+        protocol: TCP
+      template:
+        spec:
+          containers:
+          - name: deadfish-server
+            image: deadfish-server:latest
+            imagePullPolicy: Never

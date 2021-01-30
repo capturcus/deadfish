@@ -2,6 +2,7 @@
 #include <utility>
 #include "flatbuffers/flatbuffers.h"
 
+#include "agones.hpp"
 #include "deadfish.hpp"
 #include "game_thread.hpp"
 #include "websocket.hpp"
@@ -43,12 +44,14 @@ void addNewPlayer(dfws::Handle hdl, const std::string &name)
 
 	gameState.players.push_back(std::move(p));
 
+	agones::SetPlayers(gameState.players.size());
 	sendInitMetadata();
 }
 
 void startGame() {
 	gameState.phase = GamePhase::GAME;
 	dfws::SetOnMessage(&gameOnMessage);
+	agones::SetPlaying();
 	new std::thread(gameThread); // leak the shit out of it yooo
 }
 
@@ -121,12 +124,13 @@ void mainOnClose(dfws::Handle hdl)
 
 	if (gameState.phase == GamePhase::LOBBY)
 	{
+		agones::SetPlayers(gameState.players.size());
 		sendInitMetadata();
 	}
 	if (gameState.phase == GamePhase::GAME && gameState.players.empty())
 	{
 		std::cout << "no players left, exiting\n";
-		exit(0);
+		agones::Shutdown();
 	}
 }
 
@@ -158,6 +162,7 @@ bool handleCliOptions(int argc, const char* const argv[]) {
 		("level,l", boost_po::value<std::string>(), "level flatbuffer file to be loaded by the server")
 		("numplayers,n", boost_po::value<unsigned long>(), "the server will launch the game after the specified amount of players will appear in lobby, not when everybody is ready")
 		("ghosttown,g", boost_po::value<bool>()->default_value(false)->implicit_value(true), "no mobs mode" )
+		("agones", boost_po::value<bool>()->default_value(false)->implicit_value(true), "run the server with agones sdk thread" )
 	;
 
 	boost_po::store(boost_po::parse_command_line(argc, argv, desc), gameState.options);
@@ -186,6 +191,12 @@ int main(int argc, const char* const argv[])
 	dfws::SetOnClose(&mainOnClose);
 
 	std::cout << "server started\n";
+
+	if (gameState.options["agones"].as<bool>())
+		if (!agones::Start()) {
+			std::cout << "failed to initalize agones\n";
+			return -1;
+		}
 
 	int port = gameState.options["port"].as<int>();
 
