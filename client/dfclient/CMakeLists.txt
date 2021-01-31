@@ -84,6 +84,7 @@ if(EMSCRIPTEN)
 		file(COPY ${PACKAGE_DATA_DIR}/icons/icon.ico DESTINATION ${CMAKE_BINARY_DIR})
 		file(RENAME ${CMAKE_BINARY_DIR}/icon.ico ${CMAKE_BINARY_DIR}/favicon.ico)
 	endif()
+	include_directories("/usr/local/include")  # for boost ptree
 else()
 	set(THREADS_PREFER_PTHREAD_FLAG ON)
 	find_package(Threads REQUIRED)

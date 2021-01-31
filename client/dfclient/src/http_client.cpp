@@ -1,8 +1,10 @@
 #include "http_client.hpp"
 
+#include <exception>
+
 #ifdef __EMSCRIPTEN__
 // TODO: write an emscripten version
-int http::MatchmakerGet(std::string& ret)
+int http::MatchmakerGet(std::string address, std::string port, std::string& ret)
 {
 	return -1;
 }
@@ -45,7 +47,7 @@ static int throwingMatchmakerGet(std::string address, std::string port, std::str
 	// Send the HTTP request to the remote host
 	bhttp::write(stream, req);
 
-	// This buffer is used for reading and must be persisted
+	// This buffer is used for reading
 	beast::flat_buffer buffer;
 
 	// Declare a container to hold the response
@@ -73,7 +75,8 @@ int http::MatchmakerGet(std::string address, std::string port, std::string& ret)
 	int retCode = 0;
 	try {
 		retCode = throwingMatchmakerGet(address, port, ret);
-	} catch (...) {
+	} catch (std::exception& e) {
+		std::cout << "failed to connect to matchmaker: " << e.what() << "\n";
 		return -1;
 	}
 	return retCode;
