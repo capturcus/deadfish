@@ -1,4 +1,4 @@
-SET (CMAKE_CXX_FLAGS                "-Wall -Wpedantic -Wextra -g -O0")
+SET (CMAKE_CXX_FLAGS                "-Wall -Wpedantic -Wextra -g")
 
 cmake_minimum_required(VERSION 3.0.0)
 project(deadfishserver VERSION 0.1.0)
