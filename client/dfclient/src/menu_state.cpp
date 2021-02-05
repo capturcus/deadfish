@@ -34,7 +34,19 @@ void MenuState::ShowMessage(std::string message)
 	text->setPosition(res.x * 0.5f, res.y * 0.30f);
 	text->setScale(0.5f);
 	text->setColor(0, 0, 0, 255);
-	_resources._tweens.push_back(CreateTextTween(text));
+	auto tween = tweeny::from(255)
+		.to(255).during(60)
+		.to(0).during(60).onStep(
+		[text] (tweeny::tween<int>& t, int v) -> bool {
+			auto textColor = text->color();
+			text->setColor(textColor.r(), textColor.g(), textColor.b(), v);
+			std::cout << "v " << v << "\n";
+			if (v == 0)
+				delete text;
+			return false;
+		}
+	);
+	_resources._tweens.push_back(tween);
 }
 
 MenuState::MenuState(Resources& r) : _resources(r) {
@@ -68,7 +80,7 @@ MenuState::MenuState(Resources& r) : _resources(r) {
 	}
 	if (this->clientMode == ClientMode::DirectConnect) {
 		auto addr = this->directAddress + ":" + this->directPort;
-		strcpy(this->buf0, addr.c_str());
+		strcpy(this->serverAddressBuffer, addr.c_str());
 	}
 }
 
@@ -102,10 +114,10 @@ void MenuState::ProcessMatchmakerData(std::string data) {
 }
 
 void MenuState::MatchmakerLayout() {
-	ImGui::InputText("nickname", this->buf0, 64);
+	ImGui::InputText("nickname", this->nicknameBuffer, 64);
 	if (ImGui::Button("find game", {300, 30})) {
 		ImGui::End();
-		gameData.myNickname = std::string(this->buf0);
+		gameData.myNickname = std::string(this->nicknameBuffer);
 		if (gameData.myNickname.empty()) {
 			this->ShowMessage("enter a nickname");
 			return;
@@ -123,11 +135,11 @@ void MenuState::MatchmakerLayout() {
 }
 
 void MenuState::DirectConnectLayout() {
-	ImGui::InputText("server", this->buf0, 64);
-	ImGui::InputText("nickname", this->buf1, 64);
+	ImGui::InputText("server", this->serverAddressBuffer, 64);
+	ImGui::InputText("nickname", this->nicknameBuffer, 64);
 	if (ImGui::Button("connect", {300, 30})) {
-		gameData.serverAddress = std::string(this->buf0);
-		gameData.myNickname = std::string(this->buf1);
+		gameData.serverAddress = std::string(this->serverAddressBuffer);
+		gameData.myNickname = std::string(this->nicknameBuffer);
 		TryConnect();
 	}
 	ImGui::End();
