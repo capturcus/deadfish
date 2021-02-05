@@ -1,7 +1,5 @@
 #pragma once
 
-#include <iostream>
-
 template<typename Vectorlike>
 inline float angleFromVector(const Vectorlike &v) {
 	return (float) atan2(v.y, v.x);

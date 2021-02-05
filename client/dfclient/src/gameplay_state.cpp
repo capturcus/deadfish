@@ -28,9 +28,6 @@ const int IMGS_PER_SPECIES = 80;
 const int MAX_HIDING_SPOT_OPACITY = 255;
 const int MIN_HIDING_SPOT_OPACITY = 128;
 
-const int MOB_FADEIN_TIME = 5;
-const int MOB_FADEOUT_TIME = 7;
-
 std::map<uint16_t, std::string> skillTextures = {
 	{(uint16_t) Skills::INK_BOMB, "skill_ink.png"},
 	{(uint16_t) Skills::ATTRACTOR, "skill_attractor.png"},
@@ -80,7 +77,7 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine:
 	ret->setFrame(0);
 	ret->setPaused(false);
 	ret->setLayer((unsigned short)layer);
-	return std::move(ret);
+	return ret;
 }
 
 std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewMobSprite(ncine::SceneNode* parent, uint16_t species) {
@@ -100,7 +97,7 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewMobSprite(ncine::
  * @param during	time it takes
  * @return 			the created tween
 */
-static tweeny::tween<int>
+tweeny::tween<int>
 CreateAlphaTransitionTween(ncine::DrawableNode* sprite, int from, int to, int during) {
 	auto tween = tweeny::from(from)
 		.to(to).during(during).onStep(
@@ -312,53 +309,6 @@ void resetMovableMap(std::map<uint16_t, T>& map)
 		it.second.seen = false;
 }
 
-template<typename T, typename F>
-void GameplayState::processMovable(std::map<uint16_t, T>& map, const FlatBuffGenerated::MovableComponent* comp,
-	F createMovableFunc)
-{
-	auto it = map.find(comp->ID());
-	if (it == map.end()) {
-		// we see it for the first time
-		T newMov = createMovableFunc();
-		newMov.lerp.bind(static_cast<ncine::DrawableNode*>(newMov.sprite.get()));
-
-		//fade in
-		newMov.sprite->setAlpha(1);
-		newMov.tween = CreateAlphaTransitionTween(newMov.sprite.get(), 1, 255, MOB_FADEIN_TIME);
-		newMov.movableID = comp->ID();
-		map[comp->ID()] = std::move(newMov);
-		it = map.find(comp->ID());
-	}
-	T& mov = it->second;
-	mov.lerp.setupLerp(comp->pos().x(), comp->pos().y(), comp->angle());
-	mov.seen = true;
-	if (mov.isAfterimage) {
-		//re-fade in
-		mov.tween = CreateAlphaTransitionTween(mov.sprite.get(), mov.sprite->alpha(), 255, MOB_FADEIN_TIME*(1 - mov.sprite->alpha()/255));
-		mov.isAfterimage = false;
-	}
-}
-
-template<typename T>
-void GameplayState::deleteUnusedMovables(std::map<uint16_t, T>& map)
-{
-	std::vector<int> deletedIDs;
-	for (auto& it : map) {
-		auto& mov = it.second;
-		if (!mov.seen) { // not seen
-			if (!mov.isAfterimage) {	// not seen and not afterimage
-				// fade out
-				mov.tween = CreateAlphaTransitionTween(mov.sprite.get(), mov.sprite->alpha(), 0, MOB_FADEOUT_TIME*(mov.sprite->alpha()/255));
-				mov.isAfterimage = true;
-			} else if (mov.sprite->alpha() == 0) { // not seen and afterimage and alpha == 0
-				deletedIDs.push_back(it.first);
-			}
-		}
-	}
-	for (auto id : deletedIDs)
-		map.erase(id);
-}
-
 template<typename T>
 void updateMovableMap(std::map<uint16_t, T>& map, float subDelta)
 {
@@ -380,7 +330,7 @@ void GameplayState::ProcessWorldState(const void* ev) {
 		processMovable(this->mobs, mobData->movable(), [&](){
 			Mob ret;
 			ret.sprite = CreateNewMobSprite(this->cameraNode.get(), mobData->species());
-			return std::move(ret);
+			return ret;
 		});
 		Mob& mob = this->mobs.find(mobData->movable()->ID())->second; // after processMovable this is guaranteed to exist in the map
 		if (mobData->state() != mob.state) {
@@ -458,7 +408,7 @@ void GameplayState::ProcessWorldState(const void* ev) {
 			newInk.sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[inkTexName].get());
 			newInk.sprite->setLayer((unsigned short) Layers::INK_PARTICLES);
 			newInk.sprite->setScale(120./330.); // todo: fix my life
-			return std::move(newInk);
+			return newInk;
 		});
 	}
 
@@ -473,7 +423,7 @@ void GameplayState::ProcessWorldState(const void* ev) {
 			sprite->setLayer((unsigned short) Layers::MOB_MANIPULATORS);
 			Manipulator ret;
 			ret.sprite = std::move(sprite);
-			return std::move(ret);
+			return ret;
 		});
 	}
 
