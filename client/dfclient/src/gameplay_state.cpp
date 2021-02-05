@@ -204,66 +204,9 @@ void GameplayState::LoadLevel() {
 	}
 }
 
-// this whole thing should probably be refactored
-void GameplayState::ProcessDeathReport(const void* ev) {
-	auto deathReport = (const FlatBuffGenerated::DeathReport*) ev;
-	auto& rootNode = ncine::theApplication().rootNode();
-	auto text = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic"].get());
-	auto outline = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic_outline"].get());
-	const float screenWidth = ncine::theApplication().width();
-	const float screenHeight = ncine::theApplication().height();
-	if (deathReport->killer() == gameData.myPlayerID) {
-		// i killed someone
-		std::string killedName;
-		if (deathReport->killed() == (uint16_t)-1) {
-			// it was an npc
-			killedName = "a civilian";
-			text->setColor(ncine::Color::Black);
-		} else {
-			// it was a player
-			text->setColor(0, 255, 0, 255);
-			killedName = gameData.players[deathReport->killed()].name + "!";
-		}
-		text->setString(("you killed " + killedName).c_str());
-		text->setPosition(screenWidth * 0.5f, screenHeight * 0.75f);
-		text->setScale(1.5f);
-		_resources._tweens.push_back(CreateTextTween(text.get()));
-
-		_resources.playKillSound();
-		
-	} else if (deathReport->killed() == gameData.myPlayerID) {
-		// i died :c
-		_resources.playKillSound(0.4f);
-		_resources.playRandomDeathSound();
-
-		text->setString(("you have been killed by " + gameData.players[deathReport->killer()].name).c_str());
-		text->setColor(255, 0, 0, 255);
-		text->setPosition(screenWidth * 0.5f, screenHeight * 0.5f);
-		text->setScale(1.0f);
-		_resources._tweens.push_back(CreateTextTween(text.get()));
-	} else {
-		auto killer = gameData.players[deathReport->killer()].name;
-		auto killed = gameData.players[deathReport->killed()].name;
-		text->setString((killer + " killed " + killed).c_str());
-		text->setScale(0.25f);
-		text->setPosition(screenWidth * 0.8f, screenHeight * 0.8f);
-		text->setColor(0, 0, 0, 255);
-		_resources._tweens.push_back(CreateTextTween(text.get()));
-	}
-
-	outline->setString(text->string());
-	outline->setPosition(text->position());
-	outline->setScale(text->scale());
-	outline->setColor(0, 0, 0, 255);
-	_resources._tweens.push_back(CreateTextTween(outline.get()));
-
-	if (!(text->color() == ncine::Color::Black)) this->nodes.push_back(std::move(outline));
-	this->nodes.push_back(std::move(text));
-}
-
 void GameplayState::ProcessHighscoreUpdate(const void* ev) {
 	auto highscoreUpdate = (const FlatBuffGenerated::HighscoreUpdate*) ev;
-	for (int i = 0; i < highscoreUpdate->players()->size(); i++) {
+		for (int i = 0; i < highscoreUpdate->players()->size(); i++) {
 		auto highscoreEntry = highscoreUpdate->players()->Get(i);
 		// this is ugly, i know
 		for (auto& p : gameData.players) {
@@ -386,7 +329,7 @@ void GameplayState::ProcessWorldState(const void* ev) {
 		if (!hspotSprites.empty() && hspotSprites[0]->alpha() == MAX_HIDING_SPOT_OPACITY) {
 			for (auto &hsSprite : hspotSprites) {
 				auto tween = CreateAlphaTransitionTween(hsSprite.get(), MAX_HIDING_SPOT_OPACITY, MIN_HIDING_SPOT_OPACITY, 10);
-				_resources._tweens.push_back(tween);
+				_resources._intTweens.push_back(tween);
 			}
 		}
 	}
@@ -394,7 +337,7 @@ void GameplayState::ProcessWorldState(const void* ev) {
 		auto &hspotSprites = this->hiding_spots[this->currentHidingSpot];
 		for (auto &hsSprite : hspotSprites) {
 			auto tween = CreateAlphaTransitionTween(hsSprite.get(), MIN_HIDING_SPOT_OPACITY, MAX_HIDING_SPOT_OPACITY, 20);
-			_resources._tweens.push_back(tween);
+			_resources._intTweens.push_back(tween);
 		}
 	}
 	this->currentHidingSpot = worldState->currentHidingSpot()->str();
@@ -466,7 +409,7 @@ void GameplayState::OnMessage(const std::string& data) {
 }
 
 
-GameplayState::GameplayState(Resources& r) : _resources(r) {
+GameplayState::GameplayState(Resources& r) : _resources(r), _deathReportProcessor(r) {
 	std::cout << "entered gameplay state\n";
 	ncine::theApplication().gfxDevice().setClearColor(ncine::Colorf(1, 1, 1, 1));
 	auto& rootNode = ncine::theApplication().rootNode();
@@ -600,7 +543,19 @@ StateType GameplayState::Update(Messages m) {
 
 	updateHovers(mouseCoords, radiusSquared);
 
+	// clean up transparent text
+	auto new_end = std::remove_if(textNodes.begin(), textNodes.end(), [] (auto& t){
+		return t->alpha() == 0;
+	});
+	this->textNodes.resize(std::distance(textNodes.begin(), new_end));
+
 	return StateType::Gameplay;
+}
+
+void GameplayState::ProcessDeathReport(const void* ev) {
+	auto deathReport = (const FlatBuffGenerated::DeathReport*) ev;
+	auto newTextNodes = _deathReportProcessor.ProcessDeathReport(deathReport);
+	std::move(newTextNodes.begin(), newTextNodes.end(), std::back_inserter(this->textNodes));
 }
 
 void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {

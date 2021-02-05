@@ -121,6 +121,12 @@ void Player::update()
 		this->body->SetLinearVelocity({0, 0});
 		return; // disable dying while killing and moving while killing
 	}
+	if (this->multikillTimer > 0) {
+		this->multikillTimer--;
+		if (this->multikillTimer == 0) {
+			this->multikillCounter = 0;
+		}
+	}
 	if (this->toBeDeleted)
 	{
 		// kill player
@@ -292,6 +298,72 @@ Mob::~Mob()
 	}
 }
 
+struct KillcountMechanicsInfo {
+	uint16_t multikill = 0;
+	uint16_t killing_spree = 0;
+	uint16_t shutdown = 0;
+	uint16_t domination = 0;
+	uint16_t revenge = 0;
+	uint16_t comeback = 0;
+};
+
+KillcountMechanicsInfo handleKillcountMechanics(Player& killer, Player& victim) {
+	killer.kills++;
+	victim.deaths++;
+	killer.killingSpreeCounter++;
+	killer.multikillCounter++;
+	killer.playerKillCounters[victim.playerID]++;
+	killer.dominationCounters[victim.playerID]++;
+	victim.comebackCounter++;
+
+	KillcountMechanicsInfo ret;
+
+	if (killer.multikillTimer && killer.multikillCounter > 1) {
+		killer.points += killer.multikillCounter * MULTIKILL_REWARD;
+		ret.multikill = killer.multikillCounter;
+	}
+
+	// killing spree
+	if (killer.killingSpreeCounter >= KILLING_SPREE_THRESHOLD) {
+		std::cout << killer.name << " KILLING SPREE " << killer.killingSpreeCounter << std::endl;
+		killer.points += killer.killingSpreeCounter * KILLING_SPREE_REWARD;
+		ret.killing_spree = killer.killingSpreeCounter;
+	}
+	// shutdown
+	if (victim.killingSpreeCounter >= KILLING_SPREE_THRESHOLD) {
+		std::cout << killer.name << " ended " << victim.name << "'s killing spree" << std::endl;
+		killer.points += victim.killingSpreeCounter * SHUTDOWN_REWARD;
+		ret.shutdown = victim.killingSpreeCounter;
+	}
+	// domination
+	if (killer.dominationCounters[victim.playerID] >= DOMINATION_THRESHOLD) {
+		std::cout << killer.name << " is dominating " << victim.name << " [" << killer.dominationCounters[victim.playerID] << "]" << std::endl;
+		killer.points += killer.dominationCounters[victim.playerID] * DOMINATION_REWARD;
+		ret.domination = killer.dominationCounters[victim.playerID];
+	}
+	// revenge
+	if (victim.dominationCounters[killer.playerID] >= DOMINATION_THRESHOLD) {
+		std::cout << killer.name << " got revenge on " << victim.name << std::endl;
+		killer.points += victim.dominationCounters[killer.playerID] * REVENGE_REWARD;
+		ret.revenge = victim.dominationCounters[killer.playerID];
+	}
+	// comeback
+	if (killer.comebackCounter >= COMEBACK_THRESHOLD) {
+		std::cout << killer.name << " gets a comeback [" << killer.comebackCounter << std::endl;
+		killer.points += killer.comebackCounter * COMEBACK_REWARD;
+		ret.comeback = killer.comebackCounter;
+	}
+
+	killer.comebackCounter = 0;
+	killer.multikillTimer = MULTIKILL_TIMEOUT;
+	victim.multikillTimer = 0;
+	victim.multikillCounter = 0;
+	victim.killingSpreeCounter = 0;
+	victim.dominationCounters[killer.playerID] = 0;
+
+	return ret;
+}
+
 void handleGoldfishKill(Player& killer) {
 	if (killer.skills.size() == MAX_SKILLS)
 		return;
@@ -304,16 +376,26 @@ void Civilian::handleKill(Player& killer) {
 	if (killer.isDead())
 		return;
 	this->toBeDeleted = true;
-	if (this->species == GOLDFISH_SPECIES) {
-		handleGoldfishKill(killer);
-		return;
-	}
-	killer.points += CIVILIAN_PENALTY;
 
 	// send the deathreport killed npc message
 	flatbuffers::FlatBufferBuilder builder;
-	auto ev = FlatBuffGenerated::CreateDeathReport(builder, killer.playerID, -1);
+	auto ev = FlatBuffGenerated::CreateDeathReport(builder,
+		killer.playerID,
+		this->species == GOLDFISH_SPECIES ? -2 : -1,
+		0, 0,
+		killer.multikillCounter,	// information provided to let player know if his killing spree is stopped 
+		killer.killingSpreeCounter >= KILLING_SPREE_THRESHOLD ? killer.killingSpreeCounter : 0
+		);
 	sendServerMessage(killer, builder, FlatBuffGenerated::ServerMessageUnion_DeathReport, ev.Union());
+
+	if (this->species == GOLDFISH_SPECIES) {
+		handleGoldfishKill(killer);
+	} else {
+		killer.points += CIVILIAN_PENALTY;
+		killer.multikillCounter = 0;
+		killer.multikillTimer = 0;
+		killer.killingSpreeCounter = 0;
+	}
 
 	sendHighscores();
 }
@@ -322,14 +404,27 @@ void Player::handleKill(Player& killer) {
 	if (killer.isDead())
 		return;
 
+	auto mmInfo = handleKillcountMechanics(killer, *this);
 	this->toBeDeleted = true;
 	killer.points += KILL_REWARD;
 
 	// send the deathreport message
 	flatbuffers::FlatBufferBuilder builder;
-	auto ev = FlatBuffGenerated::CreateDeathReport(builder, killer.playerID, this->playerID);
+	auto ev = FlatBuffGenerated::CreateDeathReport(
+		builder,
+		killer.playerID,
+		this->playerID,
+		killer.playerKillCounters[this->playerID],
+		this->playerKillCounters[killer.playerID],
+		mmInfo.multikill,
+		mmInfo.killing_spree,
+		mmInfo.shutdown,
+		mmInfo.domination,
+		mmInfo.revenge,
+		mmInfo.comeback);
 	auto data = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_DeathReport, ev.Union());
 	sendToAll(data);
+	std::cout << "[ " << killer.playerKillCounters[this->playerID] << " : " << this->playerKillCounters[killer.playerID] << "]\n";
 
 	sendHighscores();
 }

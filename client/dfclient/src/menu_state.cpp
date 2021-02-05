@@ -19,6 +19,7 @@
 #include "resources.hpp"
 #include "util.hpp"
 #include "http_client.hpp"
+#include "text_creator.hpp"
 
 namespace nc = ncine;
 
@@ -46,15 +47,18 @@ void MenuState::ShowMessage(std::string message)
 			return false;
 		}
 	);
-	_resources._tweens.push_back(tween);
+	_resources._intTweens.push_back(tween);
 }
 
 MenuState::MenuState(Resources& r) : _resources(r) {
 	nc::SceneNode &rootNode = nc::theApplication().rootNode();
 	auto res = nc::theApplication().appConfiguration().resolution;
+
 	logoSprite = nctl::makeUnique<nc::Sprite>(&rootNode, _resources.textures["deadfish.png"].get(), res.x*0.5f, res.y*0.6f);
 	nc::theApplication().gfxDevice().setClearColor(bgColor);
+
 	if (gameData.gameInProgress) {
+		TextCreator textCreator(r);
 		std::cout << "menu game in progress\n";
 		ShowMessage("game already in progress");
 		gameData.gameInProgress = false;

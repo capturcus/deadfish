@@ -13,27 +13,16 @@ namespace nc = ncine;
 
 #include "tweeny.h"
 
+#include "../../../common/constants.hpp"
+#include "../../../common/deadfish_generated.h"
+#include "../../../common/types.hpp"
 #include "fov.hpp"
 #include "game_state.hpp"
 #include "lerp_component.hpp"
-#include "../../../common/deadfish_generated.h"
-#include "../../../common/types.hpp"
+#include "death_report_processor.hpp"
 
 const int MOB_FADEIN_TIME = 5;
 const int MOB_FADEOUT_TIME = 7;
-
-enum class Layers {
-	TILE = 0,
-	DECORATION,
-	INDICATOR,
-	MOB_MANIPULATORS,
-	MOBS,
-	SHADOW,
-	OBJECTS,
-	INK_PARTICLES,
-	HIDING_SPOTS,
-	SKILLS
-};
 
 tweeny::tween<int>
 CreateAlphaTransitionTween(ncine::DrawableNode* sprite, int from, int to, int during);
@@ -54,6 +43,7 @@ struct Mob : public Movable {
 };
 
 class Resources;
+class TextCreator;
 
 struct InkParticle : public Movable {
 };
@@ -104,8 +94,11 @@ private:
 	std::map<uint16_t, Mob> mobs;
 	std::map<uint16_t, InkParticle> inkParticles;
 
-	typedef std::vector<std::unique_ptr<ncine::DrawableNode>> DrawableNodeVector;
+
+	friend class TextCreator;
+
 	DrawableNodeVector nodes;
+	DrawableNodeVector textNodes;
 	std::map<std::string, DrawableNodeVector> hiding_spots;
 	std::unique_ptr<ncine::SceneNode> cameraNode;
 	ncine::Sprite* mySprite = nullptr;
@@ -125,6 +118,8 @@ private:
 	ncine::TimeStamp lastMessageReceivedTime;
 
 	Resources& _resources;
+
+	DeathReportProcessor _deathReportProcessor;
 };
 
 template<typename T, typename F>
