@@ -1,5 +1,5 @@
 FROM ubuntu:18.04
-RUN apt-get update && apt-get install -y git build-essential clang libbox2d-dev libglm-dev wget libz-dev libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev python3 libpulse-dev python3-pip && \
+RUN apt-get update && apt-get install -y git build-essential libbox2d-dev libglm-dev wget libz-dev libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev python3 libpulse-dev python3-pip && \
     pip3 install flatbuffers && cd / && \
     wget https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.gz && \
     tar xvf boost_1_74_0.tar.gz && cd boost_1_74_0 && ./bootstrap.sh && \

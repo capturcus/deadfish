@@ -199,7 +199,6 @@ flatbuffers::Offset<FlatBuffGenerated::Mob> createFBMob(flatbuffers::FlatBufferB
 	FlatBuffGenerated::PlayerRelation relation = FlatBuffGenerated::PlayerRelation_None;
 	if (player.killTargetID == m->movableID)
 		relation = FlatBuffGenerated::PlayerRelation_Targeted;
-	auto posVec = FlatBuffGenerated::Vec2(m->body->GetPosition().x, m->body->GetPosition().y);
 	auto movableComponent = m->fbMovable();
 	return FlatBuffGenerated::CreateMob(builder,
 									movableComponent.get(),
