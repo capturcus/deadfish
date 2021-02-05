@@ -243,7 +243,7 @@ struct MobManipulator
 	: public Movable {
 	FlatBuffGenerated::MobManipulatorType type;
 	uint16_t framesLeft;
-	bool toBeDeleted;
+	bool toBeDeleted = false;
 	void update();
 
 	virtual ~MobManipulator() {};
