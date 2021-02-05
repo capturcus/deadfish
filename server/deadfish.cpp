@@ -13,18 +13,18 @@ HidingSpot::HidingSpot(const FlatBuffGenerated::HidingSpot* fb_Hs) {
 
 	b2FixtureDef fixtureDef;
 	fixtureDef.isSensor = true; // makes hiding spot detect collision but allow movement
+	b2CircleShape circleShape;
+	b2PolygonShape boxShape;
+	b2PolygonShape polyShape;
 	if (!fb_Hs->polyverts()) {
 		if(fb_Hs->isCircle()){
-			b2CircleShape circleShape;
 			circleShape.m_radius = fb_Hs->size()->x() / 2.f;
 			fixtureDef.shape = &circleShape;
 		} else {
-			b2PolygonShape boxShape;
 			boxShape.SetAsBox(fb_Hs->size()->x()/2.f, fb_Hs->size()->y()/2.f);
 			fixtureDef.shape = &boxShape;
 		}
 	} else {
-		b2PolygonShape polyShape;
 		std::vector<b2Vec2> vertices;
 		auto fb_poly = fb_Hs->polyverts();
 		for (auto vert = fb_poly->begin(); vert != fb_poly->end(); ++vert) {
@@ -68,18 +68,19 @@ CollisionMask::CollisionMask(const FlatBuffGenerated::CollisionMask* fb_Col) {
 	body = gameState.b2world->CreateBody(&myBodyDef);
 
 	b2FixtureDef fixtureDef;
+	b2CircleShape circleShape;
+	b2PolygonShape polyShape;
+	b2PolygonShape boxShape;
+
 	if (!fb_Col->polyverts()) {
 		if(fb_Col->isCircle()){
-			b2CircleShape circleShape;
 			circleShape.m_radius = fb_Col->size()->x() / 2.f;
 			fixtureDef.shape = &circleShape;
 		} else {
-			b2PolygonShape boxShape;
 			boxShape.SetAsBox(fb_Col->size()->x()/2.f, fb_Col->size()->y()/2.f);
 			fixtureDef.shape = &boxShape;
 		}
 	} else {
-		b2PolygonShape polyShape;
 		std::vector<b2Vec2> vertices;
 		for (auto vert : *fb_Col->polyverts()) {
 			vertices.push_back(b2Vec2(vert->x(), vert->y()));

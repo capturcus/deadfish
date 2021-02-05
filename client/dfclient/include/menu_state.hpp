@@ -6,6 +6,10 @@
 
 class Resources;
 
+enum class ClientMode {
+	Matchmaker,
+	DirectConnect
+};
 struct MenuState
 	: public GameState
 {
@@ -16,7 +20,20 @@ public:
 	StateType Update(Messages) override;
 
 private:
-	bool TryConnect();
+	void TryConnect();
+	void ProcessMatchmakerData(std::string data);
+	void ShowMessage(std::string message);
+	void MatchmakerLayout();
+	void DirectConnectLayout();
+
+	ClientMode clientMode = ClientMode::Matchmaker;
+	std::string matchmakerAddress = "localhost";
+	std::string matchmakerPort = "8000";
+	std::string directAddress = "localhost";
+	std::string directPort = "63987";
+
+	char nicknameBuffer[64] = {0};
+	char serverAddressBuffer[64] = {0};
 
 	Resources& _resources;
 };

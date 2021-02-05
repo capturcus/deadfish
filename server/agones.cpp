@@ -93,6 +93,7 @@ bool dfAgones::Start()
 void dfAgones::Shutdown() {
 	if (!sdk)
 		return;
+	std::cout << "performing agones shutdown\n";
 	sdk->Shutdown();
 }
 

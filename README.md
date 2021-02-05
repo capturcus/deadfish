@@ -168,3 +168,28 @@ One important detail is Object Alignment. It's a feature from Tiled v1.4.0 up. I
  - When in tile edition mode, you can make a temporary custom brush from alredy painted parts. Simply right-click and drag on the map to select the brush template. Useful for covering large areas with similar stuff.
 
  - If you discover something worth mentioning, expand the list ;)
+
+## Matchmaking
+
+When Deadfish will be deployed on a Kubernetes cluster using Agones there will be a need for a matchmaker to coordinate players into games. The matchmaker is stored in a [separate repository](https://github.com/capturcus/deadfish-matchmaker).
+
+The client binary is shipped with an .ini file that contains the default address of the matchmaker.
+
+### Matchmaking process:
+
+1. The user inputs a desired username an clicks `find game`.
+2. A HTTP GET request is sent to the matchmaker on endpoint `/matchmake`
+3. The matchmaker uses internal Kubernetes API to find a suitable game server to add a new player to. The server must fit the following criteria:
+     - The game has not started yet (the server is in the lobby state).
+     - The number of players has not exceeded the desired number of players in the lobby (for now hardcoded to 6).
+4. If the matchmaker is unable to find a server that fits these criteria, a new Agones GameServer is allocated using the Kubernetes API.
+5. The gameserver's IP and port is sent to the game client as a response to the `/matchmake` GET request in a JSON:
+```
+{
+    "status": "ok",
+    "address": "<the gameserver's ip address>",
+    "port": "<the gameserver's port>"
+}
+```
+If an error occurred in the matchmaking process the `status` field is set to `error` and there is an `error` field with additional description that will be shown to the user.
+6. The game client connects to the supplied address and port.
