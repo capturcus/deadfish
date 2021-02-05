@@ -11,6 +11,7 @@
 #include <boost/program_options.hpp>
 #include "../common/deadfish_generated.h"
 #include "../common/constants.hpp"
+#include "../common/types.hpp"
 #include "websocket.hpp"
 
 namespace boost_po = boost::program_options;
@@ -35,6 +36,21 @@ static inline b2Vec2 g2b(glm::vec2 v) {
 
 static inline FlatBuffGenerated::Vec2 b2f(b2Vec2 v) {
 	return FlatBuffGenerated::Vec2(v.x, v.y);
+}
+
+static inline b2Vec2 f2b(FlatBuffGenerated::Vec2 v) {
+	return b2Vec2(v.x(), v.y());
+}
+
+static inline glm::vec2 f2g(FlatBuffGenerated::Vec2 v) {
+	return glm::vec2(v.x(), v.y());
+}
+
+template <typename T, typename F>
+static void iterateOverMovableMap(MovableMap<T>& map, F&& f)
+{
+	for (auto &m : map)
+		f(*m.second);
 }
 
 enum class GamePhase {
@@ -65,8 +81,20 @@ struct Collideable {
 	Collideable(const Collideable&) = delete;
 };
 
-struct Mob : public Collideable {
-	uint16_t mobID = 0;
+struct Movable {
+	FlatBuffGenerated::Vec2 pos;
+	uint16_t movableID;
+	float angle;
+
+	virtual std::unique_ptr<FlatBuffGenerated::MovableComponent> fbMovable();
+};
+
+struct CollideableMovable
+	: public Collideable, public Movable {
+	virtual std::unique_ptr<FlatBuffGenerated::MovableComponent> fbMovable() override;
+};
+
+struct Mob : public CollideableMovable {
 	uint16_t species = 0;
 	MobState state = MobState::WALKING;
 	virtual void handleCollision(UNUSED Collideable& other) override {}
@@ -83,9 +111,7 @@ struct Mob : public Collideable {
 };
 
 struct InkParticle :
-	public Collideable {
-	
-	uint16_t inkID;
+	public CollideableMovable {
 	uint16_t lifetimeFrames;
 
 	InkParticle(b2Body* b);
@@ -213,10 +239,14 @@ struct Level {
 	glm::vec2 size;
 };
 
-struct MobManipulator {
-	b2Vec2 pos;
+struct MobManipulator
+	: public Movable {
 	FlatBuffGenerated::MobManipulatorType type;
 	uint16_t framesLeft;
+	bool toBeDeleted = false;
+	void update();
+
+	virtual ~MobManipulator() {};
 };
 
 struct GameState {
@@ -228,10 +258,11 @@ public:
 	std::unique_ptr<Level> level = nullptr;
 
 	std::unique_ptr<b2World> b2world = nullptr;
-	std::vector<std::unique_ptr<Player>> players;
-	std::map<uint16_t, std::unique_ptr<Civilian>> civilians;
-	std::vector<std::unique_ptr<InkParticle>> inkParticles;
-	std::vector<MobManipulator> mobManipulators;
+
+	MovableMap<Player> players;
+	MovableMap<Civilian> civilians;
+	MovableMap<InkParticle> inkParticles;
+	MovableMap<MobManipulator> mobManipulators;
 
 	inline std::unique_ptr<std::lock_guard<std::mutex>> lock() {
 		return std::make_unique<std::lock_guard<std::mutex>>(mut);

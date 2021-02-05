@@ -28,8 +28,8 @@ void launchInkParticle(Player& p, b2Vec2 direction) {
 	inkBody->SetLinearDamping(1);
 	inkBody->ApplyLinearImpulse(direction, inkBody->GetWorldCenter(), true);
 
-	inkPart->inkID = lastInkID++;
-	gameState.inkParticles.push_back(std::move(inkPart));
+	inkPart->movableID = newMovableID();
+	gameState.inkParticles[inkPart->movableID] = std::move(inkPart);
 }
 
 const float INK_INIT_SPEED_BASE = 2;
@@ -105,11 +105,12 @@ const uint16_t MANIPULATOR_FRAMES = 60;
 bool executeSkillMobManipulator(UNUSED Player& p, UNUSED Skills skill, UNUSED b2Vec2 mousePos) {
 	std::cout << "mob manipulator " << (uint16_t) skill << "\n";
 	MobManipulator manipulator;
-	manipulator.pos = p.body->GetPosition();
+	manipulator.pos = b2f(p.body->GetPosition());
 	manipulator.type = skill == Skills::DISPERSOR ? FlatBuffGenerated::MobManipulatorType_Dispersor
 		: FlatBuffGenerated::MobManipulatorType_Attractor;
 	manipulator.framesLeft = MANIPULATOR_FRAMES;
-	gameState.mobManipulators.push_back(manipulator);
+	manipulator.movableID = newMovableID();
+	gameState.mobManipulators[manipulator.movableID] = std::make_unique<MobManipulator>(manipulator);
 	return true;
 }
 
@@ -119,4 +120,11 @@ bool executeSkillBlink(Player& p, UNUSED Skills skill, b2Vec2 mousePos) {
 	gameState.b2world->DestroyBody(p.body);
 	physicsInitMob(&p, b2g(mousePos), 0, 0.3f, 3);
 	return true;
+}
+
+void MobManipulator::update()
+{
+	this->framesLeft--;
+	if (this->framesLeft == 0)
+		this->toBeDeleted = true;
 }

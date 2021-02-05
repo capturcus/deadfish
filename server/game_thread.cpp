@@ -15,24 +15,38 @@
 const float GOLDFISH_CHANCE = 0.05f;
 const uint32_t PRESIMULATE_TICKS = 1000;
 
-uint16_t newMobID()
+uint16_t newMovableID()
 {
 	while (true)
 	{
 		uint16_t ret = random() % UINT16_MAX;
 
-		for (auto &p : gameState.players)
+		if (ret == 0)
+		continue;
+
 		{
-			if (p->mobID == ret)
+			auto it = gameState.players.find(ret);
+			if (it != gameState.players.end())
 				continue;
 		}
 
-		auto it = gameState.civilians.find(ret);
-		if (it != gameState.civilians.end())
-			continue;
+		{
+			auto it = gameState.civilians.find(ret);
+			if (it != gameState.civilians.end())
+				continue;
+		}
 
-		if (ret == 0)
-			continue;
+		{
+			auto it = gameState.inkParticles.find(ret);
+			if (it != gameState.inkParticles.end())
+				continue;
+		}
+
+		{		
+			auto it = gameState.mobManipulators.find(ret);
+			if (it != gameState.mobManipulators.end())
+				continue;
+		}
 
 		return ret;
 	}
@@ -51,7 +65,6 @@ std::string makeServerMessage(flatbuffers::FlatBufferBuilder &builder,
 	auto str = std::string(data, data + size);
 	return str;
 }
-
 
 void sendGameAlreadyInProgress(dfws::Handle hdl)
 {
@@ -75,25 +88,39 @@ void sendServerMessage(Player &player,
 
 void sendToAll(std::string &data)
 {
-	for (auto &p : gameState.players)
-	{
-		dfws::SendData(p->wsHandle, data);
-	}
+	iterateOverMovableMap(gameState.players,
+		[=](Player& p){
+			dfws::SendData(p.wsHandle, data);
+		}
+	);
 }
 
 Player* getPlayerByConnHdl(dfws::Handle hdl)
 {
-	auto player = gameState.players.begin();
-	while (player != gameState.players.end())
-	{
-		if ((*player)->wsHandle == hdl)
-		{
-			return player->get();
+	Player* ret = nullptr;
+	iterateOverMovableMap(gameState.players,
+		[&](Player& p){
+			if (p.wsHandle == hdl)
+				ret = &p;
 		}
-		player++;
-	}
-	std::cout << "getPlayerByConnHdl PLAYER NOT FOUND\n";
-	return nullptr;
+	);
+	if (!ret)
+		std::cout << "getPlayerByConnHdl PLAYER NOT FOUND\n";
+	return ret;
+}
+
+std::unique_ptr<FlatBuffGenerated::MovableComponent> Movable::fbMovable()
+{
+	return std::make_unique<FlatBuffGenerated::MovableComponent>(
+		this->pos, this->movableID, this->angle
+	);
+}
+
+std::unique_ptr<FlatBuffGenerated::MovableComponent> CollideableMovable::fbMovable()
+{
+	this->pos = b2f(this->body->GetPosition());
+	this->angle = this->body->GetAngle();
+	return Movable::fbMovable();
 }
 
 struct FOVCallback
@@ -167,16 +194,15 @@ makePlayerIndicator(flatbuffers::FlatBufferBuilder &builder,
 }
 
 flatbuffers::Offset<FlatBuffGenerated::Mob> createFBMob(flatbuffers::FlatBufferBuilder &builder,
-	Player& player, const Mob* m)
+	Player& player, Mob* m)
 {
 	FlatBuffGenerated::PlayerRelation relation = FlatBuffGenerated::PlayerRelation_None;
-	if (player.killTargetID == m->mobID)
+	if (player.killTargetID == m->movableID)
 		relation = FlatBuffGenerated::PlayerRelation_Targeted;
 	auto posVec = FlatBuffGenerated::Vec2(m->body->GetPosition().x, m->body->GetPosition().y);
+	auto movableComponent = m->fbMovable();
 	return FlatBuffGenerated::CreateMob(builder,
-									m->mobID,
-									&posVec,
-									m->body->GetAngle(),
+									movableComponent.get(),
 									(FlatBuffGenerated::MobState)m->state,
 									m->species,
 									relation);
@@ -194,8 +220,9 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 		auto mob = createFBMob(builder, player, c.get());
 		mobs.push_back(mob);
 	}
-	for (auto &p : gameState.players)
+	for (auto &pIt : gameState.players)
 	{
+		auto &p = pIt.second;
 		if (p->deathTimeout > 0)
 		{
 			// is dead, don't send
@@ -228,22 +255,25 @@ flatbuffers::Offset<void> makeWorldState(Player &player, flatbuffers::FlatBuffer
 
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::InkParticle>> inkParticles;
 	std::vector<FlatBuffGenerated::Vec2> inkVecs;
-	for (auto& ink : gameState.inkParticles) {
+	for (auto& inkIt : gameState.inkParticles) {
+		auto &ink = inkIt.second;
 		if (!playerSeeCollideable(player, *ink))
 			continue;
-		FlatBuffGenerated::Vec2 pos = b2f(ink->body->GetPosition());
-		auto inkOffset = FlatBuffGenerated::CreateInkParticle(builder, ink->inkID, &pos);
+		auto movableComponent = ink->fbMovable();
+		auto inkOffset = FlatBuffGenerated::CreateInkParticle(builder, movableComponent.get());
 		inkParticles.push_back(inkOffset);
 	}
 
 	auto inkParticlesOffset = builder.CreateVector(inkParticles);
 
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::MobManipulator>> manipulators;
-	for (auto& manipulator : gameState.mobManipulators) {
-		if (!mobSeePoint(player, manipulator.pos, true))
+	for (auto &manipulatorIt : gameState.mobManipulators) {
+		auto &manipulator = manipulatorIt.second;
+		if (!mobSeePoint(player, f2b(manipulator->pos), true))
 			continue;
-		FlatBuffGenerated::Vec2 pos = {manipulator.pos.x, manipulator.pos.y};
-		auto manOffset = FlatBuffGenerated::CreateMobManipulator(builder, &pos, manipulator.type);
+		auto movableComponent = manipulator->fbMovable();
+		auto manOffset = FlatBuffGenerated::CreateMobManipulator(builder,
+			movableComponent.get(), manipulator->type);
 		manipulators.push_back(manOffset);
 	}
 
@@ -340,13 +370,13 @@ void spawnCivilian(std::string spawnName, NavPoint* spawn) {
 		species = lowestSpecies;
 	}
 
-	c->mobID = newMobID();
+	c->movableID = newMovableID();
 	c->species = species;
 	c->previousNavpoint = spawnName;
 	c->currentNavpoint = spawnName;
 	physicsInitMob(c.get(), spawn->position, 0, 0.3f);
 	c->setNextNavpoint();
-	gameState.civilians[c->mobID] = std::move(c);
+	gameState.civilians[c->movableID] = std::move(c);
 	std::cout << "spawning civilian of species " << species <<
 		" at " << spawnName << " to a total of " << gameState.civilians.size() << "\n";
 }
@@ -371,24 +401,23 @@ void spawnPlayer(Player &player)
 	std::string maxSpawn = "";
 	for (auto &p : gameState.level->navpoints)
 	{
-		if (p.second->isplayerspawn)
-		{
-			float minDist = std::numeric_limits<float>::max();
-			for (auto &pl : gameState.players)
-			{
-				if (!pl->body)
-					continue;
-				auto dist = b2Distance(g2b(p.second->position), pl->body->GetPosition());
+		if (!p.second->isplayerspawn)
+			continue;
+
+		float minDist = std::numeric_limits<float>::max();
+		iterateOverMovableMap(gameState.players,
+			[&](Player& pl){
+				if (!pl.body)
+					return;
+				auto dist = b2Distance(g2b(p.second->position), pl.body->GetPosition());
 				if (dist < minDist)
-				{
 					minDist = dist;
-				}
 			}
-			if (minDist > maxMinDist)
-			{
-				maxMinDist = minDist;
-				maxSpawn = p.first;
-			}
+		);
+		if (minDist > maxMinDist)
+		{
+			maxMinDist = minDist;
+			maxSpawn = p.first;
 		}
 	}
 	auto spawn = gameState.level->navpoints[maxSpawn].get();
@@ -404,14 +433,18 @@ void spawnPlayer(Player &player)
 
 Mob *findMobById(uint16_t id)
 {
-	auto it = gameState.civilians.find(id);
-	if (it != gameState.civilians.end())
-		return it->second.get();
+	{
+		auto it = gameState.civilians.find(id);
+		if (it != gameState.civilians.end())
+			return it->second.get();
+	}
 
-	auto it2 = std::find_if(gameState.players.begin(), gameState.players.end(),
-							[id](const auto &p) { return p->mobID == id; });
-	if (it2 != gameState.players.end())
-		return it2->get();
+	{
+		auto it = gameState.players.find(id);
+		if (it != gameState.players.end())
+			return it->second.get();
+	}
+
 	return nullptr;
 }
 
@@ -424,7 +457,7 @@ void executeCommandKill(Player &player, uint16_t id)
 	if (!m)
 		return;
 	auto otherPlayer = dynamic_cast<Player *>(m);
-	if (otherPlayer && otherPlayer->killTargetID == player.mobID) {
+	if (otherPlayer && otherPlayer->killTargetID == player.movableID) {
 		// they're already targeting us, abort
 		return;
 	}
@@ -435,18 +468,19 @@ void executeCommandKill(Player &player, uint16_t id)
 		m->handleKill(player);
 		return;
 	}
-	player.killTargetID = m->mobID;
+	player.killTargetID = m->movableID;
 }
 
 void sendHighscores()
 {
 	flatbuffers::FlatBufferBuilder builder;
 	std::vector<flatbuffers::Offset<FlatBuffGenerated::HighscoreEntry>> entries;
-	for (auto &p : gameState.players)
-	{
-		auto entry = FlatBuffGenerated::CreateHighscoreEntry(builder, p->playerID, p->points);
-		entries.push_back(entry);
-	}
+	iterateOverMovableMap(gameState.players,
+		[&](Player& p){
+			auto entry = FlatBuffGenerated::CreateHighscoreEntry(builder, p.playerID, p.points);
+			entries.push_back(entry);
+		}
+	);
 	auto v = builder.CreateVector(entries);
 	auto update = FlatBuffGenerated::CreateHighscoreUpdate(builder, v);
 	auto data = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_HighscoreUpdate, update.Union());
@@ -519,19 +553,6 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 	}
 }
 
-template<typename C>
-void updateCollideables(std::vector<std::unique_ptr<C>>& collideables) {
-	std::vector<int> despawns;
-	for (size_t i = 0; i < collideables.size(); i++)
-	{
-		collideables[i]->update();
-		if (collideables[i]->toBeDeleted)
-			despawns.push_back(i);
-	}
-	for (int i = despawns.size() - 1; i >= 0; i--)
-		collideables.erase(collideables.begin() + despawns[i]);
-}
-
 void initGameThread(TestContactListener& tcl)
 {
 	flatbuffers::FlatBufferBuilder builder(1);
@@ -551,16 +572,25 @@ void initGameThread(TestContactListener& tcl)
 	auto data = makeServerMessage(builder, FlatBuffGenerated::ServerMessageUnion_Level, levelOffset.Union());
 	sendToAll(data);
 
-	// shuffle the players to give them random species unless it's a test
-	if (gameState.options.count("test") == 0)
-		std::shuffle(gameState.players.begin(), gameState.players.end(), std::mt19937(std::random_device()()));
-
 	uint8_t lastSpecies = 0;
-	for (auto &player : gameState.players)
-	{
-		player->species = lastSpecies;
-		lastSpecies++;
-		spawnPlayer(*player);
+	iterateOverMovableMap(gameState.players,
+		[&](Player& p){
+			p.species = lastSpecies;
+			lastSpecies++;
+			spawnPlayer(p);
+		}
+	);
+}
+
+template<typename T>
+void updateCollideableMoveableMap(MovableMap<T>& m)
+{
+	for (auto it = m.cbegin(); it != m.cend();) {
+		it->second->update();
+		if (it->second->toBeDeleted)
+			it = m.erase(it);
+		else
+			++it;
 	}
 }
 
@@ -569,20 +599,17 @@ void gameThreadTick(int& civilianTimer)
 	// update physics
 	gameState.b2world->Step(1 / 20.0, 8, 3);
 
-	updateCollideables(gameState.inkParticles);
+	updateCollideableMoveableMap(gameState.inkParticles);
+	updateCollideableMoveableMap(gameState.civilians);
+	updateCollideableMoveableMap(gameState.mobManipulators);
 
-	// update civilians
-	for (auto it = gameState.civilians.cbegin(); it != gameState.civilians.cend();) {
-		it->second->update();
-		if (it->second->toBeDeleted)
-			it = gameState.civilians.erase(it);
-		else
-			++it;
-	}
-
-	// update players
-	for (auto &p : gameState.players)
-		p->update();
+	// in players the toBeDeleted variable doesn't actually mean that the player is to be deleted
+	// so we have to treat this differently
+	iterateOverMovableMap(gameState.players,
+		[&](Player& p){
+			p.update();
+		}
+	);
 
 	// spawn civilians if need be
 	if (!gameState.options["ghosttown"].as<bool>() && civilianTimer == 0 && gameState.civilians.size() < MAX_CIVILIANS)
@@ -592,14 +619,6 @@ void gameThreadTick(int& civilianTimer)
 	}
 	else
 		civilianTimer = std::max(0, civilianTimer - 1);
-
-	for (auto it = gameState.mobManipulators.begin(); it != gameState.mobManipulators.end();) {
-		it->framesLeft--;
-		if (it->framesLeft == 0)
-			it = gameState.mobManipulators.erase(it);
-		else
-			it++;
-	}
 }
 
 void gameThread()
@@ -639,12 +658,13 @@ void gameThread()
 		gameThreadTick(civilianTimer);
 
 		// send data to everyone
-		for (auto &p : gameState.players)
-		{
-			builder.Clear();
-			auto offset = makeWorldState(*p, builder, roundTimer);
-			sendServerMessage(*p, builder, FlatBuffGenerated::ServerMessageUnion_WorldState, offset);
-		}
+		iterateOverMovableMap(gameState.players,
+			[&](Player& p){
+				builder.Clear();
+				auto offset = makeWorldState(p, builder, roundTimer);
+				sendServerMessage(p, builder, FlatBuffGenerated::ServerMessageUnion_WorldState, offset);
+			}
+		);
 
 		// Drop the lock
 		maybe_guard.reset();

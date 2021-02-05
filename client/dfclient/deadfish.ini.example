@@ -1,6 +1,11 @@
 [default]
+; possible values: matchmaker, direct
 client_mode=matchmaker
+
+; values that will be used while connecting to the matchmaker
 matchmaker_address=localhost
 matchmaker_port=8000
+
+; default values in the ui when in the direct mode
 direct_address=localhost
 direct_port=63987

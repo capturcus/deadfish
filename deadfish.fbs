@@ -131,10 +131,14 @@ enum PlayerRelation: byte {
   Targeted
 }
 
-table Mob {
-  mobID:uint16;
+struct MovableComponent {
   pos:Vec2;
+  ID:uint16;
   angle:float;
+}
+
+table Mob {
+  movable:MovableComponent;
   state:MobState;
   species:uint16;
   relation:PlayerRelation;
@@ -147,8 +151,7 @@ table Indicator {
 }
 
 table InkParticle {
-  inkID:uint16;
-  pos:Vec2;
+  movable:MovableComponent;
 }
 
 enum MobManipulatorType: byte {
@@ -157,7 +160,7 @@ enum MobManipulatorType: byte {
 }
 
 table MobManipulator {
-  pos:Vec2;
+  movable:MovableComponent;
   type:MobManipulatorType;
 }
 

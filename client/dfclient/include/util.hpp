@@ -30,9 +30,3 @@ int norm(T a, U b) {
 }
 
 }
-
-template<typename T>
-std::ostream& operator<<(std::ostream& os, const ncine::Vector2<T>& t) {
-	os << t.x << "," << t.y;
-	return os;
-}

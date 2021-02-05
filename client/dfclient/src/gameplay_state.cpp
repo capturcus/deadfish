@@ -28,9 +28,6 @@ const int IMGS_PER_SPECIES = 80;
 const int MAX_HIDING_SPOT_OPACITY = 255;
 const int MIN_HIDING_SPOT_OPACITY = 128;
 
-const int MOB_FADEIN_TIME = 5;
-const int MOB_FADEOUT_TIME = 7;
-
 std::map<uint16_t, std::string> skillTextures = {
 	{(uint16_t) Skills::INK_BOMB, "skill_ink.png"},
 	{(uint16_t) Skills::ATTRACTOR, "skill_attractor.png"},
@@ -80,7 +77,7 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewAnimSprite(ncine:
 	ret->setFrame(0);
 	ret->setPaused(false);
 	ret->setLayer((unsigned short)layer);
-	return std::move(ret);
+	return ret;
 }
 
 std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewMobSprite(ncine::SceneNode* parent, uint16_t species) {
@@ -100,7 +97,7 @@ std::unique_ptr<ncine::AnimatedSprite> GameplayState::CreateNewMobSprite(ncine::
  * @param during	time it takes
  * @return 			the created tween
 */
-static tweeny::tween<int>
+tweeny::tween<int>
 CreateAlphaTransitionTween(ncine::DrawableNode* sprite, int from, int to, int during) {
 	auto tween = tweeny::from(from)
 		.to(to).during(during).onStep(
@@ -305,47 +302,47 @@ void GameplayState::ProcessSimpleServerEvent(const void* ev) {
 	}
 }
 
+template<typename T>
+void resetMovableMap(std::map<uint16_t, T>& map)
+{
+	for (auto& it : map)
+		it.second.seen = false;
+}
+
+template<typename T>
+void updateMovableMap(std::map<uint16_t, T>& map, float subDelta)
+{
+	for (auto& it : map) {
+		auto &mov = it.second;
+		mov.tween.step(1);
+		mov.lerp.updateLerp(subDelta);
+	}
+}
+
 void GameplayState::ProcessWorldState(const void* ev) {
 	auto worldState = (const FlatBuffGenerated::WorldState*) ev;
-	// reset seen status of mobs
-	for (auto& p : this->mobs)
-		p.second.seen = false;
+	resetMovableMap(this->mobs);
+	resetMovableMap(this->inkParticles);
+	resetMovableMap(this->manipulators);
 
 	for (int i = 0; i < worldState->mobs()->size(); i++) {
 		auto mobData = worldState->mobs()->Get(i);
-		auto mobItr = this->mobs.find(mobData->mobID());
-		if (mobItr == this->mobs.end()) {
-			// this is the first time we see this mob, create it
-			Mob newMob;
-			newMob.sprite = CreateNewMobSprite(this->cameraNode.get(), mobData->species());
-			newMob.lerp.bind(static_cast<ncine::DrawableNode*>(newMob.sprite.get()));
-
-			//fade in
-			newMob.sprite->setAlpha(1);
-			_resources._mobTweens[mobData->mobID()] = CreateAlphaTransitionTween(newMob.sprite.get(), 1, 255, MOB_FADEIN_TIME);
-
-			this->mobs[mobData->mobID()] = std::move(newMob);
-			mobItr = this->mobs.find(mobData->mobID());
-		}
-		Mob& mob = mobItr->second;
-		mob.lerp.setupLerp(mobData->pos()->x(), mobData->pos()->y(), mobData->angle());
-		mob.seen = true;
-		if (mob.isAfterimage) {
-			//re-fade in
-			_resources._mobTweens[mobData->mobID()] = CreateAlphaTransitionTween(mob.sprite.get(), mob.sprite->alpha(), 255, MOB_FADEIN_TIME*(1 - mob.sprite->alpha()/255));
-			mob.isAfterimage = false;
-		}
+		processMovable(this->mobs, mobData->movable(), [&](){
+			Mob ret;
+			ret.sprite = CreateNewMobSprite(this->cameraNode.get(), mobData->species());
+			return ret;
+		});
+		Mob& mob = this->mobs.find(mobData->movable()->ID())->second; // after processMovable this is guaranteed to exist in the map
 		if (mobData->state() != mob.state) {
+			ncine::AnimatedSprite* animSprite = dynamic_cast<ncine::AnimatedSprite*>(mob.sprite.get());
 			mob.state = mobData->state();
-			mob.sprite->setAnimationIndex(mobData->state());
-			mob.sprite->setFrame(0);
-			mob.sprite->setPaused(false);
+			animSprite->setAnimationIndex(mobData->state());
+			animSprite->setFrame(0);
+			animSprite->setPaused(false);
 		}
-
 		// if it's us then save sprite
-		if (mobItr->first == gameData.myMobID) {
+		if (mob.movableID == gameData.myMobID)
 			this->mySprite = mob.sprite.get();
-		}
 
 		if (mobData->relation() == FlatBuffGenerated::PlayerRelation_None) {
 			mob.relationMarker.reset(nullptr);
@@ -355,27 +352,13 @@ void GameplayState::ProcessWorldState(const void* ev) {
 			mob.relationMarker->setLayer((unsigned short)Layers::INDICATOR);
 		}
 	}
-	std::vector<int> deletedIDs;
-	for (auto& mob : this->mobs) {
-		if (!mob.second.seen) { // not seen
-			if (!mob.second.isAfterimage) {	// not seen and not afterimage
-				// fade out
-				_resources._mobTweens[mob.first] = CreateAlphaTransitionTween(mob.second.sprite.get(), mob.second.sprite->alpha(), 0, MOB_FADEOUT_TIME*(mob.second.sprite->alpha()/255));
-				mob.second.isAfterimage = true;
-			} else if (mob.second.sprite->alpha() == 0) { // not seen and afterimage and alpha == 0
-				deletedIDs.push_back(mob.first);
-			}
-		}
-	}
-	for (auto id : deletedIDs) {
-		this->mobs.erase(id);
-		_resources._mobTweens.erase(id);
-		if (id == gameData.myMobID)
-			this->mySprite = nullptr;
-	}
 
-	if (this->mySprite == nullptr)
+	deleteUnusedMovables(this->mobs);
+
+	if (this->mobs.find(gameData.myMobID) == this->mobs.end()) {
+		this->mySprite = nullptr;
 		return;
+	}
 
 	// draw indicators
 
@@ -416,48 +399,35 @@ void GameplayState::ProcessWorldState(const void* ev) {
 	}
 	this->currentHidingSpot = worldState->currentHidingSpot()->str();
 
-	// handle ink particles
-	for (auto& i : this->inkParticles)
-		i.second.seen = false;
-
 	for (int i = 0; i < worldState->inkParticles()->size(); i++) {
-		auto ink = worldState->inkParticles()->Get(i);
-		auto inkItr = inkParticles.find(ink->inkID());
-		if (inkItr == inkParticles.end()) {
-			// not found, make a new one
+		auto inkParticleData = worldState->inkParticles()->Get(i);
+		processMovable(this->inkParticles, inkParticleData->movable(), [&](){
 			InkParticle newInk;
 			int inkNum = rand() % 3 + 1;
 			std::string inkTexName = std::string("ink") + std::to_string(inkNum) + ".png";
 			newInk.sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[inkTexName].get());
 			newInk.sprite->setLayer((unsigned short) Layers::INK_PARTICLES);
 			newInk.sprite->setScale(120./330.); // todo: fix my life
-
-			inkParticles.insert({ink->inkID(), std::move(newInk)});
-			inkItr = inkParticles.find(ink->inkID());
-			inkItr->second.lerp.bind(inkItr->second.sprite.get());
-		}
-		inkItr->second.lerp.setupLerp(ink->pos()->x(), ink->pos()->y(), inkItr->second.sprite->rotation());
-		inkItr->second.seen = true;
+			return newInk;
+		});
 	}
 
-	for (auto it = this->inkParticles.begin(); it != this->inkParticles.end();) {
-		if (!it->second.seen)
-			it = this->inkParticles.erase(it);
-		else
-			++it;
-	}
+	deleteUnusedMovables(this->inkParticles);
 
-	// handle mob manipulators
-	this->manipulators.clear();
 	for (int i = 0; i < worldState->mobManipulators()->size(); i++) {
-		auto manipulator = worldState->mobManipulators()->Get(i);
-		auto manipTexture = manipulator->type() == FlatBuffGenerated::MobManipulatorType_Dispersor ?
-			"dispersor.png" : "attractor.png";
-		auto sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[manipTexture].get());
-		sprite->setLayer((unsigned short) Layers::MOB_MANIPULATORS);
-		sprite->setPosition({manipulator->pos()->x() * METERS2PIXELS, -manipulator->pos()->y() * METERS2PIXELS});
-		this->manipulators.push_back(std::move(sprite));
+		auto manipulatorData = worldState->mobManipulators()->Get(i);
+		processMovable(this->manipulators, manipulatorData->movable(), [&](){
+			auto manipTexture = manipulatorData->type() == FlatBuffGenerated::MobManipulatorType_Dispersor ?
+				"dispersor.png" : "attractor.png";
+			auto sprite = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures[manipTexture].get());
+			sprite->setLayer((unsigned short) Layers::MOB_MANIPULATORS);
+			Manipulator ret;
+			ret.sprite = std::move(sprite);
+			return ret;
+		});
 	}
+
+	deleteUnusedMovables(this->manipulators);
 }
 
 void GameplayState::ProcessSkillBarUpdate(const void* ev) {
@@ -519,6 +489,28 @@ GameplayState::GameplayState(Resources& r) : _resources(r) {
 }
 
 GameplayState::~GameplayState() {
+}
+
+void GameplayState::updateHovers(ncine::Vector2f mouseCoords, float radiusSquared) {
+	int smallestNorm = INT32_MAX;
+	Mob* closestMob = nullptr;
+	for (auto& mob : this->mobs) {
+		if (mob.second.sprite.get() == this->mySprite)
+			continue;
+
+		mob.second.hoverMarker.reset(nullptr);
+
+		int norm = deadfish::norm(mob.second.sprite->position(), mouseCoords);
+		if (norm < smallestNorm) {
+			smallestNorm = norm;
+			closestMob = &mob.second;
+		}
+	}
+	if (closestMob && smallestNorm < radiusSquared) {
+		closestMob->hoverMarker = std::make_unique<ncine::Sprite>(closestMob->sprite.get(), _resources.textures["graycircle.png"].get());
+		closestMob->hoverMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
+		closestMob->hoverMarker->setLayer((unsigned short)Layers::INDICATOR);
+	}
 }
 
 StateType GameplayState::Update(Messages m) {
@@ -585,15 +577,9 @@ StateType GameplayState::Update(Messages m) {
 		ImGui::End();
 	}
 
-	// Update mob positions
-	for (auto& mob : this->mobs) {
-		mob.second.lerp.updateLerp(subDelta);
-	}
-
-	// Update ink cloud positions
-	for (auto& ip : this->inkParticles) {
-		ip.second.lerp.updateLerp(subDelta);
-	}
+	updateMovableMap(this->mobs, subDelta);
+	updateMovableMap(this->inkParticles, subDelta);
+	updateMovableMap(this->manipulators, subDelta);
 
 	if (this->mySprite == nullptr)
 		return StateType::Gameplay;
@@ -612,25 +598,7 @@ StateType GameplayState::Update(Messages m) {
 	float radiusSquared = this->mySprite->size().x/2;
 	radiusSquared = radiusSquared*radiusSquared;
 
-	int smallestNorm = INT32_MAX;
-	Mob* closestMob = nullptr;
-	for (auto& mob : this->mobs) {
-		if (mob.second.sprite.get() == this->mySprite)
-			continue;
-
-		mob.second.hoverMarker.reset(nullptr);
-
-		int norm = deadfish::norm(mob.second.sprite->position(), mouseCoords);
-		if (norm < smallestNorm) {
-			smallestNorm = norm;
-			closestMob = &mob.second;
-		}
-	}
-	if (closestMob && smallestNorm < radiusSquared) {
-		closestMob->hoverMarker = std::make_unique<ncine::Sprite>(closestMob->sprite.get(), _resources.textures["graycircle.png"].get());
-		closestMob->hoverMarker->setColor(ncine::Colorf(1, 1, 1, 0.3));
-		closestMob->hoverMarker->setLayer((unsigned short)Layers::INDICATOR);
-	}
+	updateHovers(mouseCoords, radiusSquared);
 
 	return StateType::Gameplay;
 }

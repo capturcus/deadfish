@@ -184,18 +184,19 @@ void Civilian::collisionResolution() {
 void Civilian::update()
 {
 	std::vector<MobManipulator> seenManips;
-	for (auto &m : gameState.mobManipulators) {
-		if (mobSeePoint(*this, m.pos, true))
-			seenManips.push_back(m);
+	for (auto &mIt : gameState.mobManipulators) {
+		auto &m = mIt.second;
+		if (mobSeePoint(*this, f2b(m->pos), true))
+			seenManips.push_back(*m);
 	}
 	if (seenManips.size() > 0) {
 		this->seenAManip = true;
 		auto last = seenManips.back();
 		if (last.type == FlatBuffGenerated::MobManipulatorType_Attractor)
-			this->targetPosition = b2g(last.pos);
+			this->targetPosition = f2g(last.pos);
 		else {
 			// dispersor
-			auto toManip = this->body->GetPosition() - last.pos;
+			auto toManip = this->body->GetPosition() - f2b(last.pos);
 			toManip.Normalize();
 			this->targetPosition = b2g(this->body->GetPosition() + toManip);
 		}
@@ -264,7 +265,7 @@ void Player::handleCollision(Collideable &other)
 	{
 		auto &mob = dynamic_cast<Mob &>(other);
 
-		if (this->killTargetID == mob.mobID)
+		if (this->killTargetID == mob.movableID)
 		{
 			this->setAttacking();
 			// the player wants to kill the mob and collided with him, execute the kill
