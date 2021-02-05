@@ -19,31 +19,10 @@ namespace nc = ncine;
 #include "fov.hpp"
 #include "game_state.hpp"
 #include "lerp_component.hpp"
-<<<<<<< HEAD
-#include "../../../common/deadfish_generated.h"
-#include "../../../common/types.hpp"
+#include "death_report_processor.hpp"
 
 const int MOB_FADEIN_TIME = 5;
 const int MOB_FADEOUT_TIME = 7;
-
-enum class Layers {
-	TILE = 0,
-	DECORATION,
-	INDICATOR,
-	MOB_MANIPULATORS,
-	MOBS,
-	SHADOW,
-	OBJECTS,
-	INK_PARTICLES,
-	HIDING_SPOTS,
-	SKILLS,
-	TEXT_OUTLINES,
-	ADDITIONAL_TEXT,
-	TEXT
-};
-=======
-#include "death_report_processor.hpp"
->>>>>>> 11a59ab (death report refactor (DeathReportProcessor))
 
 tweeny::tween<int>
 CreateAlphaTransitionTween(ncine::DrawableNode* sprite, int from, int to, int during);
@@ -142,3 +121,49 @@ private:
 
 	DeathReportProcessor _deathReportProcessor;
 };
+
+template<typename T, typename F>
+void GameplayState::processMovable(std::map<uint16_t, T>& map, const FlatBuffGenerated::MovableComponent* comp,
+	F createMovableFunc)
+{
+	auto it = map.find(comp->ID());
+	if (it == map.end()) {
+		// we see it for the first time
+		T newMov = createMovableFunc();
+		newMov.lerp.bind(static_cast<ncine::DrawableNode*>(newMov.sprite.get()));
+
+		//fade in
+		newMov.sprite->setAlpha(1);
+		newMov.tween = CreateAlphaTransitionTween(newMov.sprite.get(), 1, 255, MOB_FADEIN_TIME);
+		newMov.movableID = comp->ID();
+		it = map.insert({comp->ID(), std::move(newMov)}).first;
+	}
+	T& mov = it->second;
+	mov.lerp.setupLerp(comp->pos().x(), comp->pos().y(), comp->angle());
+	mov.seen = true;
+	if (mov.isAfterimage) {
+		//re-fade in
+		mov.tween = CreateAlphaTransitionTween(mov.sprite.get(), mov.sprite->alpha(), 255, MOB_FADEIN_TIME*(1 - mov.sprite->alpha()/255));
+		mov.isAfterimage = false;
+	}
+}
+
+template<typename T>
+void GameplayState::deleteUnusedMovables(std::map<uint16_t, T>& map)
+{
+	std::vector<int> deletedIDs;
+	for (auto& it : map) {
+		auto& mov = it.second;
+		if (!mov.seen) { // not seen
+			if (!mov.isAfterimage) {	// not seen and not afterimage
+				// fade out
+				mov.tween = CreateAlphaTransitionTween(mov.sprite.get(), mov.sprite->alpha(), 0, MOB_FADEOUT_TIME*(mov.sprite->alpha()/255));
+				mov.isAfterimage = true;
+			} else if (mov.sprite->alpha() == 0) { // not seen and afterimage and alpha == 0
+				deletedIDs.push_back(it.first);
+			}
+		}
+	}
+	for (auto id : deletedIDs)
+		map.erase(id);
+}

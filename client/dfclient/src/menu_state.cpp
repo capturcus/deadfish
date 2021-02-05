@@ -47,7 +47,7 @@ void MenuState::ShowMessage(std::string message)
 			return false;
 		}
 	);
-	_resources._tweens.push_back(tween);
+	_resources._intTweens.push_back(tween);
 }
 
 MenuState::MenuState(Resources& r) : _resources(r) {
