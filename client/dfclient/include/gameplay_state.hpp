@@ -107,6 +107,7 @@ private:
 	bool showQuitDialog = false;
 	bool gameEnded = false;
 	std::vector<nc::DrawableNode*> indicators;
+	std::unique_ptr<ncine::Sprite> destination_marker;
 	ncine::TextNode* timeLeftNode = nullptr;
 	std::string currentHidingSpot = "";
 
