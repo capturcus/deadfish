@@ -578,7 +578,7 @@ void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {
 
 		auto player = dynamic_cast<ncine::AnimatedSprite*>(this->mySprite);
 		// if player is killing sb at the moment, don't create destination marker
-		if (player->animationIndex() == 2) return;
+		if (player->animationIndex() == FlatBuffGenerated::MobState_Attack) return;
 		this->destination_marker = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures["destmarker.png"].get());
 		this->destination_marker->setPosition(worldX, worldY);
 		this->destination_marker->setLayer((unsigned short)Layers::INDICATOR);
