@@ -27,8 +27,8 @@ private:
 	std::vector<std::string> _textureFilenames;
 	std::vector<std::string> _soundFilenames;
 	Resources& _resources;
-	std::unique_ptr<ncine::TextNode> _loading_text;
-	std::unique_ptr<ncine::Sprite> _fillup_sprite;
+	std::unique_ptr<ncine::TextNode> _loadingText;
+	std::unique_ptr<ncine::Sprite> _fillupSprite;
 	std::unique_ptr<ncine::Sprite> _outline;
 	std::unique_ptr<ncine::MeshSprite> _curtain;
 };
