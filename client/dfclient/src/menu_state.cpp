@@ -5,15 +5,12 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
-#include <ncine/Application.h>
 #include <ncine/imgui.h>
-#include <ncine/MeshSprite.h>
-#include <ncine/SceneNode.h>
+#include <ncine/Application.h>
 #include <ncine/Sprite.h>
 #include <ncine/Texture.h>
 
 #include "fb_util.hpp"
-#include "game_data.hpp"
 #include "game_data.hpp"
 #include "menu_state.hpp"
 #include "resources.hpp"
