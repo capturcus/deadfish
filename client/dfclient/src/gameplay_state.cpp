@@ -565,14 +565,23 @@ void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {
 		// move
 		const float screenWidth = ncine::theApplication().width();
 		const float screenHeight = ncine::theApplication().height();
-		const float serverX = (this->mySprite->position().x + (event.x - screenWidth / 2) * 1.5f) * PIXELS2METERS;
-		const float serverY = -(this->mySprite->position().y + (event.y - screenHeight / 2) * 1.5f) * PIXELS2METERS;
+		const float worldX = this->mySprite->position().x + (event.x - screenWidth / 2) * 1.5f;
+		const float worldY = this->mySprite->position().y + (event.y - screenHeight / 2) * 1.5f;
+		const float serverX = worldX * PIXELS2METERS;
+		const float serverY = -worldY * PIXELS2METERS;
 		flatbuffers::FlatBufferBuilder builder;
 		auto pos = FlatBuffGenerated::Vec2(serverX, serverY);
 		auto cmdMove = FlatBuffGenerated::CreateCommandMove(builder, &pos);
 		auto message = FlatBuffGenerated::CreateClientMessage(builder, FlatBuffGenerated::ClientMessageUnion_CommandMove, cmdMove.Union());
 		builder.Finish(message);
 		SendData(builder);
+
+		auto player = dynamic_cast<ncine::AnimatedSprite*>(this->mySprite);
+		// if player is killing sb at the moment, don't create destination marker
+		if (player->animationIndex() == FlatBuffGenerated::MobState_Attack) return;
+		this->destination_marker = std::make_unique<ncine::Sprite>(this->cameraNode.get(), _resources.textures["destmarker.png"].get());
+		this->destination_marker->setPosition(worldX, worldY);
+		this->destination_marker->setLayer((unsigned short)Layers::INDICATOR);
 	}
 	if (event.isRightButton()) {
 		// kill
@@ -585,6 +594,7 @@ void GameplayState::OnMouseButtonPressed(const ncine::MouseEvent &event) {
 				auto message = FlatBuffGenerated::CreateClientMessage(builder, FlatBuffGenerated::ClientMessageUnion_CommandKill, cmdKill.Union());
 				builder.Finish(message);
 				SendData(builder);
+				this->destination_marker = nullptr;
 				break;
 			}
 		}
