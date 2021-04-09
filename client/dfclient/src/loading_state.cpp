@@ -114,8 +114,39 @@ StateType LoadingState::Update(Messages m) {
 	// update the loading graphics
 	_curtain->setPosition(0, 1.2*_percent_loaded);
 
-	// return
-	if (_percent_loaded == 100) return StateType::Menu;
+	// manage the ending
+	if (_percent_loaded == 100) {
+		if (_fadeoutTween == nullptr) {
+			// stretch curtain to cover the whole screen
+			ncine::Vector2f res = {ncine::theApplication().width(), ncine::theApplication().height()};
+			std::vector<ncine::Vector2f> vertices(4);	
+			vertices[0].x = 0;
+			vertices[0].y = -1.2*_percent_loaded;
+			vertices[1].x = 0;
+			vertices[1].y = res.y + 1 - 1.2*_percent_loaded;
+			vertices[2].x = res.x + 1;
+			vertices[2].y = -1.2*_percent_loaded;
+			vertices[3].x = res.x + 1;
+			vertices[3].y = res.y + 1 - 1.2*_percent_loaded;
+			_curtain->createVerticesFromTexels(vertices.size(), vertices.data());
+			_curtain->setPosition(0, 0);
+			_curtain->setLayer(65535);
+			_curtain->setAlpha(0);
+
+			// create fadeout tween
+			ncine::MeshSprite* curtainPtr = _curtain.get();
+			auto fadeoutTween = tweeny::from(0).to(255).during(25).via(tweeny::easing::circularOut)
+				.onStep([curtainPtr] (tweeny::tween<int>& t, int v) -> bool {
+					curtainPtr->setAlpha(v);
+					return false;
+				});
+			_resources._intTweens.push_back(std::move(fadeoutTween));
+			_fadeoutTween = &(*(_resources._intTweens.rbegin()));  // ... -_-
+
+		} else if (_fadeoutTween->progress() == 1) {
+			return StateType::Menu;
+		} 
+	}
 	return StateType::Loading;
 }
 
@@ -129,4 +160,5 @@ LoadingState::~LoadingState() {
 	_resources._sounds.erase("mario-powerup.wav");
 	_resources._goldfishSound = std::make_unique<ncine::AudioBufferPlayer>(_resources._goldfishSoundBuffer.get());
 
+	_curtain.reset();
 }

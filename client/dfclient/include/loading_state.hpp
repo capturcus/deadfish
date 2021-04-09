@@ -31,4 +31,5 @@ private:
 	std::unique_ptr<ncine::Sprite> _fillupSprite;
 	std::unique_ptr<ncine::Sprite> _outline;
 	std::unique_ptr<ncine::MeshSprite> _curtain;
+	tweeny::tween<int>* _fadeoutTween = nullptr;
 };
