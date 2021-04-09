@@ -8,6 +8,7 @@
 #include <memory>
 
 #include <ncine/TextNode.h>
+#include <ncine/Texture.h>
 #include <ncine/AudioBuffer.h>
 #include <ncine/AudioBufferPlayer.h>
 

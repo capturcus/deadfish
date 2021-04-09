@@ -1,10 +1,7 @@
 #include <iostream>
 
-#include <ncine/FileSystem.h>
-#include <ncine/Texture.h>
-#include <ncine/Application.h>
-
 #include "resources.hpp"
+#include "loading_state.hpp"
 #include "menu_state.hpp"
 #include "lobby_state.hpp"
 #include "gameplay_state.hpp"
@@ -13,46 +10,9 @@
 #include "websocket.hpp"
 
 StateManager::StateManager() {
-	// load textures
-	auto rootPath = ncine::theApplication().appConfiguration().dataPath();
-	auto textureDir = ncine::FileSystem::Directory((rootPath + TEXTURES_PATH).data());
-	const char* file = textureDir.readNext();
-	while (file)
-	{
-		auto absPath = rootPath.data() + std::string(TEXTURES_PATH) + "/" + std::string(file);
-		if (ncine::FileSystem::isFile(absPath.c_str())) {
-			std::cout << "loading " << file << " " << absPath << "\n";
-			_resources.textures[file] = std::make_unique<ncine::Texture>(absPath.c_str());
-		}
-		file = textureDir.readNext();
-	}
-	textureDir.close();
-	_resources.fonts["comic_outline"] = std::make_unique<ncine::Font>((rootPath + "fonts/comic_outline.fnt").data());
-	_resources.fonts["comic"] = std::make_unique<ncine::Font>((rootPath + "fonts/comic.fnt").data());
-
-	// load sounds
-	auto soundDir = ncine::FileSystem::Directory((rootPath + SOUNDS_PATH).data());
-	file = soundDir.readNext();
-	while (file) {
-		auto absPath = rootPath.data() + std::string(SOUNDS_PATH) + "/" + std::string(file);
-		if (ncine::FileSystem::isFile(absPath.c_str())) {
-			std::cout << "loading sound " << file << " " << absPath << "\n";
-			_resources._sounds[file] = std::make_unique<ncine::AudioBuffer>(absPath.c_str());
-		}
-		file = soundDir.readNext();
-	}
-
-	_resources._killSoundBuffer = std::move(_resources._sounds["amongus-kill.wav"]);
-	_resources._sounds.erase("amongus-kill.wav");
-	_resources._killSound = std::make_unique<ncine::AudioBufferPlayer>(_resources._killSoundBuffer.get());
-
-	_resources._goldfishSoundBuffer = std::move(_resources._sounds["mario-powerup.wav"]);
-	_resources._sounds.erase("mario-powerup.wav");
-	_resources._goldfishSound = std::make_unique<ncine::AudioBufferPlayer>(_resources._goldfishSoundBuffer.get());
-	
-
-	_currentStateType = StateType::Menu;
-	_currentState = std::make_unique<MenuState>(_resources);
+	// init LoadingState
+	_currentStateType = StateType::Loading;
+	_currentState = std::make_unique<LoadingState>(_resources);
 }
 
 TextCreator StateManager::CreateTextCreator() {
