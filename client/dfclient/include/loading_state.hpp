@@ -5,6 +5,8 @@
 
 #include "game_state.hpp"
 #include "ncine/TextNode.h"
+#include "ncine/Sprite.h"
+#include "ncine/MeshSprite.h"
 
 #include "tweeny.h"
 
@@ -26,4 +28,7 @@ private:
 	std::vector<std::string> _soundFilenames;
 	Resources& _resources;
 	std::unique_ptr<ncine::TextNode> _loading_text;
+	std::unique_ptr<ncine::Sprite> _fillup_sprite;
+	std::unique_ptr<ncine::Sprite> _outline;
+	std::unique_ptr<ncine::MeshSprite> _curtain;
 };

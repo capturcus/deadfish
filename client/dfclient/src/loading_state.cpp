@@ -49,15 +49,42 @@ LoadingState::LoadingState(Resources& r) : _resources(r) {
 		file = soundDir.readNext();
 	}
 
-	// load fonts (for loading text and further use)
+	// load fonts (for loading text and further use) and loading graphics
 	_resources.fonts["comic_outline"] = std::make_unique<ncine::Font>((rootPath + "fonts/comic_outline.fnt").c_str());
 	_resources.fonts["comic"] = std::make_unique<ncine::Font>((rootPath + "fonts/comic.fnt").c_str());
+
+	_resources.textures["fillup"] = std::make_unique<ncine::Texture>((rootPath + "loading/fillup.png").c_str());
+	_resources.textures["fillup_outline"] = std::make_unique<ncine::Texture>((rootPath + "loading/outline.png").c_str());
+	_resources.textures["blackpixel.png"] = std::make_unique<ncine::Texture>((rootPath + "loading/blackpixel.png").c_str());
 
 	// init loading text
 	_loading_text = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic"].get());
 	_loading_text->setColor(ncine::Color::White);
 	_loading_text->setPosition(res.x*0.5f, res.y*0.5f);
 	_loading_text->setString("Loading... 0%");
+
+	// init loading graphics
+	_fillup_sprite = std::make_unique<ncine::Sprite>(&rootNode, _resources.textures["fillup"].get());
+	_fillup_sprite->setPosition(res.x*0.5f, res.y*0.6f);
+	_fillup_sprite->setLayer(1);
+
+	_curtain = std::make_unique<ncine::MeshSprite>(&rootNode, _resources.textures["blackpixel.png"].get());
+	std::vector<ncine::Vector2f> vertices(4);	
+	vertices[0].x = _fillup_sprite->position().x - _fillup_sprite->width()/2;
+	vertices[0].y = _fillup_sprite->position().y - _fillup_sprite->height()/2;
+	vertices[1].x = _fillup_sprite->position().x + _fillup_sprite->width()/2;
+	vertices[1].y = _fillup_sprite->position().y - _fillup_sprite->height()/2;
+	vertices[2].x = _fillup_sprite->position().x - _fillup_sprite->width()/2;
+	vertices[2].y = _fillup_sprite->position().y + _fillup_sprite->height()/2;
+	vertices[3].x = _fillup_sprite->position().x + _fillup_sprite->width()/2;
+	vertices[3].y = _fillup_sprite->position().y + _fillup_sprite->height()/2;
+	_curtain->createVerticesFromTexels(vertices.size(), vertices.data());
+	_curtain->setPosition(0, 0);
+	_curtain->setLayer(2);
+
+	_outline = std::make_unique<ncine::Sprite>(&rootNode, _resources.textures["fillup_outline"].get());
+	_outline->setPosition(res.x*0.5f, res.y*0.6f);
+	_outline->setLayer(3);
 }
 
 StateType LoadingState::Update(Messages m) {
@@ -81,8 +108,11 @@ StateType LoadingState::Update(Messages m) {
 	auto _percent_loaded = _current/(double)_total * 100;
 	auto string = "Loading... " + std::to_string((int)_percent_loaded) + "%";
 	_loading_text->setString(string.c_str());
-	unsigned char alpha = 55 + 2.f*_percent_loaded;
+	unsigned char alpha = 55 + 2*_percent_loaded;
 	_loading_text->setAlpha(alpha);
+
+	// update the loading graphics
+	_curtain->setPosition(0, 1.2*_percent_loaded);
 
 	// return
 	if (_percent_loaded == 100) return StateType::Menu;
