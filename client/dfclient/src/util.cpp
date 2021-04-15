@@ -16,7 +16,7 @@ void SendData(flatbuffers::FlatBufferBuilder& builder) {
 	auto size = builder.GetSize();
 	auto str = std::string(data, data + size);
 
-	gameData.socket->Send(str);
+	webSocketManager._ws->Send(str);
 }
 
 std::vector<nc::Vector2f> createArcTexels(float outerRadius, float innerRadius, int degrees)

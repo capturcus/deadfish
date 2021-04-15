@@ -11,6 +11,7 @@
 struct WebSocket {
 	virtual int Connect(std::string& address) = 0;
 	virtual bool Send(std::string& data) = 0;
+	virtual void Close() = 0;
 	virtual ~WebSocket() {}
 
 	// TODO use lock-free queue instead?
@@ -25,6 +26,6 @@ struct WebSocketManager {
 	std::unique_ptr<WebSocket> _ws;
 };
 
-WebSocket* CreateWebSocket();
+void CreateWebSocket();
 
 extern WebSocketManager webSocketManager;

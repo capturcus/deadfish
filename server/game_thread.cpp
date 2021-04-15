@@ -68,7 +68,6 @@ std::string makeServerMessage(flatbuffers::FlatBufferBuilder &builder,
 
 void sendGameAlreadyInProgress(dfws::Handle hdl)
 {
-	std::cout << "sending game already in progress";
 	flatbuffers::FlatBufferBuilder builder;
 	auto offset = FlatBuffGenerated::CreateSimpleServerEvent(builder,
 		FlatBuffGenerated::SimpleServerEventType_GameAlreadyInProgress);
@@ -510,7 +509,9 @@ void gameOnMessage(dfws::Handle hdl, const std::string& payload)
 
 	auto p = getPlayerByConnHdl(hdl);
 	if (!p) {
+		std::cout << "gameOnMessage: game already in progress\n";
 		sendGameAlreadyInProgress(hdl);
+		dfws::Close(hdl);
 		return;
 	}
 	if (p->state == MobState::ATTACKING)

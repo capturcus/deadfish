@@ -31,6 +31,7 @@ class WebSocketEmscripten
 public:
 	int Connect(std::string& address) override;
 	bool Send(std::string& data) override;
+	void Close() override;
 	virtual ~WebSocketEmscripten() {}
 
 	EMSCRIPTEN_WEBSOCKET_T _socket;
@@ -88,17 +89,14 @@ bool WebSocketEmscripten::Send(std::string& data) {
 	return emscripten_websocket_send_binary(this->_socket, data.data(), data.size()) == EMSCRIPTEN_RESULT_SUCCESS;
 }
 
+void WebSocketEmscripten::Close() {
+	std::cout << "TODO implement\n";
+	exit(1);
+}
+
 #else // __EMSCRIPTEN__
 
-class WebSocketBeast
-	: public WebSocket
-{
-public:
-	int Connect(std::string& address) override;
-	bool Send(std::string& data) override;
-	virtual ~WebSocketBeast() {}
-
-};
+class WebSocketBeast;
 
 typedef WebSocketBeast WebSocketType;
 
@@ -117,9 +115,22 @@ namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
-net::io_context ioc;
-websocket::stream<tcp::socket> ws{ioc};
-beast::flat_buffer buffer;
+struct beastContext {
+	net::io_context ioc;
+	websocket::stream<tcp::socket> ws{ioc};
+	beast::flat_buffer buffer;
+};
+
+class WebSocketBeast
+	: public WebSocket
+{
+public:
+	int Connect(std::string& address) override;
+	bool Send(std::string& data) override;
+	void Close() override;
+	virtual ~WebSocketBeast() {}
+	beastContext ctx;
+};
 
 void DoRead();
 
@@ -131,27 +142,32 @@ void OnRead(beast::error_code ec, std::size_t bytes_transferred) {
 		if (ec.value() == boost::system::errc::operation_canceled) {
 			// this websocket has disconnected
 			// todo: cleanup whatever is happening and return to main menu
+			std::cout << "operation canceled\n";
 			return;
 		}
 		std::cout << "read failed " << ec << "\n";
 	}
 
-	auto str = beast::buffers_to_string(buffer.data());
 	WebSocketBeast* wsb = (WebSocketBeast*) webSocketManager._ws.get();
+	auto str = beast::buffers_to_string(wsb->ctx.buffer.data());
 	std::lock_guard<std::mutex> guard(wsb->mq_mutex);
 	wsb->messageQueue.push_back(str);
-	buffer.consume(buffer.size());
+	wsb->ctx.buffer.consume(wsb->ctx.buffer.size());
 	DoRead();
 }
 
 void DoRead() {
-	ws.async_read(buffer, &OnRead);
+	WebSocketBeast* wsb = (WebSocketBeast*) webSocketManager._ws.get();
+	wsb->ctx.ws.async_read(wsb->ctx.buffer, &OnRead);
 }
 
 int WebSocketBeast::Connect(std::string& fullAddress) {
-	tcp::resolver resolver{ioc};
 
-	ws.binary(true);
+	WebSocketBeast* wsb = (WebSocketBeast*) webSocketManager._ws.get();
+
+	tcp::resolver resolver{wsb->ctx.ioc};
+
+	wsb->ctx.ws.binary(true);
 
 	auto address = fullAddress.substr(std::string("ws://").size(), fullAddress.size());
 
@@ -164,16 +180,16 @@ int WebSocketBeast::Connect(std::string& fullAddress) {
 	auto port = address.substr(colon + 1, address.size());
 	auto const results = resolver.resolve(host, port);
 	try {
-		auto ep = net::connect(ws.next_layer(), results);
+		auto ep = net::connect(wsb->ctx.ws.next_layer(), results);
 		host += ':' + std::to_string(ep.port());
-		ws.set_option(websocket::stream_base::decorator(
+		wsb->ctx.ws.set_option(websocket::stream_base::decorator(
 			[](websocket::request_type& req)
 			{
 				req.set(http::field::user_agent,
 					std::string(BOOST_BEAST_VERSION_STRING) +
 						" websocket-client-coro");
 			}));
-		ws.handshake(host, "/");
+		wsb->ctx.ws.handshake(host, "/");
 	} catch (std::exception e) {
 		return -1;
 	}
@@ -183,19 +199,37 @@ int WebSocketBeast::Connect(std::string& fullAddress) {
 	DoRead();
 
 	new std::thread([&](){
-		ioc.run();
+		try {
+			wsb->ctx.ioc.run();
+		} catch (const std::exception& e) {
+			if (e.what() == std::string("Operation canceled")) {
+				std::cout << "ioc quitting\n";
+				return;
+			}
+			throw e;
+		}
+		std::cout << "ioc quitting\n";
 	});
 
 	return 0;
 }
 
 bool WebSocketBeast::Send(std::string& data) {
-	ws.write(net::buffer(std::string(data)));
+	WebSocketBeast* wsb = (WebSocketBeast*) webSocketManager._ws.get();
+	wsb->ctx.ws.write(net::buffer(std::string(data)));
+}
+
+void WebSocketBeast::Close() {
+	WebSocketBeast* wsb = (WebSocketBeast*) webSocketManager._ws.get();
+	try {
+		wsb->ctx.ws.close(websocket::close_code::normal);
+	} catch (...) {
+		std::cout << "ws.close error \n";
+	}
 }
 
 #endif
 
-WebSocket* CreateWebSocket() {
-	webSocketManager._ws = std::make_unique<WebSocketType>();
-	return webSocketManager._ws.get();
+void CreateWebSocket() {
+	webSocketManager._ws = std::make_unique<WebSocketType>(); // this deletes the old one
 }

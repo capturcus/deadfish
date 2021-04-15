@@ -141,18 +141,40 @@ public:
         // sync write
         ws_.write(net::buffer(data));
     }
+
+    void Close() {
+        ws_.close(websocket::close_code::normal);
+    }
 };
 
-void dfws::SendData(Handle hdl, const std::string& data)
+std::shared_ptr<DfWebsocket> getSocketForHandle(dfws::Handle hdl)
 {
     for (auto& s : sockets) {
         if (s->socketID_ == hdl) {
-            s->Send(data);
-            return;
+            return s;
         }
     }
     std::cout << "could not find socket with id " << hdl << "\n";
     exit(1);
+}
+
+void dfws::SendData(Handle hdl, const std::string& data)
+{
+    auto s = getSocketForHandle(hdl);
+    s->Send(data);
+}
+
+void dfws::Close(Handle hdl)
+{
+    std::cout << "closing handle " << hdl << "\n";
+    auto it = sockets.begin();
+    for (; it != sockets.end(); it++) {
+        if ((*it)->socketID_ == hdl) {
+            break;
+        }
+    }
+    (*it)->Close();
+    sockets.erase(it);
 }
 
 void dfwsOnAccept(beast::error_code ec, tcp::socket socket)
@@ -160,7 +182,7 @@ void dfwsOnAccept(beast::error_code ec, tcp::socket socket)
     std::cout << "on accept\n";
     if (ec)
         return fail(ec, "accept");
-    // websocket::stream<beast::tcp_stream> ws_(std::move(socket));
+
     auto socketPtr = std::make_shared<DfWebsocket>(std::move(socket), lastSocketID++);
     sockets.push_back(socketPtr);
     sockets.back()->start();
@@ -210,4 +232,5 @@ void dfws::Run(unsigned short port)
 
     acceptor.async_accept(&dfwsOnAccept);
     ioc.run();
+    std::cout << "ioc quitting\n";
 }
