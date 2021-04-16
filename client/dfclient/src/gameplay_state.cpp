@@ -431,6 +431,15 @@ GameplayState::GameplayState(Resources& r) : GameState(r), _deathReportProcessor
 }
 
 GameplayState::~GameplayState() {
+	// the order of these is important
+	nodes.clear();
+	textNodes.clear();
+	hiding_spots.clear();
+	destination_marker.reset();
+	skillIcons.clear();
+	shadowNode.reset();
+	mobs.clear();
+	cameraNode.reset();
 }
 
 void GameplayState::updateHovers(ncine::Vector2f mouseCoords, float radiusSquared) {
@@ -494,7 +503,6 @@ StateType GameplayState::Update(Messages m) {
 
 	// show quit dialog if necessary
 	if (this->showQuitDialog) {
-		return StateType::Menu;
 		ImGui::Begin("Do you really want to quit?", &this->showQuitDialog, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoCollapse);
 		ImGui::SetCursorPosX(70);
