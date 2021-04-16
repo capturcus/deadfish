@@ -408,8 +408,7 @@ void GameplayState::OnMessage(const std::string& data) {
 	(this->*handler)(serverMessage->event());
 }
 
-
-GameplayState::GameplayState(Resources& r) : _resources(r), _deathReportProcessor(r) {
+GameplayState::GameplayState(Resources& r) : GameState(r), _deathReportProcessor(r) {
 	std::cout << "entered gameplay state\n";
 	ncine::theApplication().gfxDevice().setClearColor(ncine::Colorf(1, 1, 1, 1));
 	auto& rootNode = ncine::theApplication().rootNode();
@@ -457,6 +456,10 @@ void GameplayState::updateHovers(ncine::Vector2f mouseCoords, float radiusSquare
 }
 
 StateType GameplayState::Update(Messages m) {
+	if (m.closed) {
+		gameData.gameClosed = true;
+		return StateType::Menu;
+	}
 	for (auto& msg: m.data_msgs) {
 		OnMessage(msg);
 	}
@@ -491,6 +494,7 @@ StateType GameplayState::Update(Messages m) {
 
 	// show quit dialog if necessary
 	if (this->showQuitDialog) {
+		return StateType::Menu;
 		ImGui::Begin("Do you really want to quit?", &this->showQuitDialog, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoCollapse);
 		ImGui::SetCursorPosX(70);

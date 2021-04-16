@@ -47,7 +47,7 @@ StateType LobbyState::OnMessage(const std::string& data) {
 	return StateType::Lobby;
 }
 
-LobbyState::LobbyState(Resources& r) : _resources(r), textCreator(r) {
+LobbyState::LobbyState(Resources& r) : GameState(r), textCreator(r) {
 	std::cout << "lobby create\n";
 
 	flatbuffers::FlatBufferBuilder builder;

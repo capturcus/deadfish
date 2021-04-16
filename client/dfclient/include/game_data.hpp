@@ -21,6 +21,7 @@ struct GameData {
     std::vector<Player> players;
     std::string levelData;
     bool gameInProgress = false;
+    bool gameClosed = false;
 };
 
 extern GameData gameData;

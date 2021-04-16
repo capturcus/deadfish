@@ -5,7 +5,6 @@
 
 #include "tweeny.h"
 
-class Resources;
 
 enum class ClientMode {
 	Matchmaker,
@@ -37,6 +36,4 @@ private:
 	char serverAddressBuffer[64] = {0};
 
 	std::unique_ptr<ncine::TextNode> gameInProgressText;
-
-	Resources& _resources;
 };

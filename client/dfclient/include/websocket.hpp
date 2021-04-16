@@ -10,13 +10,14 @@
 
 struct WebSocket {
 	virtual int Connect(std::string& address) = 0;
-	virtual bool Send(std::string& data) = 0;
+	virtual void Send(std::string& data) = 0;
 	virtual void Close() = 0;
 	virtual ~WebSocket() {}
 
 	// TODO use lock-free queue instead?
 	std::mutex mq_mutex;
 	bool toBeOpened = false;
+	bool connectionClosed;
 	std::vector<std::string> messageQueue;
 };
 

@@ -42,7 +42,6 @@ struct Mob : public Movable {
 	std::unique_ptr<ncine::Sprite> relationMarker;
 };
 
-class Resources;
 class TextCreator;
 
 struct InkParticle : public Movable {
@@ -117,8 +116,6 @@ private:
 	std::vector<std::unique_ptr<nc::DrawableNode>> skillIcons;
 
 	ncine::TimeStamp lastMessageReceivedTime;
-
-	Resources& _resources;
 
 	DeathReportProcessor _deathReportProcessor;
 };
