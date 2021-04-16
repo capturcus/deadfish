@@ -414,7 +414,7 @@ GameplayState::GameplayState(Resources& r) : GameState(r), _deathReportProcessor
 	auto& rootNode = ncine::theApplication().rootNode();
 	this->cameraNode = std::make_unique<ncine::SceneNode>(&rootNode);
 	this->LoadLevel();
-	timeLeftNode = new ncine::TextNode(&rootNode, _resources.fonts["comic"].get());
+	timeLeftNode = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic"].get());
 
 	lastMessageReceivedTime = ncine::TimeStamp::now();
 

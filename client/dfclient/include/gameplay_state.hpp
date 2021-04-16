@@ -107,7 +107,7 @@ private:
 	bool gameEnded = false;
 	std::vector<nc::DrawableNode*> indicators;
 	std::unique_ptr<ncine::Sprite> destination_marker;
-	ncine::TextNode* timeLeftNode = nullptr;
+	std::unique_ptr<ncine::TextNode> timeLeftNode;
 	std::string currentHidingSpot = "";
 
 	fov::mesh shadowMesh;
