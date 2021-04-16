@@ -5,6 +5,6 @@
 
 struct Messages {
 	bool opened = false;
+	bool closed = false;
 	std::vector<std::string> data_msgs;
 };
-

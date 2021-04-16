@@ -49,7 +49,7 @@ void MenuState::ShowMessage(std::string message)
 	_resources._intTweens.push_back(tween);
 }
 
-MenuState::MenuState(Resources& r) : _resources(r) {
+MenuState::MenuState(Resources& r) : GameState(r) {
 	nc::SceneNode &rootNode = nc::theApplication().rootNode();
 	auto res = nc::theApplication().appConfiguration().resolution;
 
@@ -57,12 +57,14 @@ MenuState::MenuState(Resources& r) : _resources(r) {
 	nc::theApplication().gfxDevice().setClearColor(bgColor);
 
 	if (gameData.gameInProgress) {
-		TextCreator textCreator(r);
 		std::cout << "menu game in progress\n";
 		ShowMessage("game already in progress");
 		webSocketManager._ws->Close();
 		webSocketManager._ws = nullptr;
 		gameData.gameInProgress = false;
+	}
+	if (gameData.gameClosed) {
+		ShowMessage("game closed");
 	}
 	boost::property_tree::ptree pt;
 	boost::property_tree::ini_parser::read_ini("deadfish.ini", pt);

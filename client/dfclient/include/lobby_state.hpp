@@ -9,8 +9,6 @@
 #include "websocket.hpp"
 #include "text_creator.hpp"
 
-class Resources;
-
 struct LobbyState
 	: public GameState
 {
@@ -33,6 +31,4 @@ private:
 	bool ready = false;
 
 	TextCreator textCreator;
-
-	Resources& _resources;
 };

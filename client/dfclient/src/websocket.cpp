@@ -13,6 +13,7 @@ Messages WebSocketManager::GetMessages() {
 
 	std::lock_guard<std::mutex> guard(_ws->mq_mutex);
 	m.opened = _ws->toBeOpened;
+	m.closed = _ws->connectionClosed;
 	m.data_msgs.swap(_ws->messageQueue);
 
 	if (m.opened) {
@@ -30,7 +31,7 @@ class WebSocketEmscripten
 {
 public:
 	int Connect(std::string& address) override;
-	bool Send(std::string& data) override;
+	void Send(std::string& data) override;
 	void Close() override;
 	virtual ~WebSocketEmscripten() {}
 
@@ -85,8 +86,8 @@ int WebSocketEmscripten::Connect(std::string& address) {
 	return 0;
 }
 
-bool WebSocketEmscripten::Send(std::string& data) {
-	return emscripten_websocket_send_binary(this->_socket, data.data(), data.size()) == EMSCRIPTEN_RESULT_SUCCESS;
+void WebSocketEmscripten::Send(std::string& data) {
+	emscripten_websocket_send_binary(this->_socket, data.data(), data.size());
 }
 
 void WebSocketEmscripten::Close() {
@@ -126,7 +127,7 @@ class WebSocketBeast
 {
 public:
 	int Connect(std::string& address) override;
-	bool Send(std::string& data) override;
+	void Send(std::string& data) override;
 	void Close() override;
 	virtual ~WebSocketBeast() {}
 	beastContext ctx;
@@ -135,23 +136,24 @@ public:
 void DoRead();
 
 void OnRead(beast::error_code ec, std::size_t bytes_transferred) {
+	WebSocketBeast* wsb = (WebSocketBeast*) webSocketManager._ws.get();
 	if (ec == websocket::error::closed)
 		return;
 
 	if (ec) {
 		if (ec.value() == boost::system::errc::operation_canceled) {
 			// this websocket has disconnected
-			// todo: cleanup whatever is happening and return to main menu
 			std::cout << "operation canceled\n";
+			wsb->connectionClosed = true;
 			return;
 		}
 		std::cout << "read failed " << ec << "\n";
 	}
 
-	WebSocketBeast* wsb = (WebSocketBeast*) webSocketManager._ws.get();
 	auto str = beast::buffers_to_string(wsb->ctx.buffer.data());
 	std::lock_guard<std::mutex> guard(wsb->mq_mutex);
-	wsb->messageQueue.push_back(str);
+	if (!str.empty())
+		wsb->messageQueue.push_back(str);
 	wsb->ctx.buffer.consume(wsb->ctx.buffer.size());
 	DoRead();
 }
@@ -195,6 +197,7 @@ int WebSocketBeast::Connect(std::string& fullAddress) {
 	}
 
 	webSocketManager._ws->toBeOpened = true;
+	webSocketManager._ws->connectionClosed = false;
 
 	DoRead();
 
@@ -214,9 +217,17 @@ int WebSocketBeast::Connect(std::string& fullAddress) {
 	return 0;
 }
 
-bool WebSocketBeast::Send(std::string& data) {
+void WebSocketBeast::Send(std::string& data) {
 	WebSocketBeast* wsb = (WebSocketBeast*) webSocketManager._ws.get();
-	wsb->ctx.ws.write(net::buffer(std::string(data)));
+	try {
+		wsb->ctx.ws.write(net::buffer(std::string(data)));
+	} catch (const std::exception& e) {
+		if (e.what() == std::string("Operation canceled")) {
+			std::cout << "operation canceled\n";
+			return;
+		}
+		throw e;
+	}
 }
 
 void WebSocketBeast::Close() {
