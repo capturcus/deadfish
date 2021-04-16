@@ -135,6 +135,8 @@ struct FOVCallback
 
 		if (data && data != target && player && !data->obstructsSight(player))
 			return 1.f;
+		if (target != data && dynamic_cast<InkParticle*>(target) && data && dynamic_cast<InkParticle*>(data))
+			return 1.f;
 		if (fraction < minfraction)
 		{
 			minfraction = fraction;
