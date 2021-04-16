@@ -165,11 +165,13 @@ struct Civilian : public Mob {
 	int slowFrames = 0;
 	b2Vec2 lastPos;
 	bool seenAManip;
+	glm::vec2 myNavpointPosition;
 
 	void handleKill(Player& killer) override;
 	void update() override;
 	void setNextNavpoint();
 	void collisionResolution();
+	void zigzagToPosition(glm::vec2 pos);
 };
 
 // just a data container to be able to send it later to clients
