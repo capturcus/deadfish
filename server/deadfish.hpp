@@ -161,10 +161,10 @@ struct Player : public Mob {
 
 struct Civilian : public Mob {
 	std::string currentNavpoint;
-	std::string previousNavpoint;
 	int slowFrames = 0;
 	b2Vec2 lastPos;
 	bool seenAManip;
+	bool firstNavpoint = true;
 	glm::vec2 myNavpointPosition;
 
 	void handleKill(Player& killer) override;

@@ -6,9 +6,10 @@
 
 #include "deadfish.hpp"
 #include "game_thread.hpp"
+#include "raycasting.hpp"
 #include "../common/geometry.hpp"
 
-float ZIGZAG_RADIUS = 0.5f;
+float ZIGZAG_RADIUS = 0.6f;
 float ZIGZAG_LENGTH = 2.f;
 
 std::ostream &operator<<(std::ostream &os, glm::vec2 &v)
@@ -179,8 +180,7 @@ void Civilian::collisionResolution() {
 		auto spawnPos = g2b(navpoint->position);
 
 		// not where we were currently going but somewhere we can go immediately from here
-		if (this->currentNavpoint != spawnName && mobSeePoint(*this, spawnPos, true)) {
-			this->previousNavpoint = "";
+		if (spawnName != this->currentNavpoint && mobSeePoint(*this, spawnPos, true)) {
 			this->myNavpointPosition = randFromCircle(navpoint->position, navpoint->radius);
 			zigzagToPosition(this->myNavpointPosition);
 			std::cout << "resolved collision - changed direction\n";
@@ -260,25 +260,49 @@ void Civilian::zigzagToPosition(glm::vec2 pos) {
 	this->targetPosition = randFromCircle(b2g(this->body->GetPosition()) + toPosStraight, ZIGZAG_RADIUS);
 }
 
+// void Civilian::setNextNavpoint()
+// {
+// 	auto &spawn = gameState.level->navpoints[this->currentNavpoint];
+// 	auto neighbors = spawn->neighbors;
+// 	std::vector<std::string>::iterator toDelete = neighbors.end();
+// 	for (auto it = neighbors.begin(); it != neighbors.end(); it++)
+// 	{
+// 		if (*it == this->previousNavpoint)
+// 		{
+// 			toDelete = it;
+// 			break;
+// 		}
+// 	}
+// 	if (toDelete != neighbors.end())
+// 		neighbors.erase(toDelete);
+// 	this->previousNavpoint = this->currentNavpoint;
+// 	this->currentNavpoint = neighbors[rand() % neighbors.size()];
+// 	auto& targetPoint = gameState.level->navpoints[this->currentNavpoint];
+// 	this->myNavpointPosition = randFromCircle(targetPoint->position, targetPoint->radius);
+// 	this->zigzagToPosition(this->myNavpointPosition);
+// }
+
 void Civilian::setNextNavpoint()
 {
-	auto &spawn = gameState.level->navpoints[this->currentNavpoint];
-	auto neighbors = spawn->neighbors;
-	std::vector<std::string>::iterator toDelete = neighbors.end();
-	for (auto it = neighbors.begin(); it != neighbors.end(); it++)
-	{
-		if (*it == this->previousNavpoint)
-		{
-			toDelete = it;
-			break;
+	float myAngle = this->body->GetAngle() * TO_DEGREES + 90 + 180;
+	std::vector<std::pair<std::string, NavPoint*>> seenNavpoints;
+	for(auto& n : gameState.level->navpoints) {
+		float toNavpoint = angleFromVector(g2b(n.second->position) - this->body->GetPosition()) * TO_DEGREES + 180;
+		float diff = abs(normalizeAngle(toNavpoint - myAngle));
+		if ((firstNavpoint || diff > 70) && // in front of us, except for spawning
+			mobSeePoint(*this, g2b(n.second->position), true, true, true)) {
+			seenNavpoints.push_back({n.first, n.second.get()});
 		}
 	}
-	if (toDelete != neighbors.end())
-		neighbors.erase(toDelete);
-	this->previousNavpoint = this->currentNavpoint;
-	this->currentNavpoint = neighbors[rand() % neighbors.size()];
-	auto& targetPoint = gameState.level->navpoints[this->currentNavpoint];
-	this->myNavpointPosition = randFromCircle(targetPoint->position, targetPoint->radius);
+	if (seenNavpoints.size() == 0) {
+		this->collisionResolution();
+		return;
+	}
+	firstNavpoint = false;
+	auto targetNavpoint = seenNavpoints[rand() % seenNavpoints.size()];
+	// std::cout << "chosen navpoint: " << targetNavpoint.first << " previous " << this->previousNavpoint << "\n";
+	this->currentNavpoint = targetNavpoint.first;
+	this->myNavpointPosition = randFromCircle(targetNavpoint.second->position, targetNavpoint.second->radius);
 	this->zigzagToPosition(this->myNavpointPosition);
 }
 
