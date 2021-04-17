@@ -41,9 +41,12 @@ void Mob::update()
 	}
 
 	// update angle
+	float myAngle = this->body->GetAngle() - 2 * M_PI * floor(this->body->GetAngle() / (2 * M_PI));
+	if (myAngle > M_PI)
+		myAngle -= 2 * M_PI;
 	glm::vec2 toTarget = glm::normalize(this->targetPosition - b2g(this->body->GetPosition()));
 	float currentAngle = -glm::orientedAngle(toTarget, glm::vec2(1, 0)) + M_PI / 2;
-	float diff = currentAngle - this->body->GetAngle();
+	float diff = currentAngle - myAngle;
 
 	if (diff < -M_PI)
 		diff += 2 * M_PI;
@@ -74,7 +77,7 @@ void Mob::update()
 	}
 
 	// update position
-	auto translation = glm::rotate(glm::vec2(1, 0), this->body->GetAngle() - (float)(M_PI / 2)) * this->calculateSpeed();
+	auto translation = glm::rotate(glm::vec2(1, 0), myAngle - (float)(M_PI / 2)) * this->calculateSpeed();
 	this->body->SetLinearVelocity(b2Vec2(translation.x, translation.y));
 }
 
