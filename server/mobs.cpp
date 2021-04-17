@@ -180,7 +180,9 @@ void Civilian::collisionResolution() {
 		auto spawnPos = g2b(navpoint->position);
 
 		// not where we were currently going but somewhere we can go immediately from here
-		if (spawnName != this->currentNavpoint && mobSeePoint(*this, spawnPos, true)) {
+		if (!navpoint->isplayerspawn && spawnName != this->currentNavpoint && mobSeePoint(*this, spawnPos, true)) {
+			this->previousNavpoint = "";
+			this->currentNavpoint = spawnName;
 			this->myNavpointPosition = randFromCircle(navpoint->position, navpoint->radius);
 			zigzagToPosition(this->myNavpointPosition);
 			std::cout << "resolved collision - changed direction\n";
@@ -217,7 +219,7 @@ void Civilian::update()
 		this->seenAManip = false;
 	}
 
-	if (this->bombsAffecting == 0 && b2Distance(this->body->GetPosition(), this->lastPos) < (WALK_SPEED/20) * 0.4f) {
+	if (this->bombsAffecting == 0 && b2Distance(this->body->GetPosition(), this->lastPos) < WALK_SPEED * 0.02f) {
 		slowFrames++;
 		if (slowFrames == CIV_SLOW_FRAMES) {
 			this->collisionResolution();
@@ -230,20 +232,21 @@ void Civilian::update()
 	} else
 		slowFrames = 0;
 	this->lastPos = this->body->GetPosition();
-	float dist = glm::distance(b2g(this->body->GetPosition()), this->targetPosition);
-	if (dist < CLOSE)
-	{
-		auto* myNavpoint = gameState.level->navpoints[this->currentNavpoint].get();
-		if (glm::distance(b2g(this->body->GetPosition()), this->myNavpointPosition) < CLOSE) {
-			// the civilian has reached his navpoint destination
-			if (myNavpoint->isspawn)
-			{
-				// we arrived at spawn, despawn
-				this->toBeDeleted = true;
-				return;
-			}
-			this->setNextNavpoint();
-		} else {
+	auto* myNavpoint = gameState.level->navpoints[this->currentNavpoint].get();
+	float distToNavpoint = glm::distance(b2g(this->body->GetPosition()), myNavpoint->position);
+	if (distToNavpoint <= myNavpoint->radius) {
+		// reached navpoint
+		if (myNavpoint->isspawn)
+		{
+			// we arrived at spawn, despawn
+			this->toBeDeleted = true;
+			return;
+		}
+		this->setNextNavpoint();
+	} else {
+		float dist = glm::distance(b2g(this->body->GetPosition()), this->targetPosition);
+		if (dist < CLOSE)
+		{
 			// this is just a zigzag destination
 			this->zigzagToPosition(this->myNavpointPosition);
 		}
@@ -260,51 +263,51 @@ void Civilian::zigzagToPosition(glm::vec2 pos) {
 	this->targetPosition = randFromCircle(b2g(this->body->GetPosition()) + toPosStraight, ZIGZAG_RADIUS);
 }
 
-// void Civilian::setNextNavpoint()
-// {
-// 	auto &spawn = gameState.level->navpoints[this->currentNavpoint];
-// 	auto neighbors = spawn->neighbors;
-// 	std::vector<std::string>::iterator toDelete = neighbors.end();
-// 	for (auto it = neighbors.begin(); it != neighbors.end(); it++)
-// 	{
-// 		if (*it == this->previousNavpoint)
-// 		{
-// 			toDelete = it;
-// 			break;
-// 		}
-// 	}
-// 	if (toDelete != neighbors.end())
-// 		neighbors.erase(toDelete);
-// 	this->previousNavpoint = this->currentNavpoint;
-// 	this->currentNavpoint = neighbors[rand() % neighbors.size()];
-// 	auto& targetPoint = gameState.level->navpoints[this->currentNavpoint];
-// 	this->myNavpointPosition = randFromCircle(targetPoint->position, targetPoint->radius);
-// 	this->zigzagToPosition(this->myNavpointPosition);
-// }
-
 void Civilian::setNextNavpoint()
 {
-	float myAngle = this->body->GetAngle() * TO_DEGREES + 90 + 180;
-	std::vector<std::pair<std::string, NavPoint*>> seenNavpoints;
-	for(auto& n : gameState.level->navpoints) {
-		float toNavpoint = angleFromVector(g2b(n.second->position) - this->body->GetPosition()) * TO_DEGREES + 180;
-		float diff = abs(normalizeAngle(toNavpoint - myAngle));
-		if ((firstNavpoint || diff > 70) && // in front of us, except for spawning
-			mobSeePoint(*this, g2b(n.second->position), true, true, true)) {
-			seenNavpoints.push_back({n.first, n.second.get()});
+	auto &spawn = gameState.level->navpoints[this->currentNavpoint];
+	auto neighbors = spawn->neighbors;
+	std::vector<std::string>::iterator toDelete = neighbors.end();
+	for (auto it = neighbors.begin(); it != neighbors.end(); it++)
+	{
+		if (*it == this->previousNavpoint)
+		{
+			toDelete = it;
+			break;
 		}
 	}
-	if (seenNavpoints.size() == 0) {
-		this->collisionResolution();
-		return;
-	}
-	firstNavpoint = false;
-	auto targetNavpoint = seenNavpoints[rand() % seenNavpoints.size()];
-	// std::cout << "chosen navpoint: " << targetNavpoint.first << " previous " << this->previousNavpoint << "\n";
-	this->currentNavpoint = targetNavpoint.first;
-	this->myNavpointPosition = randFromCircle(targetNavpoint.second->position, targetNavpoint.second->radius);
+	if (toDelete != neighbors.end())
+		neighbors.erase(toDelete);
+	this->previousNavpoint = this->currentNavpoint;
+	this->currentNavpoint = neighbors[rand() % neighbors.size()];
+	auto& targetPoint = gameState.level->navpoints[this->currentNavpoint];
+	this->myNavpointPosition = randFromCircle(targetPoint->position, targetPoint->radius);
 	this->zigzagToPosition(this->myNavpointPosition);
 }
+
+// void Civilian::setNextNavpoint()
+// {
+// 	float myAngle = this->body->GetAngle() * TO_DEGREES + 90 + 180;
+// 	std::vector<std::pair<std::string, NavPoint*>> seenNavpoints;
+// 	for(auto& n : gameState.level->navpoints) {
+// 		float toNavpoint = angleFromVector(g2b(n.second->position) - this->body->GetPosition()) * TO_DEGREES + 180;
+// 		float diff = abs(normalizeAngle(toNavpoint - myAngle));
+// 		if ((firstNavpoint || diff > 70) && // in front of us, except for spawning
+// 			mobSeePoint(*this, g2b(n.second->position), true, true, true)) {
+// 			seenNavpoints.push_back({n.first, n.second.get()});
+// 		}
+// 	}
+// 	if (seenNavpoints.size() == 0) {
+// 		this->collisionResolution();
+// 		return;
+// 	}
+// 	firstNavpoint = false;
+// 	auto targetNavpoint = seenNavpoints[rand() % seenNavpoints.size()];
+// 	// std::cout << "chosen navpoint: " << targetNavpoint.first << " previous " << this->previousNavpoint << "\n";
+// 	this->currentNavpoint = targetNavpoint.first;
+// 	this->myNavpointPosition = randFromCircle(targetNavpoint.second->position, targetNavpoint.second->radius);
+// 	this->zigzagToPosition(this->myNavpointPosition);
+// }
 
 void Player::handleCollision(Collideable &other)
 {

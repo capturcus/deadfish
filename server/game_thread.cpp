@@ -324,6 +324,8 @@ void spawnCivilian(std::string spawnName, NavPoint* spawn) {
 
 	c->movableID = newMovableID();
 	c->species = species;
+	c->previousNavpoint = spawnName;
+	c->currentNavpoint = spawnName;
 	physicsInitMob(c.get(), spawn->position, 0, 0.3f);
 	c->setNextNavpoint();
 	gameState.civilians[c->movableID] = std::move(c);

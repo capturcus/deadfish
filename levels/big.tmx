@@ -1115,7 +1115,7 @@
    </properties>
    <ellipse/>
   </object>
-  <object id="1111" name="w3" type="waypoint" x="3047.96" y="4419.72" width="266" height="266">
+  <object id="1111" name="w3" type="waypoint" x="2984.32" y="4465.17" width="202.364" height="202.364">
    <properties>
     <property name="isplayerspawn" type="bool" value="true"/>
     <property name="wps" value="w2,w7"/>
@@ -1154,13 +1154,13 @@
    </properties>
    <ellipse/>
   </object>
-  <object id="1121" name="w5" type="waypoint" x="4362.89" y="3299.84" width="316" height="316">
+  <object id="1121" name="w5" type="waypoint" x="4387.13" y="3211.96" width="316" height="316">
    <properties>
     <property name="wps" value="w6,w4"/>
    </properties>
    <ellipse/>
   </object>
-  <object id="1122" name="w4" type="waypoint" x="4471.67" y="4392.33" width="244" height="244">
+  <object id="1122" name="w4" type="waypoint" x="4486.82" y="4389.3" width="216.727" height="216.727">
    <properties>
     <property name="wps" value="w8,w5,spawnright"/>
    </properties>
