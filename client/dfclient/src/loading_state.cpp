@@ -15,39 +15,34 @@ namespace nc = ncine;
 inline long fileSize(const char* path) { return path == "" ? 0 : ncine::FileSystem::fileSize(path); }
 inline long fileSize(std::string path) { return path == "" ? 0 : ncine::FileSystem::fileSize(path.c_str()); }
 
+// iterate over files to load from dir, calculating the total size and registering file names
+long registerStuff(std::string path, std::vector<std::string>& filenames) {
+	long total = 0;
+	auto dir = ncine::FileSystem::Directory(path.c_str());
+	const char* file = dir.readNext();
+	while(file) {
+		auto absPath = path + "/" + std::string(file);
+		if(ncine::FileSystem::isFile(absPath.c_str())) {
+			total += fileSize(absPath);
+			filenames.push_back(absPath);
+		}
+		file = dir.readNext();
+	}
+	dir.close();
+	return total;
+}
+
 LoadingState::LoadingState(Resources& r) : _resources(r) {
 	nc::SceneNode &rootNode = nc::theApplication().rootNode();
 	auto res = nc::theApplication().appConfiguration().resolution;
 	nc::theApplication().gfxDevice().setClearColor(nc::Colorf::Black);
 
-	// iterate over files to load, calculating the total size and registering file names
 	// init paths
 	auto rootPath = std::string(ncine::theApplication().appConfiguration().dataPath().data());
-	auto textureDir = ncine::FileSystem::Directory((rootPath + std::string(TEXTURES_PATH)).c_str());
-	auto soundDir = ncine::FileSystem::Directory((rootPath + SOUNDS_PATH).data());
 
-	// register everything
-	const char* file = textureDir.readNext();
-	while (file)
-	{
-		auto absPath = rootPath + std::string(TEXTURES_PATH) + "/" + std::string(file);
-		if (ncine::FileSystem::isFile(absPath.c_str())) {
-			_total += fileSize(absPath);
-			_textureFilenames.push_back(absPath);
-		}
-		file = textureDir.readNext();
-	}
-	textureDir.close();
-
-	file = soundDir.readNext();
-	while (file) {
-		auto absPath = rootPath.data() + std::string(SOUNDS_PATH) + "/" + std::string(file);
-		if (ncine::FileSystem::isFile(absPath.c_str())) {
-			_total += fileSize(absPath);
-			_soundFilenames.push_back(absPath);
-		}
-		file = soundDir.readNext();
-	}
+	// register everything to calculate total size
+	_total += registerStuff(rootPath + TEXTURES_PATH, _textureFilenames);
+	_total += registerStuff(rootPath + SOUNDS_PATH, _soundFilenames);
 
 	// load fonts (for loading text and further use) and loading graphics
 	_resources.fonts["comic_outline"] = std::make_unique<ncine::Font>((rootPath + "fonts/comic_outline.fnt").c_str());
@@ -55,7 +50,12 @@ LoadingState::LoadingState(Resources& r) : _resources(r) {
 
 	_resources.textures["fillup"] = std::make_unique<ncine::Texture>((rootPath + "loading/fillup.png").c_str());
 	_resources.textures["fillup_outline"] = std::make_unique<ncine::Texture>((rootPath + "loading/outline.png").c_str());
-	_resources.textures["blackpixel.png"] = std::make_unique<ncine::Texture>((rootPath + "loading/blackpixel.png").c_str());
+	_resources.textures["blackpixel.png"] = std::make_unique<ncine::Texture>((rootPath + "textures/blackpixel.png").c_str());
+
+	// compensate blackpixel loading
+	_current += fileSize(rootPath + "textures/blackpixel.png");
+	std::remove(_textureFilenames.begin(), _textureFilenames.end(), rootPath + "textures/blackpixel.png");
+	_textureFilenames.pop_back();
 
 	// init loading text
 	_loadingText = std::make_unique<ncine::TextNode>(&rootNode, _resources.fonts["comic"].get());
