@@ -583,9 +583,9 @@ void gameThread()
 
 	initGameThread(tcl);
 
-	for (uint32_t i = 0; i < PRESIMULATE_TICKS; i++) {
-		gameThreadTick(civilianTimer);
-	}
+	// for (uint32_t i = 0; i < PRESIMULATE_TICKS; i++) {
+	// 	gameThreadTick(civilianTimer);
+	// }
 
 	// game loop
 	while (true)

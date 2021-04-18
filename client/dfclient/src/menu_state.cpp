@@ -1,5 +1,7 @@
 #include <functional>
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -96,6 +98,7 @@ void MenuState::TryConnect() {
 	std::cout << "server " << gameData.serverAddress << ", my nickname " << gameData.myNickname << "\n";
 	CreateWebSocket();
 	int ret = webSocketManager._ws->Connect(gameData.serverAddress);
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	if (ret < 0) {
 		std::cout << "socket->Connect failed " << ret << "\n";
 		this->ShowMessage("connecting to server failed");
