@@ -285,30 +285,6 @@ void Civilian::setNextNavpoint()
 	this->zigzagToPosition(this->myNavpointPosition);
 }
 
-// void Civilian::setNextNavpoint()
-// {
-// 	float myAngle = this->body->GetAngle() * TO_DEGREES + 90 + 180;
-// 	std::vector<std::pair<std::string, NavPoint*>> seenNavpoints;
-// 	for(auto& n : gameState.level->navpoints) {
-// 		float toNavpoint = angleFromVector(g2b(n.second->position) - this->body->GetPosition()) * TO_DEGREES + 180;
-// 		float diff = abs(normalizeAngle(toNavpoint - myAngle));
-// 		if ((firstNavpoint || diff > 70) && // in front of us, except for spawning
-// 			mobSeePoint(*this, g2b(n.second->position), true, true, true)) {
-// 			seenNavpoints.push_back({n.first, n.second.get()});
-// 		}
-// 	}
-// 	if (seenNavpoints.size() == 0) {
-// 		this->collisionResolution();
-// 		return;
-// 	}
-// 	firstNavpoint = false;
-// 	auto targetNavpoint = seenNavpoints[rand() % seenNavpoints.size()];
-// 	// std::cout << "chosen navpoint: " << targetNavpoint.first << " previous " << this->previousNavpoint << "\n";
-// 	this->currentNavpoint = targetNavpoint.first;
-// 	this->myNavpointPosition = randFromCircle(targetNavpoint.second->position, targetNavpoint.second->radius);
-// 	this->zigzagToPosition(this->myNavpointPosition);
-// }
-
 void Player::handleCollision(Collideable &other)
 {
 	if (this->toBeDeleted)
