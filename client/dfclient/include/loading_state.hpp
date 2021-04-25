@@ -17,7 +17,6 @@ struct LoadingState
 {
 public:
 	LoadingState(Resources& r);
-	~LoadingState() override;
 	
 	StateType Update(Messages) override;
 

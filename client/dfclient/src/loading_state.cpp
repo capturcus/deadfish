@@ -144,21 +144,18 @@ StateType LoadingState::Update(Messages m) {
 			_fadeoutTween = &(*(_resources._intTweens.rbegin()));  // ... -_-
 
 		} else if (_fadeoutTween->progress() == 1) {
+			// init soundbuffers
+			_resources._killSoundBuffer = std::move(_resources._sounds["amongus-kill.wav"]);
+			_resources._sounds.erase("amongus-kill.wav");
+			_resources._killSound = std::make_unique<ncine::AudioBufferPlayer>(_resources._killSoundBuffer.get());
+
+			_resources._goldfishSoundBuffer = std::move(_resources._sounds["mario-powerup.wav"]);
+			_resources._sounds.erase("mario-powerup.wav");
+			_resources._goldfishSound = std::make_unique<ncine::AudioBufferPlayer>(_resources._goldfishSoundBuffer.get());
+
+			_curtain.reset();
 			return StateType::Menu;
 		} 
 	}
 	return StateType::Loading;
-}
-
-LoadingState::~LoadingState() {
-	// init soundbuffers
-	_resources._killSoundBuffer = std::move(_resources._sounds["amongus-kill.wav"]);
-	_resources._sounds.erase("amongus-kill.wav");
-	_resources._killSound = std::make_unique<ncine::AudioBufferPlayer>(_resources._killSoundBuffer.get());
-
-	_resources._goldfishSoundBuffer = std::move(_resources._sounds["mario-powerup.wav"]);
-	_resources._sounds.erase("mario-powerup.wav");
-	_resources._goldfishSound = std::make_unique<ncine::AudioBufferPlayer>(_resources._goldfishSoundBuffer.get());
-
-	_curtain.reset();
 }
