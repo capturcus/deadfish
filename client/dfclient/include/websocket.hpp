@@ -17,7 +17,7 @@ struct WebSocket {
 	// TODO use lock-free queue instead?
 	std::mutex mq_mutex;
 	bool toBeOpened = false;
-	bool connectionClosed;
+	bool connectionClosed = false;
 	std::vector<std::string> messageQueue;
 };
 

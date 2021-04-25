@@ -432,6 +432,9 @@ GameplayState::GameplayState(Resources& r) : GameState(r), _deathReportProcessor
 
 GameplayState::~GameplayState() {
 	// the order of these is important
+	// because the ones that are higher contain references to the ones that are lower
+	// and nCine tries to free all the memory that is has a pointer to for some reason
+	// which leads to double frees if the order is not preserved
 	nodes.clear();
 	textNodes.clear();
 	hiding_spots.clear();
