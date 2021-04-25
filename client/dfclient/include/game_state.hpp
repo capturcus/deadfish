@@ -5,6 +5,7 @@
 #include "messages.hpp"
 
 enum class StateType {
+	Loading,
 	Menu,
 	Lobby,
 	Gameplay
