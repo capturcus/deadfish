@@ -2,21 +2,21 @@
 
 #include <iostream>
 
-WebSocketManager webSocketManager;
+std::unique_ptr<WebSocket> GlobalWebsocket;
 
 // Runs in game loop thread
-Messages WebSocketManager::GetMessages() {
+Messages GetMessages() {
 	Messages m;
-	if (!_ws) {
+	if (!GlobalWebsocket) {
 		return m;
 	}
 
-	std::lock_guard<std::mutex> guard(_ws->mq_mutex);
-	m.opened = _ws->toBeOpened;
-	m.data_msgs.swap(_ws->messageQueue);
+	std::lock_guard<std::mutex> guard(GlobalWebsocket->mq_mutex);
+	m.opened = GlobalWebsocket->toBeOpened;
+	m.data_msgs.swap(GlobalWebsocket->messageQueue);
 
 	if (m.opened) {
-		_ws->toBeOpened = false;
+		GlobalWebsocket->toBeOpened = false;
 	}
 
 	return m;
@@ -30,7 +30,7 @@ class WebSocketEmscripten
 {
 public:
 	int Connect(std::string& address) override;
-	bool Send(std::string& data) override;
+	bool Send(const std::string& data) override;
 	void Close() override;
 	virtual ~WebSocketEmscripten() {}
 
@@ -85,8 +85,8 @@ int WebSocketEmscripten::Connect(std::string& address) {
 	return 0;
 }
 
-bool WebSocketEmscripten::Send(std::string& data) {
-	return emscripten_websocket_send_binary(this->_socket, data.data(), data.size()) == EMSCRIPTEN_RESULT_SUCCESS;
+bool WebSocketEmscripten::Send(const std::string& data) {
+	return emscripten_websocket_send_binary(this->_socket, (void*) data.data(), data.size()) == EMSCRIPTEN_RESULT_SUCCESS;
 }
 
 void WebSocketEmscripten::Close() {
@@ -100,10 +100,11 @@ class WebSocketBeast;
 
 typedef WebSocketBeast WebSocketType;
 
-#include <boost/beast/core.hpp>
-#include <boost/beast/websocket.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
+#include <boost/exception/diagnostic_information.hpp>
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -126,7 +127,7 @@ class WebSocketBeast
 {
 public:
 	int Connect(std::string& address) override;
-	bool Send(std::string& data) override;
+	bool Send(const std::string& data) override;
 	void Close() override;
 	virtual ~WebSocketBeast() {}
 	beastContext ctx;
@@ -148,7 +149,7 @@ void OnRead(beast::error_code ec, std::size_t bytes_transferred) {
 		std::cout << "read failed " << ec << "\n";
 	}
 
-	WebSocketBeast* wsb = (WebSocketBeast*) webSocketManager._ws.get();
+	WebSocketBeast* wsb = (WebSocketBeast*) GlobalWebsocket.get();
 	auto str = beast::buffers_to_string(wsb->ctx.buffer.data());
 	std::lock_guard<std::mutex> guard(wsb->mq_mutex);
 	wsb->messageQueue.push_back(str);
@@ -157,13 +158,13 @@ void OnRead(beast::error_code ec, std::size_t bytes_transferred) {
 }
 
 void DoRead() {
-	WebSocketBeast* wsb = (WebSocketBeast*) webSocketManager._ws.get();
+	WebSocketBeast* wsb = (WebSocketBeast*) GlobalWebsocket.get();
 	wsb->ctx.ws.async_read(wsb->ctx.buffer, &OnRead);
 }
 
 int WebSocketBeast::Connect(std::string& fullAddress) {
 
-	WebSocketBeast* wsb = (WebSocketBeast*) webSocketManager._ws.get();
+	WebSocketBeast* wsb = (WebSocketBeast*) GlobalWebsocket.get();
 
 	tcp::resolver resolver{wsb->ctx.ioc};
 
@@ -194,19 +195,15 @@ int WebSocketBeast::Connect(std::string& fullAddress) {
 		return -1;
 	}
 
-	webSocketManager._ws->toBeOpened = true;
+	GlobalWebsocket->toBeOpened = true;
 
 	DoRead();
 
 	new std::thread([&](){
 		try {
 			wsb->ctx.ioc.run();
-		} catch (const std::exception& e) {
-			if (e.what() == std::string("Operation canceled")) {
-				std::cout << "ioc quitting\n";
-				return;
-			}
-			throw e;
+		} catch (const boost::exception& e) {
+			std::cout << "wsb->ctx.ioc.run() failed: " << boost::diagnostic_information(e) << "\n";
 		}
 		std::cout << "ioc quitting\n";
 	});
@@ -214,22 +211,24 @@ int WebSocketBeast::Connect(std::string& fullAddress) {
 	return 0;
 }
 
-bool WebSocketBeast::Send(std::string& data) {
-	WebSocketBeast* wsb = (WebSocketBeast*) webSocketManager._ws.get();
+bool WebSocketBeast::Send(const std::string& data) {
+	WebSocketBeast* wsb = (WebSocketBeast*) GlobalWebsocket.get();
 	wsb->ctx.ws.write(net::buffer(std::string(data)));
 }
 
 void WebSocketBeast::Close() {
-	WebSocketBeast* wsb = (WebSocketBeast*) webSocketManager._ws.get();
+	WebSocketBeast* wsb = (WebSocketBeast*) GlobalWebsocket.get();
 	try {
-		wsb->ctx.ws.close(websocket::close_code::normal);
+    	wsb->ctx.ws.close(websocket::close_code::normal);
+	} catch (const std::exception& ex) {
+		std::cout << "exception occured while closing websocket: " << ex.what() << std::endl;
 	} catch (...) {
-		std::cout << "ws.close error \n";
+		std::cout << "an unknown exception occured while closing websocket" << std::endl;
 	}
 }
 
 #endif
 
 void CreateWebSocket() {
-	webSocketManager._ws = std::make_unique<WebSocketType>(); // this deletes the old one
+	GlobalWebsocket = std::make_unique<WebSocketType>(); // this deletes the old one
 }

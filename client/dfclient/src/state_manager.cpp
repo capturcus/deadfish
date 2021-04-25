@@ -62,7 +62,7 @@ TextCreator StateManager::CreateTextCreator() {
 void StateManager::OnFrameStart() {
 	_resources.UpdateTweens();
 
-	auto nextStateType = _currentState->Update(webSocketManager.GetMessages());
+	auto nextStateType = _currentState->Update(GetMessages());
 	if (nextStateType == _currentStateType) {
 		return;
 	}

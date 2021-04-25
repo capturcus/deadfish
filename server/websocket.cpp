@@ -149,13 +149,14 @@ public:
 
 std::shared_ptr<DfWebsocket> getSocketForHandle(dfws::Handle hdl)
 {
-    for (auto& s : sockets) {
-        if (s->socketID_ == hdl) {
-            return s;
-        }
+    auto it = std::find_if(sockets.begin(), sockets.end(), [&] (const auto& s) {
+        return s->socketID_ == hdl;
+    });
+    if (it == sockets.end()) {
+        std::cout << "could not find socket with id " << hdl << "\n";
+        exit(1);
     }
-    std::cout << "could not find socket with id " << hdl << "\n";
-    exit(1);
+    return *it;
 }
 
 void dfws::SendData(Handle hdl, const std::string& data)
@@ -167,12 +168,9 @@ void dfws::SendData(Handle hdl, const std::string& data)
 void dfws::Close(Handle hdl)
 {
     std::cout << "closing handle " << hdl << "\n";
-    auto it = sockets.begin();
-    for (; it != sockets.end(); it++) {
-        if ((*it)->socketID_ == hdl) {
-            break;
-        }
-    }
+    auto it = std::find_if(sockets.begin(), sockets.end(), [&] (const auto& s) {
+        return s->socketID_ == hdl;
+    });
     (*it)->Close();
     sockets.erase(it);
 }
