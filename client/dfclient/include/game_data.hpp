@@ -21,8 +21,6 @@ struct GameData {
     std::vector<Player> players;
     std::string levelData;
     bool gameInProgress = false;
-
-    WebSocket* socket = nullptr;
 };
 
 extern GameData gameData;

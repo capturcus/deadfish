@@ -38,7 +38,6 @@ void MenuState::ShowMessage(std::string message)
 		[text] (tweeny::tween<int>& t, int v) -> bool {
 			auto textColor = text->color();
 			text->setColor(textColor.r(), textColor.g(), textColor.b(), v);
-			std::cout << "v " << v << "\n";
 			if (v == 0)
 				delete text;
 			return false;
@@ -58,6 +57,8 @@ MenuState::MenuState(Resources& r) : _resources(r) {
 		TextCreator textCreator(r);
 		std::cout << "menu game in progress\n";
 		ShowMessage("game already in progress");
+		GlobalWebsocket->Close();
+		GlobalWebsocket = nullptr;
 		gameData.gameInProgress = false;
 	}
 	boost::property_tree::ptree pt;
@@ -88,8 +89,8 @@ MenuState::MenuState(Resources& r) : _resources(r) {
 void MenuState::TryConnect() {
 	gameData.serverAddress = "ws://" + gameData.serverAddress;
 	std::cout << "server " << gameData.serverAddress << ", my nickname " << gameData.myNickname << "\n";
-	gameData.socket = CreateWebSocket();
-	int ret = gameData.socket->Connect(gameData.serverAddress);
+	CreateWebSocket();
+	int ret = GlobalWebsocket->Connect(gameData.serverAddress);
 	if (ret < 0) {
 		std::cout << "socket->Connect failed " << ret << "\n";
 		this->ShowMessage("connecting to server failed");

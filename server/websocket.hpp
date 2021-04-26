@@ -19,5 +19,6 @@ void SetOnMessage(OnMessageHandler msgHandler);
 void SetOnOpen(OnOpenHandler handler);
 void SetOnClose(OnCloseHandler handler);
 void Run(unsigned short port);
+void Close(Handle hdl);
 
 };

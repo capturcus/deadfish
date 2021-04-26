@@ -2,21 +2,21 @@
 
 #include <iostream>
 
-WebSocketManager webSocketManager;
+std::unique_ptr<WebSocket> GlobalWebsocket;
 
 // Runs in game loop thread
-Messages WebSocketManager::GetMessages() {
+Messages GetMessages() {
 	Messages m;
-	if (!_ws) {
+	if (!GlobalWebsocket) {
 		return m;
 	}
 
-	std::lock_guard<std::mutex> guard(_ws->mq_mutex);
-	m.opened = _ws->toBeOpened;
-	m.data_msgs.swap(_ws->messageQueue);
+	std::lock_guard<std::mutex> guard(GlobalWebsocket->mq_mutex);
+	m.opened = GlobalWebsocket->toBeOpened;
+	m.data_msgs.swap(GlobalWebsocket->messageQueue);
 
 	if (m.opened) {
-		_ws->toBeOpened = false;
+		GlobalWebsocket->toBeOpened = false;
 	}
 
 	return m;
@@ -30,7 +30,8 @@ class WebSocketEmscripten
 {
 public:
 	int Connect(std::string& address) override;
-	bool Send(std::string& data) override;
+	bool Send(const std::string& data) override;
+	void Close() override;
 	virtual ~WebSocketEmscripten() {}
 
 	EMSCRIPTEN_WEBSOCKET_T _socket;
@@ -84,28 +85,26 @@ int WebSocketEmscripten::Connect(std::string& address) {
 	return 0;
 }
 
-bool WebSocketEmscripten::Send(std::string& data) {
-	return emscripten_websocket_send_binary(this->_socket, data.data(), data.size()) == EMSCRIPTEN_RESULT_SUCCESS;
+bool WebSocketEmscripten::Send(const std::string& data) {
+	return emscripten_websocket_send_binary(this->_socket, (void*) data.data(), data.size()) == EMSCRIPTEN_RESULT_SUCCESS;
+}
+
+void WebSocketEmscripten::Close() {
+	std::cout << "TODO implement\n";
+	exit(1);
 }
 
 #else // __EMSCRIPTEN__
 
-class WebSocketBeast
-	: public WebSocket
-{
-public:
-	int Connect(std::string& address) override;
-	bool Send(std::string& data) override;
-	virtual ~WebSocketBeast() {}
-
-};
+class WebSocketBeast;
 
 typedef WebSocketBeast WebSocketType;
 
-#include <boost/beast/core.hpp>
-#include <boost/beast/websocket.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
+#include <boost/exception/diagnostic_information.hpp>
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -117,9 +116,22 @@ namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
-net::io_context ioc;
-websocket::stream<tcp::socket> ws{ioc};
-beast::flat_buffer buffer;
+struct beastContext {
+	net::io_context ioc;
+	websocket::stream<tcp::socket> ws{ioc};
+	beast::flat_buffer buffer;
+};
+
+class WebSocketBeast
+	: public WebSocket
+{
+public:
+	int Connect(std::string& address) override;
+	bool Send(const std::string& data) override;
+	void Close() override;
+	virtual ~WebSocketBeast() {}
+	beastContext ctx;
+};
 
 void DoRead();
 
@@ -131,27 +143,32 @@ void OnRead(beast::error_code ec, std::size_t bytes_transferred) {
 		if (ec.value() == boost::system::errc::operation_canceled) {
 			// this websocket has disconnected
 			// todo: cleanup whatever is happening and return to main menu
+			std::cout << "operation canceled\n";
 			return;
 		}
 		std::cout << "read failed " << ec << "\n";
 	}
 
-	auto str = beast::buffers_to_string(buffer.data());
-	WebSocketBeast* wsb = (WebSocketBeast*) webSocketManager._ws.get();
+	WebSocketBeast* wsb = (WebSocketBeast*) GlobalWebsocket.get();
+	auto str = beast::buffers_to_string(wsb->ctx.buffer.data());
 	std::lock_guard<std::mutex> guard(wsb->mq_mutex);
 	wsb->messageQueue.push_back(str);
-	buffer.consume(buffer.size());
+	wsb->ctx.buffer.consume(wsb->ctx.buffer.size());
 	DoRead();
 }
 
 void DoRead() {
-	ws.async_read(buffer, &OnRead);
+	WebSocketBeast* wsb = (WebSocketBeast*) GlobalWebsocket.get();
+	wsb->ctx.ws.async_read(wsb->ctx.buffer, &OnRead);
 }
 
 int WebSocketBeast::Connect(std::string& fullAddress) {
-	tcp::resolver resolver{ioc};
 
-	ws.binary(true);
+	WebSocketBeast* wsb = (WebSocketBeast*) GlobalWebsocket.get();
+
+	tcp::resolver resolver{wsb->ctx.ioc};
+
+	wsb->ctx.ws.binary(true);
 
 	auto address = fullAddress.substr(std::string("ws://").size(), fullAddress.size());
 
@@ -164,38 +181,54 @@ int WebSocketBeast::Connect(std::string& fullAddress) {
 	auto port = address.substr(colon + 1, address.size());
 	auto const results = resolver.resolve(host, port);
 	try {
-		auto ep = net::connect(ws.next_layer(), results);
+		auto ep = net::connect(wsb->ctx.ws.next_layer(), results);
 		host += ':' + std::to_string(ep.port());
-		ws.set_option(websocket::stream_base::decorator(
+		wsb->ctx.ws.set_option(websocket::stream_base::decorator(
 			[](websocket::request_type& req)
 			{
 				req.set(http::field::user_agent,
 					std::string(BOOST_BEAST_VERSION_STRING) +
 						" websocket-client-coro");
 			}));
-		ws.handshake(host, "/");
+		wsb->ctx.ws.handshake(host, "/");
 	} catch (std::exception e) {
 		return -1;
 	}
 
-	webSocketManager._ws->toBeOpened = true;
+	GlobalWebsocket->toBeOpened = true;
 
 	DoRead();
 
 	new std::thread([&](){
-		ioc.run();
+		try {
+			wsb->ctx.ioc.run();
+		} catch (const boost::exception& e) {
+			std::cout << "wsb->ctx.ioc.run() failed: " << boost::diagnostic_information(e) << "\n";
+		}
+		std::cout << "ioc quitting\n";
 	});
 
 	return 0;
 }
 
-bool WebSocketBeast::Send(std::string& data) {
-	ws.write(net::buffer(std::string(data)));
+bool WebSocketBeast::Send(const std::string& data) {
+	WebSocketBeast* wsb = (WebSocketBeast*) GlobalWebsocket.get();
+	wsb->ctx.ws.write(net::buffer(std::string(data)));
+}
+
+void WebSocketBeast::Close() {
+	WebSocketBeast* wsb = (WebSocketBeast*) GlobalWebsocket.get();
+	try {
+		wsb->ctx.ws.close(websocket::close_code::normal);
+	} catch (const std::exception& ex) {
+		std::cout << "exception occured while closing websocket: " << ex.what() << std::endl;
+	} catch (...) {
+		std::cout << "an unknown exception occured while closing websocket" << std::endl;
+	}
 }
 
 #endif
 
-WebSocket* CreateWebSocket() {
-	webSocketManager._ws = std::make_unique<WebSocketType>();
-	return webSocketManager._ws.get();
+void CreateWebSocket() {
+	GlobalWebsocket = std::make_unique<WebSocketType>(); // this deletes the old one
 }

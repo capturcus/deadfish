@@ -10,7 +10,8 @@
 
 struct WebSocket {
 	virtual int Connect(std::string& address) = 0;
-	virtual bool Send(std::string& data) = 0;
+	virtual bool Send(const std::string& data) = 0;
+	virtual void Close() = 0;
 	virtual ~WebSocket() {}
 
 	// TODO use lock-free queue instead?
@@ -19,12 +20,8 @@ struct WebSocket {
 	std::vector<std::string> messageQueue;
 };
 
-struct WebSocketManager {
-	Messages GetMessages();
+Messages GetMessages();
 
-	std::unique_ptr<WebSocket> _ws;
-};
+void CreateWebSocket();
 
-WebSocket* CreateWebSocket();
-
-extern WebSocketManager webSocketManager;
+extern std::unique_ptr<WebSocket> GlobalWebsocket;
