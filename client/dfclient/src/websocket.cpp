@@ -219,7 +219,7 @@ bool WebSocketBeast::Send(const std::string& data) {
 void WebSocketBeast::Close() {
 	WebSocketBeast* wsb = (WebSocketBeast*) GlobalWebsocket.get();
 	try {
-    	wsb->ctx.ws.close(websocket::close_code::normal);
+		wsb->ctx.ws.close(websocket::close_code::normal);
 	} catch (const std::exception& ex) {
 		std::cout << "exception occured while closing websocket: " << ex.what() << std::endl;
 	} catch (...) {
