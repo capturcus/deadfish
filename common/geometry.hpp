@@ -1,13 +1,5 @@
 #pragma once
 
-static float normalizeAngle(float angle) {
-	while (angle < -180.f)
-		angle += 360.f;
-	while (angle > 180.f)
-		angle -= 360.f;
-	return angle;
-}
-
 template<typename Vectorlike>
 inline float angleFromVector(const Vectorlike &v) {
 	return (float) atan2(v.y, v.x);

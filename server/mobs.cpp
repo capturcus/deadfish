@@ -175,14 +175,14 @@ void Civilian::collisionResolution() {
 	}
 	std::sort(navpoints.begin(), navpoints.end());
 	for (auto& p : navpoints) {
-		auto spawnName = std::get<1>(p);
-		auto& navpoint = gameState.level->navpoints[spawnName];
+		auto navpointName = std::get<1>(p);
+		auto& navpoint = gameState.level->navpoints[navpointName];
 		auto spawnPos = g2b(navpoint->position);
 
 		// not where we were currently going but somewhere we can go immediately from here
-		if (!navpoint->isplayerspawn && spawnName != this->currentNavpoint && mobSeePoint(*this, spawnPos, true)) {
+		if (!navpoint->isplayerspawn && navpointName != this->currentNavpoint && mobSeePoint(*this, spawnPos, true)) {
 			this->previousNavpoint = "";
-			this->currentNavpoint = spawnName;
+			this->currentNavpoint = navpointName;
 			this->myNavpointPosition = randFromCircle(navpoint->position, navpoint->radius);
 			zigzagToPosition(this->myNavpointPosition);
 			std::cout << "resolved collision - changed direction\n";
