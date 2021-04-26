@@ -11,6 +11,7 @@
 #include "level_loader.hpp"
 #include "skills.hpp"
 #include "agones.hpp"
+#include "raycasting.hpp"
 
 const float GOLDFISH_CHANCE = 0.05f;
 const uint32_t PRESIMULATE_TICKS = 1000;
@@ -120,53 +121,6 @@ std::unique_ptr<FlatBuffGenerated::MovableComponent> CollideableMovable::fbMovab
 	this->pos = b2f(this->body->GetPosition());
 	this->angle = this->body->GetAngle();
 	return Movable::fbMovable();
-}
-
-struct FOVCallback
-	: public b2RayCastCallback
-{
-	float32 ReportFixture(b2Fixture *fixture, UNUSED const b2Vec2 &point, UNUSED const b2Vec2 &normal, UNUSED float32 fraction)
-	{
-		auto data = (Collideable *)fixture->GetBody()->GetUserData();
-		// on return 1.f the currently reported fixture will be ignored and the raycast will continue
-		if (ignoreMobs && dynamic_cast<Mob*>(data))
-			return 1.f;
-
-		if (data && data != target && player && !data->obstructsSight(player))
-			return 1.f;
-		if (fraction < minfraction)
-		{
-			minfraction = fraction;
-			closest = fixture;
-		}
-		return fraction;
-	}
-	float minfraction = 1.f;
-	b2Fixture *closest = nullptr;
-	Collideable *target = nullptr;
-	Player *player = nullptr;
-	bool ignoreMobs = false;
-};
-
-bool playerSeeCollideable(Player &p, Collideable &c)
-{
-	FOVCallback fovCallback;
-	fovCallback.target = &c;
-	fovCallback.player = &p;
-	auto ppos = p.deathTimeout > 0 ? g2b(p.targetPosition) : p.body->GetPosition();
-	auto cpos = c.body->GetPosition();
-	gameState.b2world->RayCast(&fovCallback, ppos, cpos);
-	return fovCallback.closest && fovCallback.closest->GetBody() == c.body;
-}
-
-bool mobSeePoint(Mob &m, const b2Vec2 &point, bool ignoreMobs)
-{
-	if (b2Distance(m.body->GetPosition(), point) == 0.0f)
-		return true;
-	FOVCallback fovCallback;
-	fovCallback.ignoreMobs = ignoreMobs;
-	gameState.b2world->RayCast(&fovCallback, m.body->GetPosition(), point);
-	return fovCallback.minfraction == 1.f;
 }
 
 float revLerp(float min, float max, float val)

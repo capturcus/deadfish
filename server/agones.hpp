@@ -8,4 +8,4 @@ void Shutdown();
 void SetPlayers(int players);
 void SetPlaying();
 
-}; // agones
+} // agones

@@ -21,4 +21,4 @@ void SetOnClose(OnCloseHandler handler);
 void Run(unsigned short port);
 void Close(Handle hdl);
 
-};
+}
