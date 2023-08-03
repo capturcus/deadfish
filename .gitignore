@@ -8,3 +8,4 @@ levelpacker/FlatBuffGenerated/
 levels/*.bin
 
 server/build-prod
+bazel*
