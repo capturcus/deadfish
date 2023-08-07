@@ -1,14 +1,8 @@
 #include <iostream>
-#include <string>
-#include <vector>
-
-#include "absl/strings/str_join.h"
-
+#include <google/protobuf/port_def.inc>
 int main() {
-  std::vector<std::string> v = {"foo", "bar", "baz"};
-  std::string s = absl::StrJoin(v, "-");
 
-  std::cout << "Joined string: " << s << "\n";
+  std::cout << "protobuf version: " << PROTOBUF_MIN_PROTOC_VERSION << "\n";
 
   return 0;
 }

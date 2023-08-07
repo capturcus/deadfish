@@ -14,24 +14,25 @@ cc_binary(
     name = "server",
     srcs = [
         "agones.cpp",
-        # "deadfish.cpp",
-        # "game_thread.cpp",
-        # "level_loader.cpp",
-        # "main.cpp",
-        # "mobs.cpp",
-        # "skills.cpp",
-        # "websocket.cpp",
+        "deadfish.cpp",
+        "game_thread.cpp",
+        "level_loader.cpp",
+        "main.cpp",
+        "mobs.cpp",
+        "skills.cpp",
+        "websocket.cpp",
         ":server-hdrs",
     ],
     deps = [
-        "@com_google_protobuf//:protobuf",
         "@agones",
-        # "@flatbuffers",
+        "@flatbuffers//:flatbuffers",
     ]
 )
 
 cc_binary(
   name = "gcc_version",
-  deps = ["@com_google_absl//absl/strings"],
   srcs = ["gcc_version.cpp"],
+  deps = [
+        "@com_google_protobuf//:protobuf",
+    ]
 )

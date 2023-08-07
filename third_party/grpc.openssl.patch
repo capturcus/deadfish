@@ -1,0 +1,39 @@
+diff --git a/bazel/grpc_deps.bzl b/bazel/grpc_deps.bzl
+index 9179107..5adc2e9 100644
+--- a/bazel/grpc_deps.bzl
++++ b/bazel/grpc_deps.bzl
+@@ -72,12 +72,12 @@ def grpc_deps():
+
+     native.bind(
+         name = "libssl",
+-        actual = "@boringssl//:ssl",
++        actual = "@openssl//:ssl",
+     )
+
+     native.bind(
+         name = "libcrypto",
+-        actual = "@boringssl//:crypto",
++        actual = "@openssl//:crypto",
+     )
+
+     native.bind(
+@@ -185,19 +185,6 @@ def grpc_deps():
+         actual = "@libuv//:libuv",
+     )
+
+-    if "boringssl" not in native.existing_rules():
+-        http_archive(
+-            name = "boringssl",
+-            # Use github mirror instead of https://boringssl.googlesource.com/boringssl
+-            # to obtain a boringssl archive with consistent sha256
+-            sha256 = "534fa658bd845fd974b50b10f444d392dfd0d93768c4a51b61263fd37d851c40",
+-            strip_prefix = "boringssl-b9232f9e27e5668bc0414879dcdedb2a59ea75f2",
+-            urls = [
+-                "https://storage.googleapis.com/grpc-bazel-mirror/github.com/google/boringssl/archive/b9232f9e27e5668bc0414879dcdedb2a59ea75f2.tar.gz",
+-                "https://github.com/google/boringssl/archive/b9232f9e27e5668bc0414879dcdedb2a59ea75f2.tar.gz",
+-            ],
+-        )
+-
+     if "zlib" not in native.existing_rules():
+         http_archive(
+             name = "zlib",
